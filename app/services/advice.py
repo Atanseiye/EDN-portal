@@ -3,7 +3,7 @@ from app.models import AdviceRequest, AdviceResponse, ComplaintDraftRequest, Com
 from app.services.classifier import classify_issue
 from app.services.knowledge import retrieve, to_source_cards
 from app.services.natlas import NAtlasClient, NAtlasError
-from app.services.fallback import grounded_fallback
+from app.services.fallback import grounded_fallback, answer_is_direct
 from app.services.routing import regulator_for_state
 from app.services.validation import ValidationStore
 
@@ -37,8 +37,13 @@ class AdviceService:
         system = (
             "You are PowerRights NG, an electricity-consumer information assistant for Nigeria. "
             "You are powered by the official N-ATLaS model. Use ONLY the supplied verified regulatory facts for legal or regulatory claims. "
+            "Your first responsibility is to ANSWER THE USER'S ACTUAL QUESTION. The first sentence of summary MUST directly answer it. "
+            "If the user asks yes/no, answer yes/no with the necessary qualification. If they ask who, name the person/body. "
+            "If they ask how long, state the verified timeframe. If they ask what to do, state the first action. "
+            "If they ask multiple questions, answer every part in summary before giving supporting rights and steps. "
+            "Do not begin with generic phrases such as 'I have reviewed your complaint', 'this appears to be', or 'the retrieved guidance covers'. "
             "Do not invent statutes, timelines, contacts, tariffs, rights, or complaint procedures. "
-            "If the facts do not support a claim, say it needs verification. Keep the language plain and practical. "
+            "If the supplied facts do not answer something, say that explicitly. Keep the language plain and practical. "
             "Return strict JSON with exactly: summary (string), rights (array of strings), next_steps (array of strings)."
         )
         user = (
@@ -48,12 +53,41 @@ class AdviceService:
         )
         provider = self.settings.natlas_provider.lower()
         if provider in {"mock", "grounded_rules", "disabled", ""}:
-            generated = grounded_fallback(req.message, issue, docs, req.state, req.disco)
+            generated = grounded_fallback(
+                req.message,
+                issue,
+                docs,
+                route,
+                req.state,
+                req.disco,
+                model_ready=self.settings.challenge_model_ready,
+                asr_ready=self.settings.challenge_asr_ready,
+            )
         else:
             try:
                 generated = await self.natlas.generate_json(system, user)
+                if not answer_is_direct(req.message, generated, route):
+                    generated = grounded_fallback(
+                        req.message,
+                        issue,
+                        docs,
+                        route,
+                        req.state,
+                        req.disco,
+                        model_ready=self.settings.challenge_model_ready,
+                        asr_ready=self.settings.challenge_asr_ready,
+                    )
             except (NAtlasError, ValueError, KeyError):
-                generated = grounded_fallback(req.message, issue, docs, req.state, req.disco)
+                generated = grounded_fallback(
+                    req.message,
+                    issue,
+                    docs,
+                    route,
+                    req.state,
+                    req.disco,
+                    model_ready=self.settings.challenge_model_ready,
+                    asr_ready=self.settings.challenge_asr_ready,
+                )
         interaction_id = self.validation.add_interaction(
             session_id=req.session_id,
             language=req.language,
