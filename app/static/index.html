@@ -1,0 +1,51 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="theme-color" content="#0b3b2e">
+  <title>PowerRights NG — Know your electricity rights</title>
+  <link rel="stylesheet" href="/static/styles.css">
+</head>
+<body>
+<header class="topbar">
+  <a class="brand" href="/"><span class="bolt">⚡</span><span>PowerRights <b>NG</b></span></a>
+  <span class="pill">Powered by N-ATLaS</span>
+</header>
+<main>
+<section class="hero">
+  <div>
+    <span class="eyebrow">Nigeria electricity consumer assistant</span>
+    <h1>Explain what happened.<br><span>Know what to do next.</span></h1>
+    <p>Speak or type your electricity problem in English, Yorùbá, Hausa or Igbo. PowerRights matches it to verified Nigerian electricity guidance and shows the right complaint path for your state.</p>
+  </div>
+  <aside><strong>Built for real complaints</strong><ul><li>Official N-ATLaS language models</li><li>NERC-grounded consumer guidance</li><li>State-aware regulator routing</li><li>Complaint-letter generation</li></ul></aside>
+</section>
+
+<section class="workspace">
+<div class="grid">
+<label>Language<select id="language"><option value="english">English / Nigerian English</option><option value="yoruba">Yorùbá</option><option value="hausa">Hausa</option><option value="igbo">Igbo</option></select></label>
+<label>State<select id="state"><option value="">Select state</option><option>Abia</option><option>Adamawa</option><option>Akwa Ibom</option><option>Anambra</option><option>Bauchi</option><option>Bayelsa</option><option>Benue</option><option>Borno</option><option>Cross River</option><option>Delta</option><option>Ebonyi</option><option>Edo</option><option>Ekiti</option><option>Enugu</option><option>Gombe</option><option>Imo</option><option>Jigawa</option><option>Kaduna</option><option>Kano</option><option>Katsina</option><option>Kebbi</option><option>Kogi</option><option>Kwara</option><option>Lagos</option><option>Nasarawa</option><option>Niger</option><option>Ogun</option><option>Ondo</option><option>Osun</option><option>Oyo</option><option>Plateau</option><option>Rivers</option><option>Sokoto</option><option>Taraba</option><option>Yobe</option><option>Zamfara</option><option>FCT</option></select></label>
+<label>Electricity provider / DisCo<input id="disco" placeholder="e.g. Ikeja Electric"></label>
+</div>
+<label class="message">Tell us what happened<textarea id="message" rows="6" placeholder="Example: My prepaid meter stopped working and they removed it. They are now giving me estimated bills that are much higher than what I used to pay."></textarea></label>
+<div class="actions"><button class="primary" id="askBtn">Check my rights</button><button class="voice" id="recordBtn"><span id="recordIcon">●</span> <span id="recordText">Record voice</span></button></div>
+<p class="privacy">Voice is transcribed for this request and is not stored by default. Do not include passwords, PINs or payment-card details.</p>
+</section>
+
+<section id="loading" class="loading hidden"><div class="spinner"></div><p>Checking verified electricity guidance…</p></section>
+<section id="result" class="result hidden">
+<div class="result-head"><div><span class="eyebrow" id="issueType"></span><h2>What this means</h2></div><span class="pill">Verified-source answer</span></div>
+<p id="summary" class="summary"></p>
+<div class="columns"><article><h3>Your rights / protections</h3><ul id="rights"></ul></article><article><h3>What to do next</h3><ol id="steps"></ol></article></div>
+<article class="route"><span class="eyebrow">Escalation route</span><h3 id="regulatorName"></h3><p id="regulatorNote"></p><div id="regulatorContacts" class="contacts"></div></article>
+<div class="actions"><button id="draftBtn" class="secondary">Generate formal complaint</button><button id="newBtn" class="ghost">Start another complaint</button></div>
+<article id="draftPanel" class="card hidden"><div class="toolbar"><h3>Complaint draft</h3><button id="copyDraft" class="ghost small">Copy</button></div><strong id="draftSubject"></strong><pre id="draftBody"></pre><h4>Attach where available</h4><ul id="draftChecklist"></ul></article>
+<article class="card"><h3>Sources used</h3><div id="sources"></div></article>
+<article class="feedback"><p><strong>Was this useful and actionable?</strong> Your response helps document real-world validation.</p><div><button data-helpful="true">Yes</button><button data-helpful="false">Not yet</button></div><small id="feedbackStatus"></small></article>
+<p class="privacy" id="disclaimer"></p>
+</section>
+</main>
+<footer><p>N-ATLaS is an initiative of the Federal Ministry of Communications, Innovation and Digital Economy, and powered by Awarri Technologies.</p><p>PowerRights NG is an independent civic-information prototype and is not NERC or a State Electricity Regulator.</p></footer>
+<script src="/static/app.js"></script>
+</body></html>
