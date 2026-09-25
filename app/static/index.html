@@ -28,7 +28,7 @@
 <label>State<select id="state"><option value="">Select state</option><option>Abia</option><option>Adamawa</option><option>Akwa Ibom</option><option>Anambra</option><option>Bauchi</option><option>Bayelsa</option><option>Benue</option><option>Borno</option><option>Cross River</option><option>Delta</option><option>Ebonyi</option><option>Edo</option><option>Ekiti</option><option>Enugu</option><option>Gombe</option><option>Imo</option><option>Jigawa</option><option>Kaduna</option><option>Kano</option><option>Katsina</option><option>Kebbi</option><option>Kogi</option><option>Kwara</option><option>Lagos</option><option>Nasarawa</option><option>Niger</option><option>Ogun</option><option>Ondo</option><option>Osun</option><option>Oyo</option><option>Plateau</option><option>Rivers</option><option>Sokoto</option><option>Taraba</option><option>Yobe</option><option>Zamfara</option><option>FCT</option></select></label>
 <label>Electricity provider / DisCo<input id="disco" placeholder="e.g. Ikeja Electric"></label>
 </div>
-<label class="message">Tell us what happened<textarea id="message" rows="6" placeholder="Example: My prepaid meter stopped working and they removed it. They are now giving me estimated bills that are much higher than what I used to pay."></textarea></label>
+<label class="message"><span id="messageLabel">Tell us what happened</span><textarea id="message" rows="6" placeholder="Example: My prepaid meter stopped working and they removed it. They are now giving me estimated bills that are much higher than what I used to pay."></textarea></label>
 <div class="actions"><button class="primary" id="askBtn">Check my rights</button><button class="voice" id="recordBtn"><span id="recordIcon">●</span> <span id="recordText">Record voice</span></button></div>
 <label class="validation-consent"><input type="checkbox" id="validationConsent"> <span>I consent to this anonymised voice interaction being counted in PowerRights' NITDA/NCAIR challenge validation. My audio and transcript will not be stored in the validation record.</span></label>
 <p class="privacy">Voice is transcribed for this request and is not stored by default. Validation stores only an anonymous interaction ID, language, issue category, state/provider when supplied, model path and feedback. Do not include passwords, PINs or payment-card details.</p>
@@ -36,13 +36,13 @@
 
 <section id="loading" class="loading hidden"><div class="spinner"></div><p>Checking verified electricity guidance…</p></section>
 <section id="result" class="result hidden">
-<div class="result-head"><div><span class="eyebrow" id="issueType"></span><h2>What this means</h2></div><span class="pill">Verified-source answer</span></div>
+<div class="result-head"><div><span class="eyebrow" id="issueType"></span><h2 id="meaningTitle">What this means</h2></div><span class="pill">Verified-source answer</span></div>
 <p id="summary" class="summary"></p>
-<div class="columns"><article><h3>Your rights / protections</h3><ul id="rights"></ul></article><article><h3>What to do next</h3><ol id="steps"></ol></article></div>
-<article class="route"><span class="eyebrow">Escalation route</span><h3 id="regulatorName"></h3><p id="regulatorNote"></p><div id="regulatorContacts" class="contacts"></div></article>
+<div class="columns"><article><h3 id="rightsTitle">Your rights / protections</h3><ul id="rights"></ul></article><article><h3 id="stepsTitle">What to do next</h3><ol id="steps"></ol></article></div>
+<article class="route"><span class="eyebrow" id="routeTitle">Escalation route</span><h3 id="regulatorName"></h3><p id="regulatorNote"></p><div id="regulatorContacts" class="contacts"></div></article>
 <div class="actions"><button id="draftBtn" class="secondary">Generate formal complaint</button><button id="newBtn" class="ghost">Start another complaint</button></div>
 <article id="draftPanel" class="card hidden"><div class="toolbar"><h3>Complaint draft</h3><button id="copyDraft" class="ghost small">Copy</button></div><strong id="draftSubject"></strong><pre id="draftBody"></pre><h4>Attach where available</h4><ul id="draftChecklist"></ul></article>
-<article class="card"><h3>Sources used</h3><div id="sources"></div></article>
+<article class="card"><h3 id="sourcesTitle">Sources used</h3><div id="sources"></div></article>
 <article class="feedback"><p><strong>Was this useful and actionable?</strong> Your response helps document real-world validation.</p><div><button data-helpful="true">Yes</button><button data-helpful="false">Not yet</button></div><small id="feedbackStatus"></small></article>
 <p class="privacy" id="disclaimer"></p>
 </section>
