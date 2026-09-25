@@ -23,7 +23,7 @@ pipes = {
         model=model_id,
         token=HF_TOKEN,
         torch_dtype=torch.float16,
-        device=0,
+        device="cuda",
     )
     for language, model_id in MODEL_BY_LANGUAGE.items()
 }
