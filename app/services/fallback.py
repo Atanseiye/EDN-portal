@@ -1,5 +1,6 @@
 import re
-from app.models import IssueType, RegulatorRoute
+from app.models import IssueType, RegulatorRoute, Language
+from app.services.localization import localized_fact
 
 
 ELECTRICITY_TERMS = (
@@ -50,9 +51,12 @@ def _asks_language_capability(text: str) -> str | None:
 def _asks_escalation(text: str) -> bool:
     t = _norm(text)
     return (
-        ("who" in t or "where" in t)
-        and any(x in t for x in ("escalat", "complain", "report", "regulat"))
-    ) or "who regulates" in t or "where do i complain" in t
+        (("who" in t or "where" in t) and any(x in t for x in ("escalat", "complain", "report", "regulat")))
+        or "who regulates" in t or "where do i complain" in t
+        or any(x in t for x in ("ta ni mo yẹ", "ta ni mo ye", "fi ẹ̀sùn", "fi esun", "lé lọ́wọ́", "le lowo"))
+        or any(x in t for x in ("wa zan kai", "ina zan kai", "daukaka korafi"))
+        or any(x in t for x in ("onye ka m", "ebe ka m", "bugara mkpesa", "bulie mkpesa"))
+    )
 
 
 def _asks_complaint_timeline(text: str) -> bool:
@@ -85,9 +89,19 @@ def _asks_who_replaces_meter(text: str) -> bool:
 
 def _asks_estimated_after_removal(text: str) -> bool:
     t = _norm(text)
-    return "meter" in t and any(x in t for x in ("remove", "removed", "faulty", "defective")) and any(
+    english = "meter" in t and any(x in t for x in ("remove", "removed", "faulty", "defective")) and any(
         x in t for x in ("estimated", "estimate", "bill")
     )
+    yoruba = any(x in t for x in ("billing àfọwọ́kọ", "billing afowoko", "owó ina àfọwọ́kọ", "owo ina afowoko")) and any(
+        x in t for x in ("yọ", "yo", "bàjẹ́", "baje", "rọ́pò", "ropo")
+    )
+    hausa = any(x in t for x in ("estimated billing", "kimanta kudin wuta")) and any(
+        x in t for x in ("cire mita", "mita ya lalace", "mayar da mita")
+    )
+    igbo = any(x in t for x in ("estimated billing", "ego ọkụ e mere atụmatụ", "ego oku e mere atụmatụ")) and any(
+        x in t for x in ("wepụrụ mita", "wepuru mita", "mita mebiri")
+    )
+    return english or yoruba or hausa or igbo
 
 
 def _asks_disconnection_notice(text: str) -> bool:
@@ -99,12 +113,22 @@ def _asks_disconnection_notice(text: str) -> bool:
 
 def _asks_rights(text: str) -> bool:
     t = _norm(text)
-    return any(x in t for x in ("what are my rights", "my right", "do i have a right", "am i entitled"))
+    return any(x in t for x in (
+        "what are my rights", "my right", "do i have a right", "am i entitled",
+        "kí ni ẹ̀tọ́ mi", "ki ni eto mi", "ẹ̀tọ́ mi", "eto mi",
+        "menene hakkina", "me ne hakkina", "hakkina",
+        "gịnị bụ ikike m", "gini bu ikike m", "ikike m"
+    ))
 
 
 def _asks_what_to_do(text: str) -> bool:
     t = _norm(text)
-    return any(x in t for x in ("what should i do", "what do i do", "what can i do", "next step", "how do i complain"))
+    return any(x in t for x in (
+        "what should i do", "what do i do", "what can i do", "next step", "how do i complain",
+        "kí ni mo yẹ kí n ṣe", "ki ni mo ye ki n se", "kí ni mo lè ṣe", "ki ni mo le se",
+        "me ya kamata in yi", "me zan yi", "yaya zan yi",
+        "gịnị ka m mee", "gini ka m mee", "kedu ihe m ga eme"
+    ))
 
 
 def _direct_answer(
@@ -114,12 +138,18 @@ def _direct_answer(
     route: RegulatorRoute,
     state: str | None,
     disco: str | None,
+    language: Language,
     *,
     model_ready: bool,
     asr_ready: bool,
 ) -> str | None:
     t = _norm(message)
-    provider = disco or "your electricity provider"
+    provider = disco or {
+        "english": "your electricity provider",
+        "yoruba": "ilé-iṣẹ́ iná rẹ",
+        "hausa": "kamfanin wutar lantarkinka",
+        "igbo": "ụlọ ọrụ ọkụ gị",
+    }[language]
     answers: list[str] = []
 
     language = _asks_language_capability(message)
@@ -138,12 +168,26 @@ def _direct_answer(
             )
 
     if _asks_estimated_after_removal(message) and _fact(docs, "faulty-meter-estimation"):
-        answers.append(
-            "They should not simply move you to arbitrary estimated billing because a faulty or obsolete meter "
-            "was removed and not replaced. NERC's guidance says that where replacement cannot occur within the "
-            "billing period, consumption should be determined using the customer's average billing or vending "
-            "over the preceding three months."
-        )
+        answers.append({
+            "english": (
+                "They should not simply move you to arbitrary estimated billing because a faulty or obsolete meter "
+                "was removed and not replaced. NERC's guidance says that where replacement cannot occur within the "
+                "billing period, consumption should be determined using the customer's average billing or vending "
+                "over the preceding three months."
+            ),
+            "yoruba": (
+                "Rárá—wọn kò yẹ kí wọ́n kàn fi ọ sí billing àfọwọ́kọ tí kò ní ìpìlẹ̀ nítorí pé mita tó bàjẹ́ ni wọ́n yọ tí wọn kò sì rọ́pò rẹ̀. "
+                "Ìtọ́sọ́nà NERC sọ pé bí rirọ́pò mita kò bá ṣẹlẹ̀ ní àkókò billing, a yẹ kí a lo àárín gbùngbùn billing tàbí vending oṣù mẹ́ta tó ṣáájú."
+            ),
+            "hausa": (
+                "A'a—bai kamata su kawai sanya ka a arbitrary estimated billing ba saboda an cire mita mai matsala ba tare da maye gurbinsa ba. "
+                "Jagorar NERC ta ce idan ba a maye gurbin mita cikin lokacin billing ba, a yi amfani da matsakaicin billing ko vending na watanni uku da suka gabata."
+            ),
+            "igbo": (
+                "Mba—ha ekwesịghị itinye gị naanị na arbitrary estimated billing n'ihi na e wepụrụ mita mebiri emebi ma a dochighị ya. "
+                "NERC kwuru na ma ọ bụrụ na a naghị edochi mita n'oge billing, a ga-eji nkezi billing ma ọ bụ vending nke ọnwa atọ gara aga."
+            ),
+        }[language])
 
     if _asks_who_replaces_meter(message) and _fact(docs, "meter-replacement-duty"):
         answers.append(
@@ -179,7 +223,12 @@ def _direct_answer(
     if _asks_rights(message):
         facts = [d["text"] for d in docs if d.get("text")]
         if facts:
-            answers.append("The most directly relevant verified protection I found is: " + facts[0])
+            answers.append({
+                "english": "The most directly relevant verified protection I found is: ",
+                "yoruba": "Ààbò tó ṣe pàtàkì jù lọ tí mo rí nínú ìtọ́sọ́nà tó jẹ́rìí ni pé: ",
+                "hausa": "Kariyar da ta fi dacewa da na samu daga bayanan da aka tabbatar ita ce: ",
+                "igbo": "Nchedo kachasị dabara m hụrụ n'ihe e gosipụtara bụ: ",
+            }[language] + localized_fact(docs[0].get("id",""), language, facts[0]))
 
     if _asks_what_to_do(message):
         if issue == "metering":
@@ -288,6 +337,7 @@ def grounded_fallback(
     route: RegulatorRoute,
     state: str | None,
     disco: str | None,
+    language: Language = "english",
     *,
     model_ready: bool = False,
     asr_ready: bool = False,
@@ -300,12 +350,18 @@ def grounded_fallback(
         route,
         state,
         disco,
+        language,
         model_ready=model_ready,
         asr_ready=asr_ready,
     )
 
-    facts = [d["text"] for d in docs if d.get("text")]
-    provider = disco or "your electricity provider"
+    facts = [localized_fact(d.get("id",""), language, d["text"]) for d in docs if d.get("text")]
+    provider = disco or {
+        "english": "your electricity provider",
+        "yoruba": "ilé-iṣẹ́ iná rẹ",
+        "hausa": "kamfanin wutar lantarkinka",
+        "igbo": "ụlọ ọrụ ọkụ gị",
+    }[language]
 
     if issue == "other" and not is_electricity_related(message):
         return {
@@ -389,8 +445,63 @@ def grounded_fallback(
             "Use the regulator route below if it remains unresolved.",
         ]
 
+    if language == "yoruba":
+        step_map = {
+            "metering": [
+                f"Fi ẹ̀sùn metering sí Customer Complaints Unit ti {provider} ní kíkọ́, kí o sì gba complaint/reference number.",
+                "Ṣàlàyé ìgbà tí mita náà bàjẹ́ tàbí tí wọ́n yọ ọ́, kí o sì béèrè ipo rirọ́pò rẹ̀ ní kíkọ́.",
+                "Fi meter number, vending/billing records àti ẹ̀rí míì tó bá wà kún un.",
+                "Bí billing àfọwọ́kọ bá bẹ̀rẹ̀ lẹ́yìn tí wọ́n yọ mita náà, tako ìpìlẹ̀ billing náà ní kíkọ́.",
+            ],
+            "billing": [
+                f"Tako bill náà ní kíkọ́ lọ́dọ̀ Customer Complaints Unit ti {provider}, kí o sì pa acknowledgement mọ́.",
+                "Fi bill tí o ń tako, àwọn bill tàbí vending history tó ṣáájú, meter/account number àti receipts kún un.",
+                "Béèrè fún ìṣírò àti ìpìlẹ̀ bill náà ní kíkọ́, kí wọ́n sì ṣàtúnṣe owó tí kò ní ìpìlẹ̀.",
+                "Bí wọn kò bá yanju rẹ̀, lo ipa escalation tó wà nísàlẹ̀.",
+            ],
+        }
+        steps = step_map.get(issue, steps)
+    elif language == "hausa":
+        step_map = {
+            "metering": [
+                f"Ka kai rubutaccen korafin mita zuwa Customer Complaints Unit na {provider}, ka kuma samu complaint/reference number.",
+                "Ka bayyana lokacin da mita ya lalace ko aka cire shi, sannan ka nemi matsayin maye gurbinsa a rubuce.",
+                "Ka hada meter number, tarihin vending/billing da sauran hujjoji.",
+                "Idan estimated billing ya fara bayan an cire mita, ka kalubalanci tushen billing din a rubuce.",
+            ],
+            "billing": [
+                f"Ka kalubalanci bill din a rubuce a Customer Complaints Unit na {provider}, ka ajiye acknowledgement.",
+                "Ka hada bill din da kake kalubalanta, tsofaffin bills ko vending history, meter/account number da receipts.",
+                "Ka nemi bayanin lissafin da tushensa a rubuce sannan ka nemi gyaran duk cajin da ba shi da hujja.",
+                "Idan ba a warware ba, ka bi hanyar daukaka korafi da ke kasa.",
+            ],
+        }
+        steps = step_map.get(issue, steps)
+    elif language == "igbo":
+        step_map = {
+            "metering": [
+                f"Dee mkpesa gbasara mita nye Customer Complaints Unit nke {provider}, nweta complaint/reference number.",
+                "Kọwaa mgbe mita mebiri ma ọ bụ mgbe e wepụrụ ya, rịọkwa ka ha dee ọnọdụ dochie mita ahụ.",
+                "Tinye meter number, vending/billing records na ihe akaebe ndị ọzọ i nwere.",
+                "Ọ bụrụ na estimated billing malitere mgbe e wepụrụ mita, jụọ ma gbaghaa ntọala billing ahụ n'akwụkwọ.",
+            ],
+            "billing": [
+                f"Dee mgbagha banyere bill ahụ nye Customer Complaints Unit nke {provider}, debe acknowledgement.",
+                "Tinye bill ị na-agbagha, bills gara aga ma ọ bụ vending history, meter/account number na receipts.",
+                "Rịọ ka ha kọwaa calculation na basis nke bill ahụ n'akwụkwọ ma mezie ụgwọ na-enweghị ihe akaebe.",
+                "Ọ bụrụ na a naghị edozi ya, soro ụzọ escalation e gosiri n'okpuru.",
+            ],
+        }
+        steps = step_map.get(issue, steps)
+
+    default_summary = {
+        "english": "I found verified electricity-consumer guidance relevant to your question.",
+        "yoruba": "Mo rí ìtọ́sọ́nà iná tó jẹ́rìí tí ó bá ìbéèrè rẹ mu.",
+        "hausa": "Na sami tabbataccen jagorar wutar lantarki da ya dace da tambayarka.",
+        "igbo": "Achọtara m nduzi ọkụ eletrik e gosipụtara nke dabara na ajụjụ gị.",
+    }[language]
     return {
-        "summary": direct or "I found verified electricity-consumer guidance relevant to your question.",
+        "summary": direct or default_summary,
         "rights": rights,
         "next_steps": steps,
     }
