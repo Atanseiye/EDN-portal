@@ -45,8 +45,12 @@ class Settings(BaseSettings):
 
     @property
     def persistent_validation_ready(self) -> bool:
-        # Render application logs also preserve structured validation events for the challenge window.
-        return bool(self.database_url) or self.app_env == "production"
+        return bool(self.database_url)
+
+    @property
+    def validation_audit_log_ready(self) -> bool:
+        # Production emits structured, non-sensitive validation evidence to platform logs.
+        return self.app_env == "production"
 
 
 @lru_cache
