@@ -66,7 +66,16 @@ class AdviceService:
         else:
             try:
                 generated = await self.natlas.generate_json(system, user)
-                if not answer_is_direct(req.message, generated, route):
+                generated_text = " ".join([
+                    str(generated.get("summary", "")),
+                    " ".join(str(x) for x in generated.get("rights", [])),
+                    " ".join(str(x) for x in generated.get("next_steps", [])),
+                ])
+                language_ok = (
+                    effective_language == "english"
+                    or detect_text_language(generated_text, "english") == effective_language
+                )
+                if not answer_is_direct(req.message, generated, route) or not language_ok:
                     generated = grounded_fallback(
                         req.message,
                         issue,
@@ -118,12 +127,15 @@ class AdviceService:
         )
 
     async def draft_complaint(self, req: ComplaintDraftRequest) -> ComplaintDraftResponse:
+        effective_language = detect_text_language(req.message, req.language)
         issue = classify_issue(req.message)
         docs = retrieve(req.message, issue)
-        route = regulator_for_state(req.state)
+        route = localize_route(regulator_for_state(req.state), effective_language)
         context = "\n".join(f"- {d['text']} ({d['url']})" for d in docs)
+        language_name = LANG_LABEL[effective_language]
         system = (
             "Draft a concise, factual Nigerian electricity consumer complaint using only supplied facts and the consumer's details. "
+            f"Write the subject, body and checklist in {language_name}. "
             "Do not fabricate dates, amounts, account numbers, events, or legal provisions. "
             "Return strict JSON: subject (string), body (string), checklist (array of strings). "
             "The body should request investigation/resolution and ask for written acknowledgement/reference number."
@@ -136,23 +148,75 @@ class AdviceService:
             f"Desired resolution: {req.desired_resolution or 'Investigate and resolve the complaint in line with applicable rules.'}\n"
             f"Verified facts:\n{context}"
         )
-        try:
-            generated = await self.natlas.generate_json(system, user)
-        except Exception:
-            generated = {
-                "subject": f"Electricity Consumer Complaint — {issue.replace('_', ' ').title()}",
-                "body": (
-                    f"Dear Customer Complaints Team,\n\nI am writing to lodge a formal complaint concerning the following issue: {req.message}\n\n"
-                    "Please investigate this matter, provide a written acknowledgement/reference number, and communicate the resolution in writing. "
-                    f"My meter/account details are {req.meter_number or req.account_number or '[insert meter/account number]'}.\n\n"
-                    f"Requested resolution: {req.desired_resolution or 'Please resolve the complaint in line with applicable electricity consumer-protection requirements.'}\n\n"
-                    f"Yours faithfully,\n{req.complainant_name or '[Name]'}"
-                ),
-                "checklist": ["Meter or account number", "Relevant bills/receipts", "Previous complaint acknowledgement", "Photos or token history where relevant"],
+        generated = None
+        if self.settings.challenge_model_ready:
+            try:
+                candidate = await self.natlas.generate_json(system, user)
+                candidate_text = str(candidate.get("body", ""))
+                if effective_language == "english" or detect_text_language(candidate_text, "english") == effective_language:
+                    generated = candidate
+            except Exception:
+                generated = None
+
+        if generated is None:
+            provider = req.disco or {
+                "english": "Electricity Provider",
+                "yoruba": "Ilé-iṣẹ́ Iná",
+                "hausa": "Kamfanin Wutar Lantarki",
+                "igbo": "Ụlọ Ọrụ Ọkụ",
+            }[effective_language]
+            templates = {
+                "english": {
+                    "subject": f"Electricity Consumer Complaint — {issue.replace('_', ' ').title()}",
+                    "body": (
+                        f"Dear Customer Complaints Team,\n\nI am writing to lodge a formal complaint concerning the following issue: {req.message}\n\n"
+                        "Please investigate this matter, provide a written acknowledgement/reference number, and communicate the resolution in writing. "
+                        f"My meter/account details are {req.meter_number or req.account_number or '[insert meter/account number]'}.\n\n"
+                        f"Requested resolution: {req.desired_resolution or 'Please resolve the complaint in line with applicable electricity consumer-protection requirements.'}\n\n"
+                        f"Yours faithfully,\n{req.complainant_name or '[Name]'}"
+                    ),
+                    "checklist": ["Meter or account number", "Relevant bills/receipts", "Previous complaint acknowledgement", "Photos or token history where relevant"],
+                },
+                "yoruba": {
+                    "subject": f"Ẹ̀sùn Oníbàárà Iná — {issue.replace('_', ' ').title()}",
+                    "body": (
+                        f"Ẹ̀ka Ìtẹ́wọ́gbà Ẹ̀sùn Oníbàárà, {provider},\n\nMo ń fi ẹ̀sùn yìí sílẹ̀ nípa ọ̀ràn yìí: {req.message}\n\n"
+                        "Ẹ jọ̀ọ́, ẹ ṣe ìwádìí ọ̀ràn náà, ẹ fún mi ní acknowledgement/reference number ní kíkọ́, kí ẹ sì sọ ìpinnu àti ìgbésẹ̀ tí ẹ gbé fún mi ní kíkọ́. "
+                        f"Àlàyé mita/account mi ni: {req.meter_number or req.account_number or '[fi meter/account number síbí]'}.\n\n"
+                        f"Ohun tí mo ń béèrè: {req.desired_resolution or 'Ẹ jọ̀ọ́, ẹ yanju ọ̀ràn náà gẹ́gẹ́ bí ìlànà ààbò oníbàárà iná ṣe yẹ.'}\n\n"
+                        f"Ẹ ṣé,\n{req.complainant_name or '[Orúkọ]'}"
+                    ),
+                    "checklist": ["Meter/account number", "Bill àti receipts tó yẹ", "Acknowledgement ẹ̀sùn tó ṣáájú", "Fọ́tò tàbí token history tí ó bá wà"],
+                },
+                "hausa": {
+                    "subject": f"Korafin Kwastoman Wutar Lantarki — {issue.replace('_', ' ').title()}",
+                    "body": (
+                        f"Zuwa Customer Complaints Team na {provider},\n\nIna gabatar da korafi a hukumance game da wannan batu: {req.message}\n\n"
+                        "Don Allah a binciki lamarin, a ba ni acknowledgement/reference number a rubuce, sannan a sanar da ni matakin warwarewar a rubuce. "
+                        f"Bayanan mita/account dina: {req.meter_number or req.account_number or '[saka meter/account number]'}.\n\n"
+                        f"Abin da nake nema: {req.desired_resolution or 'A warware korafin bisa ka\'idojin kare hakkin kwastoman wutar lantarki.'}\n\n"
+                        f"Na gode,\n{req.complainant_name or '[Suna]'}"
+                    ),
+                    "checklist": ["Meter/account number", "Bills da receipts", "Acknowledgement na korafin baya", "Hotuna ko token history idan akwai"],
+                },
+                "igbo": {
+                    "subject": f"Mkpesa Onye Ahịa Ọkụ — {issue.replace('_', ' ').title()}",
+                    "body": (
+                        f"Nye Customer Complaints Team nke {provider},\n\nAna m etinye mkpesa a n'akwụkwọ banyere okwu a: {req.message}\n\n"
+                        "Biko nyochaa okwu a, nye m acknowledgement/reference number n'akwụkwọ, ma kọwaakwa ihe e mere iji dozie ya n'akwụkwọ. "
+                        f"Nkọwa mita/account m bụ: {req.meter_number or req.account_number or '[tinye meter/account number]'}.\n\n"
+                        f"Ihe m na-arịọ: {req.desired_resolution or 'Biko dozie okwu a dịka ụkpụrụ nchedo onye ahịa ọkụ si dị.'}\n\n"
+                        f"Daalụ,\n{req.complainant_name or '[Aha]'}"
+                    ),
+                    "checklist": ["Meter/account number", "Bills na receipts", "Acknowledgement mkpesa gara aga", "Foto ma ọ bụ token history ma ọ bụrụ na ọ dị"],
+                },
             }
+            generated = templates[effective_language]
+
         return ComplaintDraftResponse(
-            subject=str(generated.get("subject", "Electricity Consumer Complaint")),
+            subject=str(generated.get("subject", "")),
             body=str(generated.get("body", "")),
             destination=route,
             checklist=[str(x) for x in generated.get("checklist", [])][:8],
         )
+
