@@ -12,3 +12,22 @@ $("draftBtn").onclick=async()=>{const p={...base(),complainant_name:null,phone:n
 $("copyDraft").onclick=async()=>{await navigator.clipboard.writeText($("draftSubject").textContent+"\n\n"+$("draftBody").textContent);$("copyDraft").textContent="Copied";setTimeout(()=>$("copyDraft").textContent="Copy",1200)};
 $("newBtn").onclick=()=>{$("result").classList.add("hidden");$("message").value="";window.scrollTo({top:0,behavior:"smooth"})};
 document.querySelectorAll("[data-helpful]").forEach(b=>b.onclick=async()=>{if(!s.interactionId)return;const r=await fetch("/api/v1/feedback",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({interaction_id:s.interactionId,helpful:b.dataset.helpful==="true",understood_language:true,resolved_or_actionable:b.dataset.helpful==="true",consent_to_validation:s.validationConsent})});$("feedbackStatus").textContent=r.ok?"Thank you — validation response recorded.":"Could not record feedback."});
+
+async function refreshReadiness(){
+  try{
+    const r=await fetch("/api/v1/challenge/readiness");
+    if(!r.ok)throw new Error("readiness unavailable");
+    const d=await r.json();
+    const el=$("modelStatus");
+    if(d.ready){
+      el.textContent="N-ATLaS live";
+      el.title="Official N-ATLaS LLM and ASR are connected.";
+    }else{
+      el.textContent="N-ATLaS activation pending";
+      el.title="The public application is live, but official N-ATLaS inference is not fully connected yet.";
+    }
+  }catch(_){
+    $("modelStatus").textContent="Model status unavailable";
+  }
+}
+refreshReadiness();
