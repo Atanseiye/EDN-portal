@@ -1,0 +1,18 @@
+{
+  "abia": {"name":"Abia State Electricity Regulatory Authority (ASERA)","email":"info.asera@abiastate.gov.ng","website":"https://www.asera.abiastate.gov.ng","phone":"0707 909 2439","address":"15 Library Avenue, Umuahia, Abia State"},
+  "anambra": {"name":"Anambra State Electricity Regulatory Commission (ASERC)","email":"info@aserc.anambrastate.gov.ng","website":"https://www.aserc.anambrastate.gov.ng","phone":"0916 240 2960","address":"ASERC Complex, Old Government House Complex, Awka, Anambra State"},
+  "bayelsa": {"name":"Bayelsa State Electricity Regulatory Authority (BYERA)","email":"office@byera.energy","website":"https://www.byera.energy","phone":"0912 263 6936","address":"Oxbow Lake, Yenagoa, Bayelsa State"},
+  "edo": {"name":"Edo State Electricity Regulatory Commission","email":null,"website":null,"phone":null,"address":"Edo State"},
+  "ekiti": {"name":"Ekiti State Electricity Regulatory Bureau (EKSERB)","email":null,"website":"https://www.ekserb.ng","phone":null,"address":"Old NERC Forum Building, Adebayo Road, Ado Ekiti, Ekiti State"},
+  "enugu": {"name":"Enugu State Electricity Regulatory Commission (EERC)","email":"info@eerc.en.gov.ng","website":"https://www.eerc.en.gov.ng","phone":"0707 205 1569","address":"No 2 Forest Close, Off Forest Crescent, Off Park Avenue, G.R.A. Enugu, Enugu State"},
+  "gombe": {"name":"Gombe State Electricity Regulatory Commission (GOSERC)","email":"infogoserc@gmail.com","website":null,"phone":"0803 314 1578","address":"Mohammed Aliyu Plaza, Gombe-Bauchi Express Road, Gombe State"},
+  "imo": {"name":"Imo State Electricity Regulatory Commission (ISERC)","email":null,"website":"https://www.iserc.com.ng","phone":"0803 343 7594","address":"Electricity House, Concorde Boulevard, New Owerri, Imo State"},
+  "kogi": {"name":"Kogi State Electricity Regulatory Commission (KERC)","email":"info@kerc.kg.gov.ng","website":"https://www.kerc.kg.gov.ng","phone":"0912 426 7545, 0907 732 4141","address":"Alheri Junction, Along Crowther Memorial College, Lokoja, Kogi State"},
+  "lagos": {"name":"Lagos State Electricity Regulatory Commission (LASERC)","email":"info@laserc.com.ng","website":"https://www.laserc.com.ng","phone":"0916 934 6145","address":"Block B Lagos Revenue House, Assbifi Rd, Alausa, Lagos 101233, Lagos State"},
+  "nasarawa": {"name":"Nasarawa State Electricity Regulatory Commission (NASERC)","email":null,"website":"https://www.naserc.na.gov.ng","phone":null,"address":"Former Ministry of Health, Opposite Federal Secretariat Lafia, Jos Road Lafia, Nasarawa State"},
+  "niger": {"name":"Niger State Electricity Regulatory Commission (NSERC)","email":"info@nserc.ni.gov.ng","website":"https://www.nserc.ni.gov.ng","phone":"0704 444 0453","address":"No 6 Nnamdi Azikwe Road, Minna, Niger State"},
+  "ogun": {"name":"Ogun State Electricity Regulatory Commission (OGERC)","email":null,"website":null,"phone":null,"address":"Ogun State"},
+  "ondo": {"name":"Ondo State Electricity Regulatory Bureau (OSERB)","email":"ondoserb@gmail.com","website":"https://www.oserb.ng","phone":"0807 095 6100, 0708 325 8660, 0903 468 5101","address":"5 Samuel Olukayode Street, Old UNICEF Building, Alagbaka, Akure, Ondo State"},
+  "oyo": {"name":"Oyo State Electricity Regulatory Commission","email":null,"website":null,"phone":null,"address":"Oyo State"},
+  "plateau": {"name":"Plateau State Electricity Regulatory Commission","email":null,"website":null,"phone":null,"address":"Former Tati Hotel, Gada Biu, Jos, Plateau State"}
+}
