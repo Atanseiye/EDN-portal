@@ -1,16 +1,13 @@
 from app.config import Settings
 from app.models import AdviceRequest, AdviceResponse, ComplaintDraftRequest, ComplaintDraftResponse
 from app.services.classifier import classify_issue
-from app.services.knowledge import retrieve, to_source_cards
+from app.services.knowledge import retrieve
 from app.services.natlas import NAtlasClient, NAtlasError
 from app.services.fallback import grounded_fallback, answer_is_direct
 from app.services.routing import regulator_for_state
 from app.services.validation import ValidationStore
-
-DISCLAIMER = (
-    "PowerRights provides informational guidance from cited electricity-regulatory sources. "
-    "It is not a regulator, law firm, or substitute for an official decision. Verify time-sensitive rules with the cited authority."
-)
+from app.services.language import detect_text_language
+from app.services.localization import localize_route, disclaimer_for, localized_source_cards, LANG_LABEL
 
 
 class AdviceService:
@@ -27,9 +24,11 @@ class AdviceService:
         asr_provider: str | None = None,
         validation_consent: bool = False,
     ) -> AdviceResponse:
+        effective_language = req.language if channel == "voice" else detect_text_language(req.message, req.language)
         issue = classify_issue(req.message)
         docs = retrieve(req.message, issue)
         route = regulator_for_state(req.state)
+        localized_route = localize_route(route, effective_language)
         context = "\n\n".join(
             f"SOURCE {i+1}: {d['title']}\nAuthority: {d['authority']}\nURL: {d['url']}\nFACTS: {d['text']}"
             for i, d in enumerate(docs)
@@ -47,7 +46,7 @@ class AdviceService:
             "Return strict JSON with exactly: summary (string), rights (array of strings), next_steps (array of strings)."
         )
         user = (
-            f"Preferred response language: {req.language}.\nState: {req.state or 'not provided'}.\n"
+            f"Required response language: {LANG_LABEL[effective_language]}. ALL user-facing response text in summary, rights and next_steps MUST be in {LANG_LABEL[effective_language]}.\nState: {req.state or 'not provided'}.\n"
             f"DisCo/provider: {req.disco or 'not provided'}.\nIssue category: {issue}.\n"
             f"Consumer message: {req.message}\n\nVERIFIED CONTEXT:\n{context}"
         )
@@ -60,6 +59,7 @@ class AdviceService:
                 route,
                 req.state,
                 req.disco,
+                language=effective_language,
                 model_ready=self.settings.challenge_model_ready,
                 asr_ready=self.settings.challenge_asr_ready,
             )
@@ -74,6 +74,7 @@ class AdviceService:
                         route,
                         req.state,
                         req.disco,
+                        language=effective_language,
                         model_ready=self.settings.challenge_model_ready,
                         asr_ready=self.settings.challenge_asr_ready,
                     )
@@ -85,12 +86,13 @@ class AdviceService:
                     route,
                     req.state,
                     req.disco,
+                    language=effective_language,
                     model_ready=self.settings.challenge_model_ready,
                     asr_ready=self.settings.challenge_asr_ready,
                 )
         interaction_id = self.validation.add_interaction(
             session_id=req.session_id,
-            language=req.language,
+            language=effective_language,
             issue_type=issue,
             state=req.state,
             disco=req.disco,
@@ -104,15 +106,15 @@ class AdviceService:
             summary=str(generated.get("summary", "")),
             rights=[str(x) for x in generated.get("rights", [])][:6],
             next_steps=[str(x) for x in generated.get("next_steps", [])][:7],
-            escalation=route,
-            sources=to_source_cards(docs),
-            language=req.language,
+            escalation=localized_route,
+            sources=localized_source_cards(docs, effective_language),
+            language=effective_language,
             model=(
                 self.settings.natlas_model
                 if self.settings.challenge_model_ready
                 else "verified-grounded-fallback"
             ),
-            disclaimer=DISCLAIMER,
+            disclaimer=disclaimer_for(effective_language),
         )
 
     async def draft_complaint(self, req: ComplaintDraftRequest) -> ComplaintDraftResponse:
