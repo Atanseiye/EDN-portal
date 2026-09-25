@@ -1,0 +1,1 @@
+"""PowerRights NG application package."""
