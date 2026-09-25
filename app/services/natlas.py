@@ -1,3 +1,4 @@
+import asyncio
 import json
 from datetime import datetime
 import httpx
@@ -14,9 +15,12 @@ class NAtlasClient:
     def __init__(self, settings: Settings):
         self.settings = settings
         self._local = None
+        self._space_client = None
 
     async def generate_json(self, system: str, user: str) -> dict:
         provider = self.settings.natlas_provider.lower()
+        if provider == "gradio_space":
+            return await self._gradio_space(system, user)
         if provider == "openai_compatible":
             return await self._openai_compatible(system, user)
         if provider == "local":
@@ -24,6 +28,25 @@ class NAtlasClient:
         if provider == "mock":
             return self._mock(user)
         raise NAtlasError(f"Unsupported NATLAS_PROVIDER={provider}")
+
+    async def _gradio_space(self, system: str, user: str) -> dict:
+        if not self.settings.natlas_space_id:
+            raise NAtlasError("NATLAS_SPACE_ID is not configured")
+        try:
+            from gradio_client import Client
+            if self._space_client is None:
+                self._space_client = Client(self.settings.natlas_space_id)
+            result = await asyncio.to_thread(
+                self._space_client.predict,
+                system=system,
+                user=user,
+                api_name="/generate_json",
+            )
+        except Exception as exc:
+            raise NAtlasError(f"N-ATLaS ZeroGPU request failed: {exc}") from exc
+        if isinstance(result, dict):
+            return result
+        return _extract_json(str(result))
 
     async def _openai_compatible(self, system: str, user: str) -> dict:
         url = self.settings.natlas_base_url.rstrip("/") + "/chat/completions"
