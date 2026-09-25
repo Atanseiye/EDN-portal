@@ -34,6 +34,11 @@ def home():
     return FileResponse(static_dir / "index.html")
 
 
+@app.get("/challenge", include_in_schema=False)
+def challenge_page():
+    return FileResponse(static_dir / "challenge.html")
+
+
 @app.get("/health")
 def health():
     stats = service.validation.stats()
