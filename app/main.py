@@ -36,41 +36,64 @@ def home():
 
 @app.get("/health")
 def health():
+    stats = service.validation.stats()
+    challenge_ready = (
+        settings.challenge_model_ready
+        and settings.challenge_asr_ready
+        and stats["validation_target_met"]
+    )
     return {
         "status": "ok",
         "environment": settings.app_env,
         "natlas_provider": settings.natlas_provider,
         "asr_provider": settings.asr_provider,
         "natlas_model": settings.natlas_model,
-        "persistent_validation": settings.persistent_validation_ready,
-        "challenge_ready": (
-            settings.challenge_model_ready
-            and settings.challenge_asr_ready
-            and settings.persistent_validation_ready
-        ),
+        "database_persistence": settings.persistent_validation_ready,
+        "structured_validation_audit_log": settings.validation_audit_log_ready,
+        "eligible_voice_interactions": stats["competition_eligible_voice_interactions"],
+        "validation_target": stats["validation_target"],
+        "challenge_ready": challenge_ready,
     }
 
 
 @app.get("/api/v1/challenge/readiness")
 def challenge_readiness():
+    stats = service.validation.stats()
     checks = {
+        "working_technical_artifact": True,
         "official_natlas_llm_configured": settings.challenge_model_ready,
         "official_natlas_asr_configured": settings.challenge_asr_ready,
-        "persistent_validation_store": settings.persistent_validation_ready,
-        "mock_traffic_excluded_from_validation": True,
+        "minimum_50_documented_real_voice_interactions": stats["validation_target_met"],
+        "mock_and_grounded_fallback_traffic_excluded": True,
         "official_source_grounding": True,
+        "same_language_input_output": True,
         "state_aware_regulator_routing": True,
-        "real_user_validation_export": True,
+        "validation_consent_and_audit_trail": settings.validation_audit_log_ready,
+        "technical_documentation_in_repository": True,
     }
+    qualifying = (
+        checks["working_technical_artifact"]
+        and checks["official_natlas_llm_configured"]
+        and checks["official_natlas_asr_configured"]
+        and checks["minimum_50_documented_real_voice_interactions"]
+    )
     return {
-        "ready": all([
-            checks["official_natlas_llm_configured"],
-            checks["official_natlas_asr_configured"],
-            checks["persistent_validation_store"],
-        ]),
+        "ready": qualifying,
+        "track": "Innovation & Enterprise",
+        "problem_statement": "Voice-First Access",
         "checks": checks,
-        "required_model": settings.natlas_model,
-        "note": "Only real N-ATLaS voice interactions are counted as competition-eligible validation evidence.",
+        "validation": stats,
+        "required_models": {
+            "llm": "NCAIR1/N-ATLaS",
+            "english_asr": "NCAIR1/NigerianAccentedEnglish",
+            "yoruba_asr": "NCAIR1/Yoruba-ASR",
+            "hausa_asr": "NCAIR1/Hausa-ASR",
+            "igbo_asr": "NCAIR1/Igbo-ASR",
+        },
+        "note": (
+            "Submission readiness stays false until the live deployment uses genuine N-ATLaS LLM and official N-ATLaS ASR, "
+            "and at least 50 consented real-user voice interactions have traversed that exact model path."
+        ),
     }
 
 
