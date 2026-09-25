@@ -43,17 +43,57 @@ def test_billing_and_metering_are_not_static_duplicates():
     assert metering["model"] == "verified-grounded-fallback"
 
 
-def test_non_electricity_prompt_is_not_given_fake_rights():
+def test_language_capability_question_is_answered_directly():
     result = ask("Can you speak Igbo?", state="Anambra", disco="EEDC")
 
     assert result["issue_type"] == "other"
-    assert "does not look like an electricity complaint" in result["summary"]
+    assert "Igbo" in result["summary"]
+    assert "not active" in result["summary"]
     assert result["rights"] == []
-    assert any("Describe the electricity problem" in step for step in result["next_steps"])
+
+
+def test_escalation_question_names_state_regulator():
+    result = ask(
+        "Who should I escalate my unresolved electricity complaint to in Anambra?",
+        state="Anambra",
+        disco="EEDC",
+    )
+    assert "Anambra State Electricity Regulatory Commission" in result["summary"]
+    assert "EEDC" in result["summary"]
+
+
+def test_complaint_timeline_question_states_15_working_days():
+    result = ask("How long does the DisCo have to resolve my written electricity complaint?")
+    assert "15 working days" in result["summary"]
+
+
+def test_meter_replacement_responsibility_is_answered():
+    result = ask("Who is responsible for replacing my faulty prepaid meter?")
+    assert "responsible" in result["summary"].lower()
+    assert "Ikeja Electric" in result["summary"]
+
+
+def test_estimated_billing_after_meter_removal_is_answered():
+    result = ask(
+        "Can they give me estimated bills after removing my faulty meter and not replacing it?"
+    )
+    assert "should not" in result["summary"].lower()
+    assert "three months" in result["summary"].lower()
+
+
+def test_compound_question_answers_multiple_parts():
+    result = ask(
+        "My faulty meter was removed and I am now on estimated billing. "
+        "What are my rights, what should I do, and who do I escalate to if Ikeja Electric does not resolve it?"
+    )
+    summary = result["summary"].lower()
+    assert "estimated" in summary
+    assert "first step" in summary
+    assert "lagos state electricity regulatory commission" in summary
 
 
 def test_tariff_band_response_is_specific():
     result = ask("I am being charged Band A but we do not get the promised hours of supply.")
     assert result["issue_type"] == "tariff_band"
-    assert "tariff/service-band complaint" in result["summary"]
-    assert any("service band" in step.lower() for step in result["next_steps"])
+    assert "challenge" in result["summary"].lower()
+    assert "service band" in result["summary"].lower()
