@@ -1,0 +1,10 @@
+{
+  "name":"PowerRights NG",
+  "short_name":"PowerRights",
+  "description":"Voice-first Nigerian electricity consumer rights and complaint navigation.",
+  "start_url":"/",
+  "display":"standalone",
+  "background_color":"#f5f8f5",
+  "theme_color":"#0b3b2e",
+  "icons":[]
+}
