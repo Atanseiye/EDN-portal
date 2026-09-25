@@ -97,3 +97,50 @@ def test_tariff_band_response_is_specific():
     assert result["issue_type"] == "tariff_band"
     assert "challenge" in result["summary"].lower()
     assert "service band" in result["summary"].lower()
+
+
+def test_yoruba_text_overrides_stale_english_selector_and_returns_yoruba():
+    message = (
+        "Láti ìgbà náà ni wọ́n ti ń fún mi ní owó ina àfọwọ́kọ tí ó ga ju ohun tí mo máa ń san lọ. "
+        "Mo ti fi ẹ̀sùn náà ránṣẹ́ sí wọn ṣùgbọ́n wọn kò ṣe ohunkóhun. "
+        "Ṣé wọ́n lè máa ṣe billing àfọwọ́kọ fún mi báyìí? "
+        "Kí ni ẹ̀tọ́ mi, kí ni mo yẹ kí n ṣe báyìí, àti ta ni mo yẹ kí n fi ẹ̀sùn náà lé lọ́wọ́ tí wọn kò bá yanju rẹ̀?"
+    )
+    result = ask(message, state="Anambra", disco="EEDC")
+
+    assert result["language"] == "yoruba"
+    assert "Ìgbésẹ̀" in result["summary"] or "ẹ̀sùn" in result["summary"]
+    assert any("oníbàárà" in right.lower() or "ẹ̀sùn" in right.lower() for right in result["rights"])
+    assert any("kí o" in step.lower() or "ẹ̀sùn" in step.lower() for step in result["next_steps"])
+    assert "ẹ̀sùn" in result["escalation"]["note"].lower()
+
+
+def test_yoruba_natural_metering_without_english_keywords_is_classified():
+    result = ask(
+        "Mita mi bàjẹ́, wọ́n yọ ọ́ kúrò, wọn kò sì rọ́pò rẹ̀. Kí ni mo yẹ kí n ṣe?",
+        state="Anambra",
+        disco="EEDC",
+    )
+    assert result["language"] == "yoruba"
+    assert result["issue_type"] == "metering"
+    assert "Ìgbésẹ̀" in result["summary"] or "mita" in result["summary"].lower()
+
+
+def test_hausa_text_language_is_preserved():
+    result = ask(
+        "Mita na ya lalace kuma kamfanin wuta ya cire shi. Me zan yi kuma menene hakkina?",
+        state="Kaduna",
+        disco="Kaduna Electric",
+    )
+    assert result["language"] == "hausa"
+    assert any(word in result["summary"].lower() for word in ("mataki", "mita", "korafi", "hakki"))
+
+
+def test_igbo_text_language_is_preserved():
+    result = ask(
+        "Mita m mebiri ma ha wepụrụ mita ahụ. Gịnị ka m mee, kedụ ikike m?",
+        state="Anambra",
+        disco="EEDC",
+    )
+    assert result["language"] == "igbo"
+    assert any(word in result["summary"].lower() for word in ("nzọụkwụ", "mita", "mkpesa", "ikike"))
