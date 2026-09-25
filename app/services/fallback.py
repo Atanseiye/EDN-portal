@@ -120,104 +120,110 @@ def _direct_answer(
 ) -> str | None:
     t = _norm(message)
     provider = disco or "your electricity provider"
+    answers: list[str] = []
 
     language = _asks_language_capability(message)
     if language:
         if model_ready and asr_ready:
-            return f"Yes. PowerRights is configured to support {language} through the official N-ATLaS language stack."
-        if asr_ready:
-            return f"PowerRights can transcribe {language} voice with the configured N-ATLaS ASR, but full N-ATLaS response generation is not active yet."
-        return (
-            f"PowerRights is designed to support {language}, but the official N-ATLaS {language} voice/model path "
-            "is not active on this deployment yet, so I should not claim full live language support."
+            answers.append(f"Yes. PowerRights is configured to support {language} through the official N-ATLaS language stack.")
+        elif asr_ready:
+            answers.append(
+                f"PowerRights can transcribe {language} voice with the configured N-ATLaS ASR, "
+                "but full N-ATLaS response generation is not active yet."
+            )
+        else:
+            answers.append(
+                f"PowerRights is designed to support {language}, but the official N-ATLaS {language} voice/model path "
+                "is not active on this deployment yet, so I should not claim full live language support."
+            )
+
+    if _asks_estimated_after_removal(message) and _fact(docs, "faulty-meter-estimation"):
+        answers.append(
+            "They should not simply move you to arbitrary estimated billing because a faulty or obsolete meter "
+            "was removed and not replaced. NERC's guidance says that where replacement cannot occur within the "
+            "billing period, consumption should be determined using the customer's average billing or vending "
+            "over the preceding three months."
         )
 
-    if _asks_escalation(message):
-        if route.level == "state":
-            return (
-                f"For an unresolved intrastate electricity complaint in {state or 'your state'}, first complain to "
-                f"{provider}'s Customer Complaints Unit; the regulatory escalation point is {route.regulator_name}."
-            )
-        return (
-            f"First complain in writing to {provider}'s Customer Complaints Unit. If it remains unresolved, "
-            "escalate to the relevant NERC Consumer Forum and then to NERC."
+    if _asks_who_replaces_meter(message) and _fact(docs, "meter-replacement-duty"):
+        answers.append(
+            f"The DisCo is responsible for urgent repair or replacement of a defective metering system; "
+            f"for your case, that means {provider}."
         )
 
-    if _asks_meter_replacement_timeline(message):
-        fact = _fact(docs, "meter-replacement-duty")
-        if fact:
-            return (
-                "For a faulty metering-system fault, NERC's metering FAQ cites a two-working-day repair or "
-                "replacement requirement after the fault is discovered."
-            )
+    if _asks_meter_replacement_timeline(message) and _fact(docs, "meter-replacement-duty"):
+        answers.append(
+            "For a faulty metering-system fault, NERC's metering FAQ cites a two-working-day repair or "
+            "replacement requirement after the fault is discovered."
+        )
 
-    if _asks_credit_timeline(message):
-        fact = _fact(docs, "meter-credit-balance")
-        if fact:
-            return (
-                "NERC states that units recorded on the old meter should be credited to the customer within "
-                "48 hours after the replacement meter is installed."
-            )
+    if _asks_credit_timeline(message) and _fact(docs, "meter-credit-balance"):
+        answers.append(
+            "NERC states that units recorded on the old meter should be credited to the customer within "
+            "48 hours after the replacement meter is installed."
+        )
 
-    if _asks_complaint_timeline(message):
-        fact = _fact(docs, "complaint-timeline")
-        if fact:
-            return (
-                "NERC states that a DisCo is expected to resolve a written customer complaint within "
-                "15 working days, depending on the complexity of the complaint."
-            )
+    if _asks_complaint_timeline(message) and _fact(docs, "complaint-timeline"):
+        answers.append(
+            "NERC states that a DisCo is expected to resolve a written customer complaint within "
+            "15 working days, depending on the complexity of the complaint."
+        )
 
-    if _asks_who_replaces_meter(message):
-        fact = _fact(docs, "meter-replacement-duty")
-        if fact:
-            return (
-                f"The DisCo is responsible for urgent repair or replacement of a defective metering system; "
-                f"for your case, that means {provider}."
-            )
-
-    if _asks_estimated_after_removal(message):
-        fact = _fact(docs, "faulty-meter-estimation")
-        if fact:
-            return (
-                "They should not simply move you to arbitrary estimated billing because a faulty or obsolete meter "
-                "was removed and not replaced. NERC's guidance says that where replacement cannot occur within the "
-                "billing period, consumption should be determined using the customer's average billing or vending "
-                "over the preceding three months."
-            )
-
-    if _asks_disconnection_notice(message):
-        fact = _fact(docs, "consumer-rights")
-        if fact:
-            return (
-                "Electricity customers are entitled to written notice ahead of disconnection in line with the "
-                "applicable regulatory guidelines. The sources currently loaded here do not establish a single "
-                "universal notice period, so PowerRights should not invent one."
-            )
+    if _asks_disconnection_notice(message) and _fact(docs, "consumer-rights"):
+        answers.append(
+            "Electricity customers are entitled to written notice ahead of disconnection in line with the "
+            "applicable regulatory guidelines. The sources currently loaded here do not establish a single "
+            "universal notice period, so PowerRights should not invent one."
+        )
 
     if _asks_rights(message):
         facts = [d["text"] for d in docs if d.get("text")]
         if facts:
-            return "Your relevant protections are set out in the verified guidance below; the most directly applicable one is: " + facts[0]
+            answers.append("The most directly relevant verified protection I found is: " + facts[0])
 
     if _asks_what_to_do(message):
         if issue == "metering":
-            return (
+            answers.append(
                 f"Your first step is to submit a written metering complaint to {provider}'s Customer Complaints Unit, "
                 "get a complaint/reference number, and attach the meter number plus evidence of the fault or removal."
             )
-        if issue == "billing":
-            return (
+        elif issue == "billing":
+            answers.append(
                 f"Your first step is to dispute the bill in writing with {provider}'s Customer Complaints Unit, "
                 "keep the acknowledgement, and attach the disputed bill plus earlier bills or vending history."
             )
-        if issue == "disconnection":
-            return (
+        elif issue == "disconnection":
+            answers.append(
                 f"Ask {provider} in writing for the reason and basis for the disconnection, keep the notice and receipts, "
                 "and lodge a formal complaint if you dispute it."
             )
-        return (
-            f"Start with a written complaint to {provider}'s Customer Complaints Unit and keep the acknowledgement/reference number."
-        )
+        else:
+            answers.append(
+                f"Start with a written complaint to {provider}'s Customer Complaints Unit and keep the acknowledgement/reference number."
+            )
+
+    if _asks_escalation(message):
+        if route.level == "state":
+            answers.append(
+                f"For an unresolved intrastate electricity complaint in {state or 'your state'}, first complain to "
+                f"{provider}'s Customer Complaints Unit; the regulatory escalation point is {route.regulator_name}."
+            )
+        else:
+            answers.append(
+                f"First complain in writing to {provider}'s Customer Complaints Unit. If it remains unresolved, "
+                "escalate to the relevant NERC Consumer Forum and then to NERC."
+            )
+
+    if answers:
+        # Preserve order, remove duplicate wording.
+        unique = []
+        seen = set()
+        for answer in answers:
+            key = _norm(answer)
+            if key not in seen:
+                seen.add(key)
+                unique.append(answer)
+        return " ".join(unique)
 
     if issue == "safety":
         return (
@@ -274,7 +280,6 @@ def _direct_answer(
         )
 
     return None
-
 
 def grounded_fallback(
     message: str,
