@@ -34,7 +34,7 @@ class Settings(BaseSettings):
         provider = self.natlas_provider.lower()
         if provider == "gradio_space":
             return bool(self.natlas_space_id)
-        return provider not in {"mock", "disabled", ""}
+        return provider not in {"mock", "grounded_rules", "disabled", ""}
 
     @property
     def challenge_asr_ready(self) -> bool:
