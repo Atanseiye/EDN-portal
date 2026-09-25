@@ -25,8 +25,8 @@ class NAtlasClient:
             return await self._openai_compatible(system, user)
         if provider == "local":
             return await self._local_transformers(system, user)
-        if provider == "mock":
-            return self._mock(user)
+        if provider in {"mock", "grounded_rules", "disabled", ""}:
+            raise NAtlasError("Official N-ATLaS inference is not active on this deployment")
         raise NAtlasError(f"Unsupported NATLAS_PROVIDER={provider}")
 
     async def _gradio_space(self, system: str, user: str) -> dict:
@@ -99,20 +99,6 @@ class NAtlasClient:
         generated = outputs[0][inputs["input_ids"].shape[-1]:]
         text = tokenizer.decode(generated, skip_special_tokens=True)
         return _extract_json(text)
-
-    def _mock(self, user: str) -> dict:
-        return {
-            "summary": "I have reviewed the electricity complaint and matched it to verified Nigerian consumer-protection guidance.",
-            "rights": [
-                "You have a right to transparent billing and to file a complaint for prompt investigation.",
-                "Keep your written complaint acknowledgement and supporting evidence for escalation.",
-            ],
-            "next_steps": [
-                "Submit the complaint in writing to the electricity provider's Customer Complaints Unit and keep the acknowledgement.",
-                "Attach your meter/account number, bills, receipts, token history and relevant photographs where available.",
-                "If unresolved, use the regulator escalation route shown below.",
-            ],
-        }
 
 
 def _extract_json(text: str) -> dict:
