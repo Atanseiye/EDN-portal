@@ -18,7 +18,14 @@ class AdviceService:
         self.natlas = NAtlasClient(settings)
         self.validation = ValidationStore(settings)
 
-    async def advise(self, req: AdviceRequest, *, channel: str = "text", asr_provider: str | None = None) -> AdviceResponse:
+    async def advise(
+        self,
+        req: AdviceRequest,
+        *,
+        channel: str = "text",
+        asr_provider: str | None = None,
+        validation_consent: bool = False,
+    ) -> AdviceResponse:
         issue = classify_issue(req.message)
         docs = retrieve(req.message, issue)
         route = regulator_for_state(req.state)
@@ -57,6 +64,7 @@ class AdviceService:
             disco=req.disco,
             channel=channel,
             asr_provider=asr_provider,
+            validation_consent=validation_consent,
         )
         return AdviceResponse(
             interaction_id=interaction_id,
