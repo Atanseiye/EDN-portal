@@ -3,6 +3,7 @@ from app.models import AdviceRequest, AdviceResponse, ComplaintDraftRequest, Com
 from app.services.classifier import classify_issue
 from app.services.knowledge import retrieve, to_source_cards
 from app.services.natlas import NAtlasClient, NAtlasError
+from app.services.fallback import grounded_fallback
 from app.services.routing import regulator_for_state
 from app.services.validation import ValidationStore
 
@@ -45,17 +46,14 @@ class AdviceService:
             f"DisCo/provider: {req.disco or 'not provided'}.\nIssue category: {issue}.\n"
             f"Consumer message: {req.message}\n\nVERIFIED CONTEXT:\n{context}"
         )
-        try:
-            generated = await self.natlas.generate_json(system, user)
-        except (NAtlasError, ValueError, KeyError):
-            generated = {
-                "summary": docs[0]["text"] if docs else "I could not safely generate a grounded answer from the available material.",
-                "rights": [d["text"] for d in docs[:2]],
-                "next_steps": [
-                    "Write to your electricity provider's complaint unit and keep proof of submission.",
-                    "Use the regulator route shown below if the matter is not resolved.",
-                ],
-            }
+        provider = self.settings.natlas_provider.lower()
+        if provider in {"mock", "grounded_rules", "disabled", ""}:
+            generated = grounded_fallback(req.message, issue, docs, req.state, req.disco)
+        else:
+            try:
+                generated = await self.natlas.generate_json(system, user)
+            except (NAtlasError, ValueError, KeyError):
+                generated = grounded_fallback(req.message, issue, docs, req.state, req.disco)
         interaction_id = self.validation.add_interaction(
             session_id=req.session_id,
             language=req.language,
@@ -75,7 +73,11 @@ class AdviceService:
             escalation=route,
             sources=to_source_cards(docs),
             language=req.language,
-            model=self.settings.natlas_model if self.settings.natlas_provider != "mock" else "mock-development-mode",
+            model=(
+                self.settings.natlas_model
+                if self.settings.challenge_model_ready
+                else "verified-grounded-fallback"
+            ),
             disclaimer=DISCLAIMER,
         )
 
