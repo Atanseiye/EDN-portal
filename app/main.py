@@ -86,6 +86,7 @@ async def voice_advice(
     state: str | None = Form(default=None),
     disco: str | None = Form(default=None),
     session_id: str | None = Form(default=None),
+    validation_consent: bool = Form(default=False),
 ):
     if not settings.challenge_asr_ready:
         raise HTTPException(
@@ -99,7 +100,12 @@ async def voice_advice(
     except ASRError as exc:
         raise HTTPException(status_code=400, detail=str(exc)) from exc
     req = AdviceRequest(message=transcript, language=language, state=state, disco=disco, session_id=session_id)
-    result = await service.advise(req, channel="voice", asr_provider=settings.asr_provider)
+    result = await service.advise(
+        req,
+        channel="voice",
+        asr_provider=settings.asr_provider,
+        validation_consent=validation_consent,
+    )
     payload = result.model_dump()
     payload["summary"] = f"Transcript: {transcript}\n\n{payload['summary']}"
     return AdviceResponse(**payload)
