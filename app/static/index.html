@@ -30,7 +30,8 @@
 </div>
 <label class="message">Tell us what happened<textarea id="message" rows="6" placeholder="Example: My prepaid meter stopped working and they removed it. They are now giving me estimated bills that are much higher than what I used to pay."></textarea></label>
 <div class="actions"><button class="primary" id="askBtn">Check my rights</button><button class="voice" id="recordBtn"><span id="recordIcon">●</span> <span id="recordText">Record voice</span></button></div>
-<p class="privacy">Voice is transcribed for this request and is not stored by default. Do not include passwords, PINs or payment-card details.</p>
+<label class="validation-consent"><input type="checkbox" id="validationConsent"> <span>I consent to this anonymised voice interaction being counted in PowerRights' NITDA/NCAIR challenge validation. My audio and transcript will not be stored in the validation record.</span></label>
+<p class="privacy">Voice is transcribed for this request and is not stored by default. Validation stores only an anonymous interaction ID, language, issue category, state/provider when supplied, model path and feedback. Do not include passwords, PINs or payment-card details.</p>
 </section>
 
 <section id="loading" class="loading hidden"><div class="spinner"></div><p>Checking verified electricity guidance…</p></section>
