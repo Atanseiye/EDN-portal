@@ -1,6 +1,7 @@
 import csv
 import hashlib
 import io
+import json
 import sqlite3
 import uuid
 from datetime import datetime, timezone
@@ -110,7 +111,25 @@ class ValidationStore:
             with self._postgres() as con:
                 with con.cursor() as cur:
                     cur.execute("INSERT INTO interactions VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)", values)
-        else:
+        _emit_validation_event({
+            "event": "interaction",
+            "interaction_id": interaction_id,
+            "created_at": values[1].isoformat(),
+            "session_hash": session_hash,
+            "language": language,
+            "issue_type": issue_type,
+            "state": state,
+            "disco": disco,
+            "channel": channel,
+            "natlas_provider": self.settings.natlas_provider,
+            "asr_provider": asr_provider,
+            "competition_model_path": (
+                channel == "voice"
+                and self.settings.natlas_provider not in {"mock", "disabled", ""}
+                and (asr_provider or "") not in {"mock", "disabled", ""}
+            ),
+        })
+        if not self.use_postgres:
             sqlite_values = list(values)
             sqlite_values[1] = sqlite_values[1].isoformat()
             sqlite_values[10] = int(sqlite_values[10])
@@ -152,6 +171,15 @@ class ValidationStore:
                         data.notes, int(data.consent_to_validation),
                     ),
                 )
+        _emit_validation_event({
+            "event": "feedback",
+            "interaction_id": data.interaction_id,
+            "created_at": now.isoformat(),
+            "helpful": data.helpful,
+            "understood_language": data.understood_language,
+            "resolved_or_actionable": data.resolved_or_actionable,
+            "consent_to_validation": data.consent_to_validation,
+        })
 
     def _rows(self):
         query = """SELECT i.id, i.created_at, i.language, i.issue_type, i.state, i.disco, i.channel,
@@ -201,3 +229,8 @@ class ValidationStore:
             "consented_feedback": feedback,
             "persistent_store": "postgres" if self.use_postgres else "sqlite",
         }
+
+
+def _emit_validation_event(payload: dict) -> None:
+    """Structured stdout evidence retained by the deployment platform during the challenge window."""
+    print("POWERRIGHTS_VALIDATION_EVENT " + json.dumps(payload, ensure_ascii=False, sort_keys=True), flush=True)
