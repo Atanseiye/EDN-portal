@@ -389,3 +389,80 @@ def grounded_fallback(
         "rights": rights,
         "next_steps": steps,
     }
+
+
+def answer_is_direct(message: str, generated: dict, route: RegulatorRoute) -> bool:
+    """Reject generic or evasive model output before it reaches the user."""
+    summary = str(generated.get("summary", "")).strip()
+    if not summary:
+        return False
+
+    s = _norm(summary)
+    m = _norm(message)
+
+    generic_markers = (
+        "i have reviewed the electricity complaint",
+        "matched it to verified",
+        "this appears to be a",
+        "the retrieved guidance covers",
+    )
+    if any(marker in s for marker in generic_markers):
+        return False
+
+    language = _asks_language_capability(message)
+    if language and language.lower().replace("yorùbá", "yoruba") not in s.replace("yorùbá", "yoruba"):
+        return False
+
+    if _asks_escalation(message):
+        regulator = route.regulator_name.lower()
+        acronym_match = re.search(r"\(([A-Z]{3,})\)", route.regulator_name)
+        acronym = acronym_match.group(1).lower() if acronym_match else ""
+        if route.level == "state":
+            significant = [w for w in re.findall(r"[a-z]+", regulator) if len(w) > 5]
+            if acronym and acronym in s:
+                return True
+            if significant and not any(w in s for w in significant[:3]):
+                return False
+        elif "nerc" not in s:
+            return False
+
+    if _asks_complaint_timeline(message) or _asks_meter_replacement_timeline(message) or _asks_credit_timeline(message):
+        if not re.search(r"\b\d+\b|working day|hours?|days?", s):
+            return False
+
+    if _asks_estimated_after_removal(message):
+        if "estimated" not in s and "billing" not in s:
+            return False
+        if not any(x in s for x in ("average", "three months", "3 months", "arbitrary", "should not", "cannot")):
+            return False
+
+    if _asks_who_replaces_meter(message):
+        if not any(x in s for x in ("disco", "distribution", "provider", "responsible")):
+            return False
+
+    if _asks_disconnection_notice(message):
+        if not any(x in s for x in ("notice", "written", "disconnect")):
+            return False
+
+    # For other questions, require at least one meaningful query term to survive into
+    # the answer. This blocks polished generic summaries that ignore the actual input.
+    stop = {
+        "what", "when", "where", "which", "who", "whom", "whose", "why", "how",
+        "can", "could", "would", "should", "does", "did", "the", "and", "for",
+        "with", "this", "that", "from", "have", "has", "had", "your", "my",
+        "they", "them", "their", "about", "please",
+    }
+    query_terms = {
+        w for w in re.findall(r"[a-z0-9]+", m)
+        if len(w) >= 4 and w not in stop
+    }
+    if query_terms and not any(term in s for term in query_terms):
+        combined = _norm(
+            " ".join(str(x) for x in generated.get("rights", []))
+            + " "
+            + " ".join(str(x) for x in generated.get("next_steps", []))
+        )
+        if not any(term in combined for term in query_terms):
+            return False
+
+    return True
