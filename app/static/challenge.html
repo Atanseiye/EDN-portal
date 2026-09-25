@@ -1,0 +1,47 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="theme-color" content="#0b3b2e">
+  <title>PowerRights NG — NAIC 2026 Readiness</title>
+  <link rel="stylesheet" href="/static/styles.css">
+</head>
+<body>
+<header class="topbar">
+  <a class="brand" href="/"><span class="bolt">⚡</span><span>PowerRights <b>NG</b></span></a>
+  <a class="pill" href="/">Open product</a>
+</header>
+<main>
+<section class="hero compact-hero">
+  <div>
+    <span class="eyebrow">NAIC 2026 · Voice-First Access</span>
+    <h1>Challenge<br><span>readiness.</span></h1>
+    <p>This page reports the live qualification state of PowerRights against the technical requirements enforced by the application.</p>
+  </div>
+</section>
+
+<section class="workspace">
+  <div class="readiness-summary">
+    <div><span class="eyebrow">Submission state</span><h2 id="readyLabel">Checking…</h2></div>
+    <div class="score-ring"><strong id="voiceCount">0</strong><span>/ 50 real voice interactions</span></div>
+  </div>
+  <div class="progress"><div id="progressBar"></div></div>
+  <p class="privacy" id="remaining"></p>
+  <div id="checks" class="criteria-grid"></div>
+</section>
+
+<section class="result">
+  <span class="eyebrow">Required official models</span>
+  <h2>Integration evidence</h2>
+  <div id="models" class="criteria-grid"></div>
+  <p class="privacy">A check only turns green when the deployed configuration is a genuine N-ATLaS path. Grounded-rule fallback, mock traffic and non-consented interactions are explicitly excluded.</p>
+</section>
+</main>
+<footer>
+  <p>N-ATLaS is an initiative of the Federal Ministry of Communications, Innovation and Digital Economy, and powered by Awarri Technologies.</p>
+  <p><a href="https://github.com/Atanseiye/EDN-portal/tree/powerrights-ng">Technical repository</a></p>
+</footer>
+<script src="/static/challenge.js"></script>
+</body>
+</html>
