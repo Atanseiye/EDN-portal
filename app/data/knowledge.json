@@ -1,0 +1,92 @@
+[
+  {
+    "id": "complaint-path",
+    "title": "How to file and escalate an electricity complaint",
+    "authority": "Nigerian Electricity Regulatory Commission (NERC)",
+    "url": "https://nerc.gov.ng/need-help/services/how-to-file-a-complaint/",
+    "updated": "2026-09-25 verified",
+    "categories": ["general", "billing", "metering", "disconnection", "service_quality", "tariff_band", "token_vending", "connection"],
+    "tags": ["complaint", "CCU", "forum", "escalation", "DisCo"],
+    "text": "The first complaint point is the Customer Complaints Unit of the electricity distribution company. If the complaint is unresolved, delayed, or the customer is dissatisfied, the matter may be escalated to the relevant consumer regulator pathway. In states still under federal oversight this is the NERC Consumer Forum and then NERC."
+  },
+  {
+    "id": "complaint-timeline",
+    "title": "DisCo complaint resolution timeline",
+    "authority": "Nigerian Electricity Regulatory Commission (NERC)",
+    "url": "https://nerc.gov.ng/faq/complaints-and-redress-procedure/",
+    "updated": "2026-09-25 verified",
+    "categories": ["general"],
+    "tags": ["15 working days", "complaint acknowledgement", "CCU"],
+    "text": "A customer should make a written complaint to the DisCo Customer Care/Complaints Unit and retain acknowledgement. NERC states that the DisCo is expected to resolve the complaint within 15 working days, depending on complexity."
+  },
+  {
+    "id": "consumer-rights",
+    "title": "Electricity consumer rights and obligations",
+    "authority": "Nigerian Electricity Regulatory Commission (NERC)",
+    "url": "https://nerc.gov.ng/need-help/services/consumer-rights-obligations/",
+    "updated": "2026-09-25 verified",
+    "categories": ["general", "billing", "disconnection"],
+    "tags": ["rights", "transparent billing", "refund", "disconnection notice", "complaints"],
+    "text": "Electricity customers have rights including transparent billing, billing of unmetered customers under the applicable methodology, written notice ahead of disconnection in line with regulatory guidelines, refund where overbilled, and the right to file complaints and have them investigated."
+  },
+  {
+    "id": "estimated-billing-cap",
+    "title": "Estimated billing and energy caps",
+    "authority": "Nigerian Electricity Regulatory Commission (NERC)",
+    "url": "https://nerc.gov.ng/faq/billing/",
+    "updated": "2026-09-25 verified",
+    "categories": ["billing"],
+    "tags": ["estimated billing", "energy cap", "unmetered", "overbilling"],
+    "text": "NERC states that unmetered customers subject to estimated billing should not be billed above the applicable energy cap published for their feeder."
+  },
+  {
+    "id": "faulty-meter-estimation",
+    "title": "Faulty meter replacement and billing",
+    "authority": "Nigerian Electricity Regulatory Commission (NERC)",
+    "url": "https://nerc.gov.ng/faq/billing/",
+    "updated": "2026-09-25 verified",
+    "categories": ["metering", "billing"],
+    "tags": ["faulty meter", "obsolete meter", "replacement", "three months average"],
+    "text": "NERC states that when a faulty or obsolete meter is removed, the customer should not be pushed to arbitrary estimated billing because the DisCo failed to replace it. Where replacement cannot occur within the billing period, NERC describes use of the customer's average billing or vending over the preceding three months for consumption determination."
+  },
+  {
+    "id": "meter-replacement-duty",
+    "title": "Responsibility for defective meter replacement",
+    "authority": "Nigerian Electricity Regulatory Commission (NERC)",
+    "url": "https://nerc.gov.ng/faq/metering/",
+    "updated": "2026-09-25 verified",
+    "categories": ["metering"],
+    "tags": ["meter replacement", "defective meter", "two working days"],
+    "text": "NERC's metering FAQ states that where a metering-system fault occurs, the DisCo is responsible for urgent repair or replacement and cites a two-working-day requirement after the fault is discovered."
+  },
+  {
+    "id": "meter-credit-balance",
+    "title": "Credit balance when a faulty meter is replaced",
+    "authority": "Nigerian Electricity Regulatory Commission (NERC)",
+    "url": "https://nerc.gov.ng/faq/metering/",
+    "updated": "2026-09-25 verified",
+    "categories": ["metering", "token_vending"],
+    "tags": ["credit balance", "units", "replacement meter", "48 hours"],
+    "text": "NERC states that the customer and DisCo representative should jointly note units on the meter being replaced, and the customer should be credited with those units within 48 hours after the new meter is installed."
+  },
+  {
+    "id": "state-transition",
+    "title": "State electricity regulatory transition",
+    "authority": "Nigerian Electricity Regulatory Commission (NERC)",
+    "url": "https://nerc.gov.ng/media/the-transition-to-state-electricity-regulation-key-takeaways-the-new-serc-directory/",
+    "updated": "2026-07-22",
+    "categories": ["general", "billing", "metering", "disconnection", "service_quality", "tariff_band"],
+    "tags": ["state regulator", "SERC", "Electricity Act 2023", "decentralisation"],
+    "text": "NERC reported in July 2026 that 16 states had fully transitioned to state electricity regulation. Consumers in transitioned states should use their State Electricity Regulatory Commission or equivalent for intrastate regulatory complaints rather than assuming NERC is the complaint regulator."
+  },
+  {
+    "id": "safety-tampering",
+    "title": "Electrical installation tampering and safety",
+    "authority": "Nigerian Electricity Regulatory Commission (NERC)",
+    "url": "https://nerc.gov.ng/faq/complaints-and-redress-procedure/",
+    "updated": "2026-09-25 verified",
+    "categories": ["safety"],
+    "tags": ["tampering", "bypass", "danger", "report"],
+    "text": "NERC warns that tampering with electrical installations is dangerous and should be reported to the nearest DisCo service centre or official whistle-blower/customer-service channel."
+  }
+]
