@@ -152,20 +152,29 @@ def _direct_answer(
     }[language]
     answers: list[str] = []
 
-    language = _asks_language_capability(message)
-    if language:
+    language_capability = _asks_language_capability(message)
+    if language_capability:
         if model_ready and asr_ready:
-            answers.append(f"Yes. PowerRights is configured to support {language} through the official N-ATLaS language stack.")
+            answers.append({
+                "english": f"Yes. PowerRights is configured to support {language_capability} through the official N-ATLaS language stack.",
+                "yoruba": f"Bẹ́ẹ̀ni. PowerRights ti ṣètò láti ṣe àtìlẹ́yìn fún {language_capability} nípasẹ̀ N-ATLaS.",
+                "hausa": f"Eh. An tsara PowerRights don tallafawa {language_capability} ta hanyar N-ATLaS.",
+                "igbo": f"Ee. A haziri PowerRights ka ọ kwado {language_capability} site na N-ATLaS.",
+            }[language])
         elif asr_ready:
-            answers.append(
-                f"PowerRights can transcribe {language} voice with the configured N-ATLaS ASR, "
-                "but full N-ATLaS response generation is not active yet."
-            )
+            answers.append({
+                "english": f"PowerRights can transcribe {language_capability} voice with the configured N-ATLaS ASR, but full N-ATLaS response generation is not active yet.",
+                "yoruba": f"PowerRights lè tú ohùn {language_capability} sí ọ̀rọ̀ pẹ̀lú N-ATLaS ASR, ṣùgbọ́n ìdáhùn N-ATLaS kíkún kò tíì ṣiṣẹ́.",
+                "hausa": f"PowerRights na iya rubuta muryar {language_capability} da N-ATLaS ASR, amma cikakken samar da amsa na N-ATLaS bai fara aiki ba tukuna.",
+                "igbo": f"PowerRights nwere ike idepụta olu {language_capability} site na N-ATLaS ASR, mana mmepụta azịza N-ATLaS zuru ezu amalitebeghị.",
+            }[language])
         else:
-            answers.append(
-                f"PowerRights is designed to support {language}, but the official N-ATLaS {language} voice/model path "
-                "is not active on this deployment yet, so I should not claim full live language support."
-            )
+            answers.append({
+                "english": f"PowerRights is designed to support {language_capability}, but the official N-ATLaS {language_capability} voice/model path is not active on this deployment yet.",
+                "yoruba": f"A ṣe PowerRights láti ṣe àtìlẹ́yìn fún {language_capability}, ṣùgbọ́n ọ̀nà N-ATLaS fún ohùn/àwòṣe {language_capability} kò tíì ṣiṣẹ́ lórí deployment yìí.",
+                "hausa": f"An tsara PowerRights don tallafawa {language_capability}, amma hanyar N-ATLaS ta murya/samfurin {language_capability} ba ta aiki a wannan deployment din tukuna.",
+                "igbo": f"E mere PowerRights ka ọ kwado {language_capability}, mana ụzọ N-ATLaS maka olu/model {language_capability} anaghị arụ ọrụ na deployment a ugbu a.",
+            }[language])
 
     if _asks_estimated_after_removal(message) and _fact(docs, "faulty-meter-estimation"):
         answers.append({
@@ -232,36 +241,49 @@ def _direct_answer(
 
     if _asks_what_to_do(message):
         if issue == "metering":
-            answers.append(
-                f"Your first step is to submit a written metering complaint to {provider}'s Customer Complaints Unit, "
-                "get a complaint/reference number, and attach the meter number plus evidence of the fault or removal."
-            )
+            answers.append({
+                "english": f"Your first step is to submit a written metering complaint to {provider}'s Customer Complaints Unit, get a complaint/reference number, and attach the meter number plus evidence of the fault or removal.",
+                "yoruba": f"Ìgbésẹ̀ àkọ́kọ́ ni kí o fi ẹ̀sùn nípa mita sí Customer Complaints Unit ti {provider} ní kíkọ́, gba complaint/reference number, kí o sì fi meter number àti ẹ̀rí pé mita náà bàjẹ́ tàbí pé wọ́n yọ ọ́ kún un.",
+                "hausa": f"Mataki na farko shi ne ka kai rubutaccen korafin mita zuwa Customer Complaints Unit na {provider}, ka samu complaint/reference number, sannan ka hada meter number da hujjar matsalar ko cire mitar.",
+                "igbo": f"Nzọụkwụ mbụ bụ ide mkpesa gbasara mita nye Customer Complaints Unit nke {provider}, nweta complaint/reference number, tinyekwa meter number na ihe akaebe banyere mmebi ma ọ bụ iwepụ mita.",
+            }[language])
         elif issue == "billing":
-            answers.append(
-                f"Your first step is to dispute the bill in writing with {provider}'s Customer Complaints Unit, "
-                "keep the acknowledgement, and attach the disputed bill plus earlier bills or vending history."
-            )
+            answers.append({
+                "english": f"Your first step is to dispute the bill in writing with {provider}'s Customer Complaints Unit, keep the acknowledgement, and attach the disputed bill plus earlier bills or vending history.",
+                "yoruba": f"Ìgbésẹ̀ àkọ́kọ́ ni kí o tako bill náà ní kíkọ́ lọ́dọ̀ Customer Complaints Unit ti {provider}, pa acknowledgement mọ́, kí o sì fi bill tí o ń tako àti billing/vending history tó ṣáájú kún un.",
+                "hausa": f"Mataki na farko shi ne ka kalubalanci bill din a rubuce a Customer Complaints Unit na {provider}, ka ajiye acknowledgement, sannan ka hada bill din da tsofaffin bills ko vending history.",
+                "igbo": f"Nzọụkwụ mbụ bụ ide mgbagha banyere bill ahụ nye Customer Complaints Unit nke {provider}, debe acknowledgement, tinyekwa bill ahụ na bills gara aga ma ọ bụ vending history.",
+            }[language])
         elif issue == "disconnection":
-            answers.append(
-                f"Ask {provider} in writing for the reason and basis for the disconnection, keep the notice and receipts, "
-                "and lodge a formal complaint if you dispute it."
-            )
+            answers.append({
+                "english": f"Ask {provider} in writing for the reason and basis for the disconnection, keep the notice and receipts, and lodge a formal complaint if you dispute it.",
+                "yoruba": f"Béèrè lọ́wọ́ {provider} ní kíkọ́ fún ìdí àti ìpìlẹ̀ gígé iná náà, pa notice àti receipts mọ́, kí o sì fi ẹ̀sùn sílẹ̀ bí o bá tako ìgbésẹ̀ náà.",
+                "hausa": f"Ka nemi {provider} ya bayyana dalili da tushen katsewar a rubuce, ka ajiye notice da receipts, sannan ka kai korafi idan kana kalubalantar katsewar.",
+                "igbo": f"Rịọ {provider} ka o dee ihe kpatara na ntọala mgbanyụ ọkụ ahụ, debe notice na receipts, tinyekwa mkpesa ma ọ bụrụ na ị na-agbagha ya.",
+            }[language])
         else:
-            answers.append(
-                f"Start with a written complaint to {provider}'s Customer Complaints Unit and keep the acknowledgement/reference number."
-            )
+            answers.append({
+                "english": f"Start with a written complaint to {provider}'s Customer Complaints Unit and keep the acknowledgement/reference number.",
+                "yoruba": f"Bẹ̀rẹ̀ pẹ̀lú ẹ̀sùn tí o kọ sí Customer Complaints Unit ti {provider}, kí o sì pa acknowledgement/reference number mọ́.",
+                "hausa": f"Ka fara da rubutaccen korafi zuwa Customer Complaints Unit na {provider}, ka kuma ajiye acknowledgement/reference number.",
+                "igbo": f"Bido site n'ide mkpesa nye Customer Complaints Unit nke {provider}, debe acknowledgement/reference number.",
+            }[language])
 
     if _asks_escalation(message):
         if route.level == "state":
-            answers.append(
-                f"For an unresolved intrastate electricity complaint in {state or 'your state'}, first complain to "
-                f"{provider}'s Customer Complaints Unit; the regulatory escalation point is {route.regulator_name}."
-            )
+            answers.append({
+                "english": f"For an unresolved intrastate electricity complaint in {state or 'your state'}, first complain to {provider}'s Customer Complaints Unit; the regulatory escalation point is {route.regulator_name}.",
+                "yoruba": f"Fún ẹ̀sùn iná inú {state or 'ìpínlẹ̀ rẹ'} tí a kò tíì yanju, kọ́kọ́ fi ẹ̀sùn sí Customer Complaints Unit ti {provider}; aláṣẹ tí o yẹ kí o gbe ẹ̀sùn náà lọ sí ni {route.regulator_name}.",
+                "hausa": f"Ga korafin wutar lantarki na cikin {state or 'jiharka'} da ba a warware ba, fara da Customer Complaints Unit na {provider}; hukumar da za ka daukaka korafin zuwa ita ce {route.regulator_name}.",
+                "igbo": f"Maka mkpesa ọkụ dị n'ime {state or 'steeti gị'} nke a naghị edozi, buru ụzọ dee mkpesa nye Customer Complaints Unit nke {provider}; onye nchịkwa ị ga-ebuga ya bụ {route.regulator_name}.",
+            }[language])
         else:
-            answers.append(
-                f"First complain in writing to {provider}'s Customer Complaints Unit. If it remains unresolved, "
-                "escalate to the relevant NERC Consumer Forum and then to NERC."
-            )
+            answers.append({
+                "english": f"First complain in writing to {provider}'s Customer Complaints Unit. If it remains unresolved, escalate to the relevant NERC Consumer Forum and then to NERC.",
+                "yoruba": f"Kọ́kọ́ fi ẹ̀sùn sí Customer Complaints Unit ti {provider} ní kíkọ́. Bí wọn kò bá yanju rẹ̀, gbe e lọ sí NERC Consumer Forum tó yẹ, lẹ́yìn náà sí NERC.",
+                "hausa": f"Fara da rubutaccen korafi zuwa Customer Complaints Unit na {provider}. Idan ba a warware ba, daukaka zuwa NERC Consumer Forum da ya dace sannan zuwa NERC.",
+                "igbo": f"Buru ụzọ dee mkpesa nye Customer Complaints Unit nke {provider}. Ọ bụrụ na a naghị edozi ya, bulie ya gaa NERC Consumer Forum kwesịrị ekwesị, mesịa gaa NERC.",
+            }[language])
 
     if answers:
         # Preserve order, remove duplicate wording.
@@ -281,15 +303,19 @@ def _direct_answer(
         )
 
     if issue == "billing":
-        if "estimated" in t:
-            return (
-                "This is a dispute about estimated billing. NERC's guidance says unmetered customers should not be billed "
-                "above the applicable energy cap for their feeder, and you can formally challenge the billing basis."
-            )
-        return (
-            f"You can formally dispute this bill with {provider}; ask for the calculation/basis in writing and request correction "
-            "of any unsupported charge."
-        )
+        if "estimated" in t or "àfọwọ́kọ" in t or "afowoko" in t:
+            return {
+                "english": "This is a dispute about estimated billing. NERC's guidance says unmetered customers should not be billed above the applicable energy cap for their feeder, and you can formally challenge the billing basis.",
+                "yoruba": "Èyí jẹ́ àríyànjiyàn nípa billing àfọwọ́kọ. Ìtọ́sọ́nà NERC sọ pé oníbàárà tí kò ní mita kò yẹ kí a gba owó ju energy cap tó wúlò fún feeder rẹ̀ lọ, o sì lè tako ìpìlẹ̀ billing náà ní kíkọ́.",
+                "hausa": "Wannan korafi ne game da estimated billing. Jagorar NERC ta ce bai kamata a caje kwastoman da ba shi da mita sama da energy cap na feeder dinsa ba, kuma kana iya kalubalantar tushen billing din a rubuce.",
+                "igbo": "Nke a bụ esemokwu gbasara estimated billing. NERC kwuru na onye ahịa na-enweghị mita agaghị enwe billing karịrị energy cap nke feeder ya, ị nwekwara ike ịgbagha ntọala billing ahụ n'akwụkwọ.",
+            }[language]
+        return {
+            "english": f"You can formally dispute this bill with {provider}; ask for the calculation/basis in writing and request correction of any unsupported charge.",
+            "yoruba": f"O lè tako bill yìí ní kíkọ́ lọ́dọ̀ {provider}; béèrè fún ìṣírò àti ìpìlẹ̀ bill náà ní kíkọ́, kí o sì béèrè pé kí wọ́n ṣàtúnṣe owó tí kò ní ìpìlẹ̀.",
+            "hausa": f"Za ka iya kalubalantar wannan bill a rubuce a wajen {provider}; ka nemi lissafi da tushen bill din a rubuce sannan ka nemi a gyara duk cajin da ba shi da hujja.",
+            "igbo": f"Ị nwere ike ịgbagha bill a n'akwụkwọ n'aka {provider}; rịọ ka ha kọwaa calculation na basis nke bill ahụ ma mezie ụgwọ na-enweghị ihe akaebe.",
+        }[language]
 
     if issue == "metering":
         return (
