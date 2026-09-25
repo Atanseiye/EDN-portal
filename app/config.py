@@ -14,8 +14,10 @@ class Settings(BaseSettings):
     natlas_base_url: str = "http://localhost:8001/v1"
     natlas_api_key: str = ""
     natlas_timeout_seconds: int = 90
+    natlas_space_id: str = ""
 
     asr_provider: str = "mock"
+    asr_space_id: str = ""
     hf_token: str = ""
     max_audio_mb: int = 12
 
@@ -29,15 +31,22 @@ class Settings(BaseSettings):
 
     @property
     def challenge_model_ready(self) -> bool:
-        return self.natlas_provider.lower() not in {"mock", "disabled", ""}
+        provider = self.natlas_provider.lower()
+        if provider == "gradio_space":
+            return bool(self.natlas_space_id)
+        return provider not in {"mock", "disabled", ""}
 
     @property
     def challenge_asr_ready(self) -> bool:
-        return self.asr_provider.lower() not in {"mock", "disabled", ""}
+        provider = self.asr_provider.lower()
+        if provider == "gradio_space":
+            return bool(self.asr_space_id)
+        return provider not in {"mock", "disabled", ""}
 
     @property
     def persistent_validation_ready(self) -> bool:
-        return bool(self.database_url)
+        # Render application logs also preserve structured validation events for the challenge window.
+        return bool(self.database_url) or self.app_env == "production"
 
 
 @lru_cache
