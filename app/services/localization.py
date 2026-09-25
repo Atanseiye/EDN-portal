@@ -1,4 +1,4 @@
-from app.models import Language, RegulatorRoute
+from app.models import Language, RegulatorRoute, SourceCard
 
 LANG_LABEL = {
     "english": "English",
@@ -81,3 +81,16 @@ def localize_route(route: RegulatorRoute, language: Language) -> RegulatorRoute:
 
 def disclaimer_for(language: Language) -> str:
     return DISCLAIMER.get(language, DISCLAIMER["english"])
+
+
+def localized_source_cards(docs: list[dict], language: Language) -> list[SourceCard]:
+    cards = []
+    for item in docs:
+        cards.append(SourceCard(
+            title=item["title"],
+            authority=item["authority"],
+            url=item["url"],
+            excerpt=localized_fact(item.get("id", ""), language, item["text"]),
+            updated=item.get("updated"),
+        ))
+    return cards
