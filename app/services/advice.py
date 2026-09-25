@@ -165,6 +165,7 @@ class AdviceService:
                 "hausa": "Kamfanin Wutar Lantarki",
                 "igbo": "Ụlọ Ọrụ Ọkụ",
             }[effective_language]
+            hausa_resolution = req.desired_resolution or "A warware korafin bisa ka'idodin kare hakkin kwastoman wutar lantarki."
             templates = {
                 "english": {
                     "subject": f"Electricity Consumer Complaint — {issue.replace('_', ' ').title()}",
@@ -194,7 +195,7 @@ class AdviceService:
                         f"Zuwa Customer Complaints Team na {provider},\n\nIna gabatar da korafi a hukumance game da wannan batu: {req.message}\n\n"
                         "Don Allah a binciki lamarin, a ba ni acknowledgement/reference number a rubuce, sannan a sanar da ni matakin warwarewar a rubuce. "
                         f"Bayanan mita/account dina: {req.meter_number or req.account_number or '[saka meter/account number]'}.\n\n"
-                        f"Abin da nake nema: {req.desired_resolution or 'A warware korafin bisa ka\'idojin kare hakkin kwastoman wutar lantarki.'}\n\n"
+                        f"Abin da nake nema: {hausa_resolution}\n\n"
                         f"Na gode,\n{req.complainant_name or '[Suna]'}"
                     ),
                     "checklist": ["Meter/account number", "Bills da receipts", "Acknowledgement na korafin baya", "Hotuna ko token history idan akwai"],
