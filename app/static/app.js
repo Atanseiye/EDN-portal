@@ -186,3 +186,5 @@ async function refreshReadiness(){
   }catch(_){$("modelStatus").textContent="Model status unavailable"}
 }
 refreshReadiness();
+
+if("serviceWorker" in navigator){window.addEventListener("load",()=>navigator.serviceWorker.register("/static/service-worker.js").catch(()=>{}));}
