@@ -90,7 +90,8 @@ class ValidationStore:
 
     def add_interaction(self, *, session_id: str | None, language: str, issue_type: str, state: str | None,
                         disco: str | None, channel: str, asr_provider: str | None = None,
-                        transcript: str | None = None, store_transcript: bool = False) -> str:
+                        transcript: str | None = None, store_transcript: bool = False,
+                        validation_consent: bool = False) -> str:
         interaction_id = str(uuid.uuid4())
         session_hash = hashlib.sha256(session_id.encode()).hexdigest()[:20] if session_id else None
         values = (
@@ -123,8 +124,10 @@ class ValidationStore:
             "channel": channel,
             "natlas_provider": self.settings.natlas_provider,
             "asr_provider": asr_provider,
+            "validation_consent": validation_consent,
             "competition_model_path": (
                 channel == "voice"
+                and validation_consent
                 and self.settings.natlas_provider not in {"mock", "disabled", ""}
                 and (asr_provider or "") not in {"mock", "disabled", ""}
             ),
