@@ -1,86 +1,99 @@
-# EDNAi — Ìbẹ̀rẹ̀ fún Developer
+# EDNAi — Ìbẹ̀rẹ̀ fún Developer (Yorùbá)
 
-EDNAi jẹ́ irinṣẹ́ developer tí a kọ́ lórí model osise `NCAIR1/N-ATLaS`. Ó ń jẹ́ kí developer lè so N-ATLaS mọ́ app, dán án wò, ṣe evaluation, ṣe adaptation, àti deploy rẹ̀ láì ní láti tún gbogbo plumbing kọ láti ìbẹ̀rẹ̀.
+EDNAi jẹ́ developer layer fún model osise `NCAIR1/N-ATLaS`. Ó ń fún developer ní SDK, gateway, evaluation tools, Dataset Studio, fine-tuning starter àti runtime tooling.
 
-## Python
+## Ìlérí pàtàkì
 
-Fi package náà sílẹ̀:
+EDNAi kò gba model míì láti rọ́pò N-ATLaS. Qualifying inference gbọ́dọ̀ fi model ID `NCAIR1/N-ATLaS` hàn.
 
-```bash
-pip install -e .
-```
-
-Lò ó:
+## Python SDK
 
 ```python
 from ednai import EDNAi
 
-client = EDNAi(base_url="https://your-ednai-gateway.example")
-
+client = EDNAi(base_url="https://ednai-6znf.onrender.com")
 response = client.generate(
-    "Ṣàlàyé ohun tí API jẹ́ fún developer tuntun.",
+    "Ṣàlàyé ohun tí API jẹ́.",
     system="Dáhùn ní Yorùbá tó rọrùn.",
     temperature=0.2,
     max_tokens=300,
 )
-
 print(response.text)
 ```
 
-## TypeScript
+## TypeScript SDK
 
 ```ts
 import { EDNAi } from "@ednai/sdk";
 
-const ai = new EDNAi({ baseUrl: "https://your-ednai-gateway.example" });
-
-const result = await ai.generate("Kí ni API?", {
-  system: "Dáhùn ní Yorùbá.",
-  temperature: 0.2
+const ai = new EDNAi({
+  baseUrl: "https://ednai-6znf.onrender.com"
 });
 
+const result = await ai.generate("Kí ni API?");
 console.log(result.text);
 ```
 
 ## OpenAI-compatible API
 
-Developer tó ti ní tooling tó ń lo OpenAI-style endpoint lè yí base URL padà sí EDNAi:
-
 ```bash
-curl -X POST https://your-ednai-gateway.example/v1/chat/completions \
+curl -X POST https://ednai-6znf.onrender.com/v1/chat/completions \
   -H "Content-Type: application/json" \
   -d '{
-    "model": "NCAIR1/N-ATLaS",
-    "messages": [{"role":"user","content":"Kí ni transformer attention?"}]
+    "model":"NCAIR1/N-ATLaS",
+    "messages":[{"role":"user","content":"Ṣàlàyé transformer attention."}]
   }'
 ```
 
-EDNAi kò ní gba model míì gẹ́gẹ́ bí qualifying N-ATLaS runtime. Model ID gbọ́dọ̀ jẹ́ `NCAIR1/N-ATLaS`.
+## Prompt àti JSON mode
+
+Lo system prompt láti sọ èdè, tone tàbí constraint. Má tan JSON mode fún prose deede. Tan-an nígbà tí application bá nílò JSON tó ṣeé ka lọ́nà machine.
 
 ## Evaluation
 
 ```bash
-ednai eval benchmarks/natlas_smoke.jsonl --base-url http://localhost:8000
+ednai eval benchmarks/natlas_smoke.jsonl \
+  --base-url https://ednai-6znf.onrender.com
 ```
 
-Benchmark náà lè dán English, Yorùbá, Hausa àti Igbo wò. Àwọn smoke checks kì í ṣe ìdájọ́ semantic quality tó pé; fún production tàbí research, fi human review àti metric tó bá use-case mu kún un.
+Evaluation Workbench lè ṣàyẹ̀wò required strings, forbidden strings, JSON validity àti latency. Fún semantic quality, fi human review tàbí metric tó bá task mu kún un.
+
+## Dataset Studio
+
+Dataset Studio gba:
+- chat-format `messages[]`;
+- instruction/input/output JSONL.
+
+Ó ń validate row kọ̀ọ̀kan, normalize dataset, ó sì ń ṣẹ̀dá training-ready JSONL.
 
 ## Fine-tuning
 
-Wo `fine_tuning/README.md`.
-
-Starter kit EDNAi ń:
-- bẹ̀rẹ̀ láti `NCAIR1/N-ATLaS`;
-- lo QLoRA 4-bit NF4;
-- kọ́ LoRA adapter dípò kí ó tún gbogbo 8B model kọ́;
-- fi adapter sí output directory lọ́tọ̀.
-
-## Speech model
-
-```python
-from ednai.speech import asr_model_for
-
-asr_model_for("yoruba")
+```bash
+python fine_tuning/prepare_data.py --input raw.jsonl --output prepared.jsonl
+python fine_tuning/train_qlora.py \
+  --dataset prepared.jsonl \
+  --output-dir outputs/my-natlas-adapter
 ```
 
-Èyí máa dá `NCAIR1/Yoruba-ASR` padà.
+QLoRA starter náà ń ṣẹ̀dá adapter láti `NCAIR1/N-ATLaS` gan-an.
+
+## Runtime modes
+
+- **ZeroGPU** — hosted runtime fún development/demo; free quota lè queue tàbí tán fún ìgbà díẹ̀.
+- **Local Transformers** — load official N-ATLaS weights lórí machine/server tirẹ.
+- **OpenAI-compatible N-ATLaS** — so EDNAi mọ́ endpoint tó ń ṣiṣẹ́ N-ATLaS gidi.
+
+## Runtime verification
+
+```bash
+curl -X POST https://ednai-6znf.onrender.com/api/runtime/probe
+```
+
+Probe yìí ń jẹ́risi provenance model, ó sì máa fail bí upstream model kì í ṣe `NCAIR1/N-ATLaS`.
+
+## Speech models
+
+- Nigerian English — `NCAIR1/NigerianAccentedEnglish`
+- Yorùbá — `NCAIR1/Yoruba-ASR`
+- Hausa — `NCAIR1/Hausa-ASR`
+- Igbo — `NCAIR1/Igbo-ASR`
