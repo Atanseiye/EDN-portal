@@ -18,6 +18,7 @@ from ednai.providers import (
     OpenAICompatibleProvider,
     Provider,
     ProviderError,
+    ProviderQuotaError,
     assert_natlas_model,
 )
 from server.config import get_settings
@@ -169,6 +170,13 @@ def runtime_probe():
             max_tokens=16,
             json_mode=False,
         )
+    except ProviderQuotaError as exc:
+        headers = (
+            {"Retry-After": str(exc.retry_after_seconds)}
+            if exc.retry_after_seconds
+            else None
+        )
+        raise HTTPException(status_code=429, detail=str(exc), headers=headers) from exc
     except ProviderError as exc:
         raise HTTPException(status_code=502, detail=str(exc)) from exc
     if generation.model != NATLAS_MODEL_ID:
@@ -204,6 +212,13 @@ def _generate(req: GenerateRequest) -> Generation:
             max_tokens=req.max_tokens,
             json_mode=req.json_mode,
         )
+    except ProviderQuotaError as exc:
+        headers = (
+            {"Retry-After": str(exc.retry_after_seconds)}
+            if exc.retry_after_seconds
+            else None
+        )
+        raise HTTPException(status_code=429, detail=str(exc), headers=headers) from exc
     except ProviderError as exc:
         raise HTTPException(status_code=502, detail=str(exc)) from exc
 
