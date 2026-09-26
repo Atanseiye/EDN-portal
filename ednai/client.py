@@ -5,7 +5,7 @@ from typing import Iterable
 
 import httpx
 
-from .models import Generation, Message, Transcription
+from .models import Generation, Message, Transcription, UseCaseGeneration
 from .providers import NATLAS_MODEL_ID
 from .speech import normalize_speech_language
 
@@ -51,6 +51,39 @@ class EDNAi:
             response = client.get(f"{self.base_url}/v1/models")
         response.raise_for_status()
         return response.json()["data"]
+
+    def use_cases(self) -> dict:
+        with httpx.Client(timeout=self.timeout) as client:
+            response = client.get(f"{self.base_url}/v1/use-cases")
+        response.raise_for_status()
+        return response.json()
+
+    def run_use_case(
+        self,
+        use_case: str,
+        inputs: dict,
+        *,
+        language: str = "english",
+        temperature: float | None = None,
+        max_tokens: int | None = None,
+        json_mode: bool = False,
+    ) -> UseCaseGeneration:
+        headers = {"authorization": f"Bearer {self.api_key}"} if self.api_key else {}
+        payload = {
+            "language": language,
+            "inputs": inputs,
+            "temperature": temperature,
+            "max_tokens": max_tokens,
+            "json_mode": json_mode,
+        }
+        with httpx.Client(timeout=self.timeout) as client:
+            response = client.post(
+                f"{self.base_url}/v1/use-cases/{use_case}",
+                json=payload,
+                headers=headers,
+            )
+        response.raise_for_status()
+        return UseCaseGeneration.model_validate(response.json())
 
     def transcribe(self, audio_path: str | Path, language: str) -> Transcription:
         language = normalize_speech_language(language)
@@ -125,3 +158,37 @@ class AsyncEDNAi:
             response = await client.get(f"{self.base_url}/v1/audio/capabilities")
         response.raise_for_status()
         return response.json()
+
+
+    async def use_cases(self) -> dict:
+        async with httpx.AsyncClient(timeout=self.timeout) as client:
+            response = await client.get(f"{self.base_url}/v1/use-cases")
+        response.raise_for_status()
+        return response.json()
+
+    async def run_use_case(
+        self,
+        use_case: str,
+        inputs: dict,
+        *,
+        language: str = "english",
+        temperature: float | None = None,
+        max_tokens: int | None = None,
+        json_mode: bool = False,
+    ) -> UseCaseGeneration:
+        headers = {"authorization": f"Bearer {self.api_key}"} if self.api_key else {}
+        payload = {
+            "language": language,
+            "inputs": inputs,
+            "temperature": temperature,
+            "max_tokens": max_tokens,
+            "json_mode": json_mode,
+        }
+        async with httpx.AsyncClient(timeout=self.timeout) as client:
+            response = await client.post(
+                f"{self.base_url}/v1/use-cases/{use_case}",
+                json=payload,
+                headers=headers,
+            )
+        response.raise_for_status()
+        return UseCaseGeneration.model_validate(response.json())
