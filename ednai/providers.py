@@ -82,6 +82,12 @@ class OpenAICompatibleProvider(Provider):
                 f"N-ATLaS upstream returned HTTP {response.status_code}: {response.text[:500]}"
             )
         raw = response.json()
+        upstream_model = str(raw.get("model", "")).strip()
+        if upstream_model != NATLAS_MODEL_ID:
+            raise ProviderError(
+                f"Upstream model provenance check failed: expected {NATLAS_MODEL_ID}, "
+                f"received {upstream_model or '<missing model id>'}."
+            )
         try:
             choice = raw["choices"][0]
             text = choice["message"]["content"]
@@ -89,7 +95,7 @@ class OpenAICompatibleProvider(Provider):
             raise ProviderError("Unexpected N-ATLaS upstream response shape") from exc
         return Generation(
             text=text,
-            model=raw.get("model", model),
+            model=upstream_model,
             provider=self.name,
             finish_reason=choice.get("finish_reason"),
             latency_ms=round((time.perf_counter() - started) * 1000, 2),
@@ -128,12 +134,20 @@ class GradioSpaceProvider(Provider):
                 payload = {"text": result}
         else:
             payload = result
-        text = payload.get("text") if isinstance(payload, dict) else str(payload)
+        if not isinstance(payload, dict):
+            raise ProviderError("N-ATLaS Gradio runtime must return structured provenance")
+        upstream_model = str(payload.get("model", "")).strip()
+        if upstream_model != NATLAS_MODEL_ID:
+            raise ProviderError(
+                f"Gradio runtime provenance check failed: expected {NATLAS_MODEL_ID}, "
+                f"received {upstream_model or '<missing model id>'}."
+            )
+        text = payload.get("text")
         if not text:
             raise ProviderError("N-ATLaS Gradio runtime returned no text")
         return Generation(
             text=str(text),
-            model=NATLAS_MODEL_ID,
+            model=upstream_model,
             provider=self.name,
             latency_ms=round((time.perf_counter() - started) * 1000, 2),
             raw=payload if isinstance(payload, dict) else {"result": payload},
