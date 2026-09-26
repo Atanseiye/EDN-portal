@@ -1,0 +1,51 @@
+name: EDNAi Live Runtime Smoke
+
+on:
+  push:
+    branches: [ednai]
+    paths:
+      - ".github/workflows/ednai-live-runtime-smoke.yml"
+  workflow_dispatch:
+
+jobs:
+  smoke:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Verify gateway health
+        run: |
+          set -euo pipefail
+          curl --fail --silent --show-error --max-time 60             https://ednai-6znf.onrender.com/health | tee /tmp/health.json
+          python - <<'PY'
+          import json
+          body=json.load(open("/tmp/health.json"))
+          assert body["model"] == "NCAIR1/N-ATLaS", body
+          assert body["provider"] == "gradio_space", body
+          assert body["direct_natlas_integration"] is True, body
+          print("Gateway health verified:", body)
+          PY
+
+      - name: Probe direct N-ATLaS runtime
+        run: |
+          set -euo pipefail
+          status=0
+          for attempt in 1 2 3; do
+            echo "Probe attempt $attempt"
+            if curl --fail --silent --show-error --max-time 240               -X POST https://ednai-6znf.onrender.com/api/runtime/probe               -o /tmp/probe.json; then
+              status=1
+              break
+            fi
+            sleep 15
+          done
+          if [ "$status" -ne 1 ]; then
+            echo "Runtime probe failed after retries."
+            exit 1
+          fi
+          cat /tmp/probe.json
+          python - <<'PY'
+          import json
+          body=json.load(open("/tmp/probe.json"))
+          assert body["ok"] is True, body
+          assert body["model"] == "NCAIR1/N-ATLaS", body
+          assert body["provenance_verified"] is True, body
+          print("Direct N-ATLaS provenance verified:", body)
+          PY
