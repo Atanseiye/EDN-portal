@@ -91,6 +91,27 @@ curl -X POST https://ednai-6znf.onrender.com/api/runtime/probe
 
 Probe a na-enyocha provenance model ma fail ma ọ bụrụ na upstream model abụghị `NCAIR1/N-ATLaS`.
 
+
+## Speech Studio na official ASR
+
+EDNAi na-enye developer official NCAIR speech-recognition models site na gateway, SDK, CLI na Speech Studio.
+
+```python
+result = client.transcribe("audio.wav", language="igbo")
+print(result.text)
+print(result.model)
+```
+
+EDNAi na-enyocha model ID runtime weghachiri ka ọ kwekọọ na asụsụ ahọpụtara; ọ naghị ekwe ASR model substitution.
+
+## Oke TTS
+
+NCAIR enwebeghị official N-ATLaS TTS checkpoint. EDNAi na-ekewa speech synthesis na qualifying N-ATLaS provenance. Speech Studio na-eji browser/device voice dabara na Igbo naanị mgbe voice dị; ọ naghị eji asụsụ ọzọ n'azụ onye developer.
+
+```ts
+await ai.speak("Nnọọ na EDNAi.", "igbo");
+```
+
 ## Speech models
 
 - Nigerian English — `NCAIR1/NigerianAccentedEnglish`
