@@ -104,6 +104,21 @@ export function speakWithDeviceVoice(
   });
 }
 
+export interface VoiceTurnOptions {
+  filename?: string;
+  system?: string;
+  temperature?: number;
+  maxTokens?: number;
+  jsonMode?: boolean;
+  speak?: boolean;
+  tts?: DeviceTTSOptions;
+}
+
+export interface VoiceTurnResult {
+  transcription: Transcription;
+  generation: Generation;
+}
+
 export interface EDNAiOptions {
   baseUrl: string;
   apiKey?: string;
@@ -190,6 +205,28 @@ export class EDNAi {
     options: DeviceTTSOptions = {},
   ): Promise<void> {
     return speakWithDeviceVoice(text, language, options);
+  }
+
+  async voiceTurn(
+    audio: Blob,
+    language: SpeechLanguage,
+    options: VoiceTurnOptions = {},
+  ): Promise<VoiceTurnResult> {
+    const transcription = await this.transcribe(
+      audio,
+      language,
+      options.filename ?? "audio.webm",
+    );
+    const generation = await this.generate(transcription.text, {
+      system: options.system,
+      temperature: options.temperature,
+      maxTokens: options.maxTokens,
+      jsonMode: options.jsonMode,
+    });
+    if (options.speak) {
+      await this.speak(generation.text, language, options.tts);
+    }
+    return { transcription, generation };
   }
 
   async models(): Promise<Array<Record<string, unknown>>> {
