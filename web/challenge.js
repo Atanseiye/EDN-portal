@@ -38,7 +38,7 @@ $("feedbackForm").addEventListener("submit",async(e)=>{
     const r=await fetch("/api/beta/feedback",{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify(payload)});
     const body=await r.json();
     if(!r.ok)throw new Error(body.detail||"Submission failed");
-    $("formStatus").textContent="Feedback recorded. Thank you.";
+    $("formStatus").textContent="Feedback recorded and queued for external-tester verification. Thank you.";
     $("feedbackForm").reset();
     await refresh();
   }catch(err){$("formStatus").textContent=err.message;}
