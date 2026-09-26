@@ -10,14 +10,101 @@
 <body>
 <header class="nav">
   <a class="brand" href="/"><span class="mark">E</span><span>EDN<span>Ai</span></span></a>
-  <nav><a href="/guide">Docs</a><a href="/challenge">Challenge readiness</a><a href="/docs">API</a></nav>
+  <nav>
+    <a href="/guide">Docs</a>
+    <a href="/challenge">Challenge readiness</a>
+    <a href="/docs">API</a>
+    <button id="quickstartNavBtn" class="nav-cta" type="button">Get started</button>
+  </nav>
 </header>
 <main>
 <section class="hero console-hero">
-  <span class="eyebrow">Nigerian AI developer infrastructure</span>
-  <h1>Build with <em>N-ATLaS</em><br>without fighting the plumbing.</h1>
-  <p>One developer layer for integration, testing, evaluation, adaptation and deployment of Nigeria's N-ATLaS model.</p>
-  <div class="hero-tags"><span>Python SDK</span><span>TypeScript SDK</span><span>Playground</span><span>Eval</span><span>QLoRA</span></div>
+  <div class="hero-status-row">
+    <span class="eyebrow">Nigerian AI developer infrastructure</span>
+    <span id="heroRuntimeStatus" class="runtime-inline"><i></i><span>Checking N-ATLaS…</span></span>
+  </div>
+  <h1>Build, test and ship with <em>N-ATLaS.</em></h1>
+  <p>Go from first prompt to evaluated, adapted and deployable Nigerian AI applications through one developer layer.</p>
+  <div class="hero-actions">
+    <button id="heroStartBtn" class="primary hero-primary" type="button">Start building <span>→</span></button>
+    <a class="hero-secondary" href="/guide">Read the docs</a>
+    <span class="shortcut-hint">⌘/Ctrl + K <small>command menu</small></span>
+  </div>
+  <div class="hero-tags"><span>Python SDK</span><span>TypeScript SDK</span><span>OpenAI-compatible API</span><span>Evaluation</span><span>Dataset Studio</span><span>QLoRA</span></div>
+</section>
+
+<section class="launchpad panel" id="launchpad">
+  <div class="launchpad-copy">
+    <div class="launchpad-heading">
+      <div>
+        <span class="eyebrow">Developer launchpad</span>
+        <h2>Your first N-ATLaS request in minutes.</h2>
+      </div>
+      <span id="onboardingProgress" class="progress-pill">0 / 3 complete</span>
+    </div>
+    <p>Pick your stack, copy a working request, then move directly into the playground or starter project.</p>
+
+    <div class="onboarding-steps">
+      <button class="onboarding-step active" id="stepStack" type="button" data-onboarding="stack">
+        <span class="step-number">1</span>
+        <span><strong>Choose your stack</strong><small>Python, TypeScript or cURL</small></span>
+      </button>
+      <button class="onboarding-step" id="stepRun" type="button" data-onboarding="run">
+        <span class="step-number">2</span>
+        <span><strong>Run a real prompt</strong><small>Use the connected N-ATLaS runtime</small></span>
+      </button>
+      <button class="onboarding-step" id="stepShip" type="button" data-onboarding="ship">
+        <span class="step-number">3</span>
+        <span><strong>Take it into code</strong><small>Copy integration code or download starter</small></span>
+      </button>
+    </div>
+
+    <div class="language-links">
+      <span>Docs:</span>
+      <a href="/guide/en">English</a>
+      <a href="/guide/yo">Yorùbá</a>
+      <a href="/guide/ha">Hausa</a>
+      <a href="/guide/ig">Igbo</a>
+    </div>
+  </div>
+
+  <div class="quickstart-card">
+    <div class="quickstart-head">
+      <div class="stack-tabs" role="tablist" aria-label="Quickstart language">
+        <button class="stack-tab active" type="button" data-stack="python">Python</button>
+        <button class="stack-tab" type="button" data-stack="typescript">TypeScript</button>
+        <button class="stack-tab" type="button" data-stack="curl">cURL</button>
+      </div>
+      <button id="copyQuickstartBtn" class="copy-chip" type="button">Copy</button>
+    </div>
+    <pre class="quickstart-code"><code id="quickstartCode"></code></pre>
+    <div class="quickstart-actions">
+      <button id="tryQuickstartBtn" class="primary" type="button">Try in Playground</button>
+      <a id="downloadStarterLink" class="ghost action-link" href="/api/studio/starter.zip">Download starter</a>
+    </div>
+    <p class="quickstart-note">No API key is required for the public demo gateway. Free ZeroGPU quota may queue or temporarily exhaust.</p>
+  </div>
+</section>
+
+<section class="template-section">
+  <div class="template-heading">
+    <div><span class="eyebrow">Start from a working pattern</span><h2>Try a template.</h2></div>
+    <button id="hideTemplatesBtn" class="ghost compact-btn" type="button">Hide templates</button>
+  </div>
+  <div id="templateGrid" class="template-grid">
+    <button class="template-card" type="button" data-template="english">
+      <span class="template-icon">EN</span><strong>Nigerian explainer</strong><small>Simple Nigerian English response</small><em>Use template →</em>
+    </button>
+    <button class="template-card" type="button" data-template="yoruba">
+      <span class="template-icon">YO</span><strong>Yorùbá assistant</strong><small>Language-preserving response</small><em>Use template →</em>
+    </button>
+    <button class="template-card" type="button" data-template="hausa">
+      <span class="template-icon">HA</span><strong>Hausa assistant</strong><small>Clear Hausa explanation</small><em>Use template →</em>
+    </button>
+    <button class="template-card" type="button" data-template="extract">
+      <span class="template-icon">{ }</span><strong>Structured extraction</strong><small>Machine-readable JSON output</small><em>Use template →</em>
+    </button>
+  </div>
 </section>
 
 <nav class="console-tabs" aria-label="EDNAi developer workspaces">
@@ -53,7 +140,7 @@
     </div>
     <div class="composer">
       <textarea id="prompt" rows="4" placeholder="Ask N-ATLaS something…"></textarea>
-      <div class="composer-foot"><span id="meta">Ready</span><button id="sendBtn" class="primary">Send</button></div>
+      <div class="composer-foot"><span id="meta" aria-live="polite">Ready · Ctrl/⌘ + Enter to run</span><div class="composer-actions"><button id="composerExamplesBtn" class="text-button" type="button">Examples</button><button id="sendBtn" class="primary">Send</button></div></div>
     </div>
   </section>
 </section>
@@ -182,5 +269,24 @@ ai.generate("Báwo ni?")</code></pre></article>
 </section>
 </main>
 <footer><strong>EDNAi</strong> · An Energy Data Network developer product · Built directly on NCAIR1/N-ATLaS.</footer>
+
+<dialog id="commandPalette" class="command-dialog">
+  <div class="command-head">
+    <div><span class="eyebrow">Jump anywhere</span><h2>Command menu</h2></div>
+    <button id="closeCommandBtn" class="icon-button" type="button" aria-label="Close">×</button>
+  </div>
+  <input id="commandSearch" class="command-search" placeholder="Search tools, docs or actions…" autocomplete="off">
+  <div id="commandList" class="command-list">
+    <button type="button" data-command="playground"><span>⌘</span><strong>Playground</strong><small>Run N-ATLaS prompts</small></button>
+    <button type="button" data-command="evaluate"><span>✓</span><strong>Evaluation</strong><small>Run multilingual benchmarks</small></button>
+    <button type="button" data-command="dataset"><span>▦</span><strong>Dataset Studio</strong><small>Validate training JSONL</small></button>
+    <button type="button" data-command="finetune"><span>↗</span><strong>Fine-tune Planner</strong><small>Generate a QLoRA plan</small></button>
+    <button type="button" data-command="runtime"><span>◉</span><strong>Runtime & SDK</strong><small>Inspect provenance and capabilities</small></button>
+    <button type="button" data-command="docs"><span>?</span><strong>Documentation</strong><small>English, Yorùbá, Hausa and Igbo</small></button>
+  </div>
+  <p class="command-foot">Tip: press <kbd>Esc</kbd> to close.</p>
+</dialog>
+
+<div id="toast" class="toast" role="status" aria-live="polite"></div>
 <script src="/assets/app.js"></script>
 </body></html>
