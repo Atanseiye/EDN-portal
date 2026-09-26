@@ -1,0 +1,19 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>EDNAi Docs</title><link rel="stylesheet" href="/assets/styles.css"><style>.doc{max-width:900px;margin:40px auto}.doc h1{font-size:52px;letter-spacing:-.04em}.doc h2{margin-top:38px}.doc pre{overflow:auto;background:#0d1b1e;color:#e8fff3;padding:18px;border-radius:14px}.doc code{font-family:ui-monospace,monospace}.doc p,.doc li{color:#52625d;line-height:1.7}.lang{display:flex;gap:8px;margin:16px 0 30px}.lang a{padding:7px 10px;border:1px solid var(--line);border-radius:999px;text-decoration:none;color:var(--green);font-weight:800;font-size:12px}</style></head><body><header class="nav"><a class="brand" href="/"><span class="mark">E</span><span>EDN<span>Ai</span></span></a><nav><a href="/">Playground</a><a href="/challenge">Challenge readiness</a></nav></header><main class="doc"><span class="eyebrow">Developer documentation</span><h1>Build with N-ATLaS.</h1><div class="lang"><a href="/guide/en">English</a><a href="/guide/yo">Yorùbá</a></div><p>EDNAi gives Nigerian developers one stable layer for calling, evaluating, adapting and deploying <code>NCAIR1/N-ATLaS</code>.</p><h2>Python SDK</h2><pre><code>from ednai import EDNAi
+
+ai = EDNAi(base_url="https://your-gateway")
+result = ai.generate(
+    "Explain transformer attention simply.",
+    temperature=0.2,
+)
+print(result.text)</code></pre><h2>TypeScript SDK</h2><pre><code>import { EDNAi } from "@ednai/sdk";
+
+const ai = new EDNAi({ baseUrl: "https://your-gateway" });
+const result = await ai.generate("Ka bayyana API da Hausa.");
+console.log(result.text);</code></pre><h2>OpenAI-compatible API</h2><pre><code>POST /v1/chat/completions
+{
+  "model": "NCAIR1/N-ATLaS",
+  "messages": [{"role":"user","content":"Kí ni API?"}]
+}</code></pre><h2>Evaluate</h2><pre><code>ednai eval benchmarks/natlas_smoke.jsonl \
+  --base-url http://localhost:8000 \
+  --output report.json</code></pre><h2>Adapt</h2><p>The included QLoRA starter trains lightweight adapters directly on N-ATLaS using NF4 4-bit quantization and LoRA.</p><pre><code>python fine_tuning/prepare_data.py --input raw.jsonl --output prepared.jsonl
+python fine_tuning/train_qlora.py --dataset prepared.jsonl --output-dir outputs/adapter</code></pre><p>Full source documentation lives in <code>docs/en/getting-started.md</code>.</p></main></body></html>
