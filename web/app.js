@@ -651,6 +651,317 @@ document.addEventListener("keydown",event=>{
 });
 
 
+/* ---------- N-ATLaS Use Case Studio ---------- */
+let useCaseRegistry=null;
+let activeUseCase="chatbot";
+let useCaseStack="python";
+let lastUseCaseResult="";
+
+function currentUseCaseDefinition(){
+  return useCaseRegistry&&useCaseRegistry.use_cases
+    ?useCaseRegistry.use_cases[activeUseCase]
+    :null;
+}
+
+function renderUseCaseCatalog(){
+  const root=$("useCaseCatalog");
+  if(!root||!useCaseRegistry)return;
+  root.innerHTML="";
+  Object.entries(useCaseRegistry.use_cases).forEach(([slug,definition])=>{
+    const button=document.createElement("button");
+    button.type="button";
+    button.className="usecase-card"+(slug===activeUseCase?" active":"");
+    button.dataset.useCase=slug;
+
+    const icon=document.createElement("span");
+    icon.className="usecase-card-icon";
+    icon.textContent=definition.icon;
+
+    const copy=document.createElement("span");
+    const title=document.createElement("strong");
+    title.textContent=definition.title;
+    const description=document.createElement("small");
+    description.textContent=definition.description;
+    copy.append(title,description);
+
+    button.append(icon,copy);
+    button.addEventListener("click",()=>selectUseCase(slug));
+    root.appendChild(button);
+  });
+}
+
+function renderUseCaseFields(definition){
+  const root=$("useCaseFields");
+  if(!root)return;
+  root.innerHTML="";
+
+  definition.fields.forEach(field=>{
+    const label=document.createElement("label");
+    label.textContent=field.label+(field.required?" *":"");
+
+    let input;
+    if(field.type==="select"){
+      input=document.createElement("select");
+      (field.options||[]).forEach(option=>{
+        const node=document.createElement("option");
+        node.value=option.value;
+        node.textContent=option.label;
+        input.appendChild(node);
+      });
+      input.value=field.default||((field.options||[])[0]?.value||"");
+    }else if(field.type==="input"){
+      input=document.createElement("input");
+      input.type="text";
+      input.placeholder=field.placeholder||"";
+      input.value=field.default||"";
+    }else{
+      input=document.createElement("textarea");
+      input.rows=5;
+      input.placeholder=field.placeholder||"";
+      input.value=field.default||"";
+    }
+
+    input.dataset.useCaseField=field.name;
+    input.dataset.required=field.required?"true":"false";
+    input.addEventListener("input",()=>{
+      if(activeUseCase==="translation"&&field.name==="target_language"&&$("useCaseLanguage")){
+        $("useCaseLanguage").value=input.value;
+      }
+      updateUseCaseCode();
+    });
+    input.addEventListener("change",()=>{
+      if(activeUseCase==="translation"&&field.name==="target_language"&&$("useCaseLanguage")){
+        $("useCaseLanguage").value=input.value;
+      }
+      updateUseCaseCode();
+    });
+    label.appendChild(input);
+
+    if(field.help){
+      const help=document.createElement("span");
+      help.className="usecase-field-help";
+      help.textContent=field.help;
+      label.appendChild(help);
+    }
+    root.appendChild(label);
+  });
+}
+
+function collectUseCaseInputs(){
+  const values={};
+  document.querySelectorAll("[data-use-case-field]").forEach(input=>{
+    values[input.dataset.useCaseField]=input.value;
+  });
+  return values;
+}
+
+function selectUseCase(slug){
+  if(!useCaseRegistry||!useCaseRegistry.use_cases[slug])return;
+  activeUseCase=slug;
+  const definition=useCaseRegistry.use_cases[slug];
+  renderUseCaseCatalog();
+  $("useCaseIcon").textContent=definition.icon;
+  $("useCaseTitle").textContent=definition.title;
+  $("useCaseDescription").textContent=definition.description;
+  $("useCaseOutputLabel").textContent=definition.output_label||"N-ATLaS output";
+  $("useCaseTemperature").value=definition.temperature;
+  $("useCaseMaxTokens").value=definition.max_tokens;
+  $("useCaseJsonMode").checked=false;
+  renderUseCaseFields(definition);
+  lastUseCaseResult="";
+  $("useCaseResult").textContent="Run the workflow to see the N-ATLaS response here.";
+  $("useCaseResult").className="usecase-result empty";
+  $("useCaseMeta").textContent="";
+  $("copyUseCaseResultBtn").disabled=true;
+  $("useCaseToPlaygroundBtn").disabled=true;
+  $("useCaseStatus").textContent="Ready";
+  updateUseCaseCode();
+}
+
+function loadUseCaseExample(){
+  const definition=currentUseCaseDefinition();
+  if(!definition)return;
+  const example=definition.example_inputs||{};
+  document.querySelectorAll("[data-use-case-field]").forEach(input=>{
+    if(Object.prototype.hasOwnProperty.call(example,input.dataset.useCaseField)){
+      input.value=example[input.dataset.useCaseField];
+    }
+  });
+  if(activeUseCase==="translation"&&example.target_language){
+    $("useCaseLanguage").value=example.target_language;
+  }
+  updateUseCaseCode();
+  showToast("Example loaded. Run it with N-ATLaS when ready.","success");
+}
+
+function updateUseCaseCode(){
+  if(!useCaseRegistry||!currentUseCaseDefinition()||!$("useCaseCode"))return;
+  const inputs=collectUseCaseInputs();
+  const language=$("useCaseLanguage").value;
+  const temperature=Number($("useCaseTemperature").value);
+  const maxTokens=Number($("useCaseMaxTokens").value);
+  const jsonMode=$("useCaseJsonMode").checked;
+
+  const payload={
+    language,
+    inputs,
+    temperature,
+    max_tokens:maxTokens,
+    json_mode:jsonMode
+  };
+
+  let code="";
+  if(useCaseStack==="typescript"){
+    code=`import { EDNAi } from "@ednai/sdk";
+
+const ai = new EDNAi({
+  baseUrl: "https://ednai-6znf.onrender.com"
+});
+
+const result = await ai.runUseCase(
+  "${activeUseCase}",
+  ${JSON.stringify(inputs,null,2)},
+  {
+    language: "${language}",
+    temperature: ${temperature},
+    maxTokens: ${maxTokens},
+    jsonMode: ${jsonMode}
+  }
+);
+
+console.log(result.text);`;
+  }else if(useCaseStack==="curl"){
+    code=`curl -X POST https://ednai-6znf.onrender.com/v1/use-cases/${activeUseCase} \\\n  -H "Content-Type: application/json" \\\n  --data-binary @- <<'JSON'
+${JSON.stringify(payload,null,2)}
+JSON`;
+  }else{
+    code=`from ednai import EDNAi
+
+ai = EDNAi(base_url="https://ednai-6znf.onrender.com")
+
+result = ai.run_use_case(
+    "${activeUseCase}",
+    ${JSON.stringify(inputs,null,4)},
+    language="${language}",
+    temperature=${temperature},
+    max_tokens=${maxTokens},
+    json_mode=${jsonMode?"True":"False"},
+)
+
+print(result.text)`;
+  }
+  $("useCaseCode").textContent=code;
+}
+
+async function loadUseCaseRegistry(){
+  try{
+    const response=await fetch("/v1/use-cases",{cache:"no-store"});
+    useCaseRegistry=await readApiResponse(response);
+    renderUseCaseCatalog();
+    selectUseCase(activeUseCase);
+  }catch(error){
+    if($("useCaseCatalog")){
+      $("useCaseCatalog").innerHTML='<p class="hint">Could not load use-case definitions.</p>';
+    }
+    if($("useCaseStatus"))$("useCaseStatus").textContent="Registry unavailable";
+  }
+}
+
+if($("loadUseCaseExampleBtn"))$("loadUseCaseExampleBtn").addEventListener("click",loadUseCaseExample);
+if($("useCaseLanguage"))$("useCaseLanguage").addEventListener("change",updateUseCaseCode);
+if($("useCaseTemperature"))$("useCaseTemperature").addEventListener("input",updateUseCaseCode);
+if($("useCaseMaxTokens"))$("useCaseMaxTokens").addEventListener("input",updateUseCaseCode);
+if($("useCaseJsonMode"))$("useCaseJsonMode").addEventListener("change",updateUseCaseCode);
+
+document.querySelectorAll(".usecase-stack").forEach(button=>{
+  button.addEventListener("click",()=>{
+    useCaseStack=button.dataset.usecaseStack;
+    document.querySelectorAll(".usecase-stack").forEach(item=>{
+      item.classList.toggle("active",item===button);
+    });
+    updateUseCaseCode();
+  });
+});
+
+if($("runUseCaseBtn"))$("runUseCaseBtn").addEventListener("click",async()=>{
+  const definition=currentUseCaseDefinition();
+  if(!definition)return;
+
+  const inputs=collectUseCaseInputs();
+  const missing=definition.fields.find(field=>field.required&&!String(inputs[field.name]||"").trim());
+  if(missing){
+    const input=document.querySelector('[data-use-case-field="'+missing.name+'"]');
+    showToast("Complete "+missing.label+" first.","error");
+    if(input)input.focus();
+    return;
+  }
+
+  setButtonLoading($("runUseCaseBtn"),true);
+  $("useCaseStatus").textContent="Running N-ATLaS…";
+  $("useCaseResult").textContent="Generating with N-ATLaS";
+  $("useCaseResult").className="usecase-result generating";
+  $("useCaseMeta").textContent="";
+
+  try{
+    const response=await fetch("/v1/use-cases/"+activeUseCase,{
+      method:"POST",
+      headers:{"content-type":"application/json"},
+      body:JSON.stringify({
+        language:$("useCaseLanguage").value,
+        inputs,
+        temperature:Number($("useCaseTemperature").value),
+        max_tokens:Number($("useCaseMaxTokens").value),
+        json_mode:$("useCaseJsonMode").checked
+      })
+    });
+    const result=await readApiResponse(response);
+    lastUseCaseResult=result.text||"";
+    $("useCaseResult").textContent=lastUseCaseResult||"(N-ATLaS returned an empty response.)";
+    $("useCaseResult").className="usecase-result";
+    $("useCaseMeta").textContent=[
+      result.use_case,
+      result.language,
+      result.model,
+      result.provider||"EDNAi",
+      result.latency_ms!=null?result.latency_ms+" ms":""
+    ].filter(Boolean).join(" · ");
+    $("useCaseStatus").textContent="Completed";
+    $("copyUseCaseResultBtn").disabled=!lastUseCaseResult;
+    $("useCaseToPlaygroundBtn").disabled=!lastUseCaseResult;
+    showToast(definition.title+" completed with N-ATLaS.","success");
+  }catch(error){
+    lastUseCaseResult="";
+    $("useCaseResult").textContent="Runtime error: "+error.message;
+    $("useCaseResult").className="usecase-result";
+    $("useCaseStatus").textContent=error.status===429?"Quota exhausted":"Request failed";
+    showToast(error.message,"error");
+  }finally{
+    setButtonLoading($("runUseCaseBtn"),false);
+  }
+});
+
+if($("copyUseCaseResultBtn"))$("copyUseCaseResultBtn").addEventListener("click",async()=>{
+  if(!lastUseCaseResult)return;
+  await copyText(lastUseCaseResult);
+  showToast("N-ATLaS result copied.","success");
+});
+
+if($("useCaseToPlaygroundBtn"))$("useCaseToPlaygroundBtn").addEventListener("click",()=>{
+  if(!lastUseCaseResult)return;
+  $("prompt").value=lastUseCaseResult;
+  consolePanel("playground");
+  $("panel-playground").scrollIntoView({behavior:"smooth",block:"start"});
+  setTimeout(()=>$("prompt").focus(),300);
+});
+
+if($("copyUseCaseCodeBtn"))$("copyUseCaseCodeBtn").addEventListener("click",async()=>{
+  await copyText($("useCaseCode").textContent);
+  showToast("Integration code copied.","success");
+});
+
+loadUseCaseRegistry();
+
+
 /* ---------- Speech Studio ---------- */
 const officialAsrModels={
   english:"NCAIR1/NigerianAccentedEnglish",
@@ -882,4 +1193,4 @@ renderQuickstart(savedStack,false);
 
 workspaceRestore();
 const requestedPanel=(location.hash||"#playground").slice(1);
-if(["playground","speech","evaluate","dataset","finetune","runtime","overview"].includes(requestedPanel))consolePanel(requestedPanel);
+if(["playground","usecases","speech","evaluate","dataset","finetune","runtime","overview"].includes(requestedPanel))consolePanel(requestedPanel);
