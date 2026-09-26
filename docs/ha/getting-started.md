@@ -110,3 +110,25 @@ EDNAi yana tabbatar da model ID da runtime ya dawo da shi ya dace da harshen da 
 - Yorùbá — `NCAIR1/Yoruba-ASR`
 - Hausa — `NCAIR1/Hausa-ASR`
 - Igbo — `NCAIR1/Igbo-ASR`
+
+
+## Use Case Studio
+
+EDNAi yana da workflow na N-ATLaS guda takwas: `chatbot`, `translation`, `education`, `culture`, `government`, `digital_inclusion`, `research` da `song`.
+
+```python
+result = client.run_use_case(
+    "education",
+    {
+        "topic": "Photosynthesis",
+        "learner_level": "JSS 2",
+        "objective": "Ka bayyana yadda tsiro ke yin abinci.",
+        "format": "lesson_quiz",
+    },
+    language="hausa",
+)
+print(result.text)
+```
+
+Yi amfani da `GET /v1/use-cases` don ganin workflows da `POST /v1/use-cases/{use_case}` don gudanar da su. Song generation rubutattun original lyrics ne kawai.
+
