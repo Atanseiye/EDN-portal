@@ -1,5 +1,5 @@
 from .client import AsyncEDNAi, EDNAi
-from .models import Generation, Message, ModelInfo, Transcription
+from .models import Generation, Message, ModelInfo, Transcription, UseCaseGeneration
 from .providers import NATLAS_MODEL_ID
 
 __all__ = [
@@ -9,5 +9,6 @@ __all__ = [
     "Message",
     "ModelInfo",
     "Transcription",
+    "UseCaseGeneration",
     "NATLAS_MODEL_ID",
 ]
