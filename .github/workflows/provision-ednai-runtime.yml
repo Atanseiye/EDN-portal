@@ -14,8 +14,8 @@ jobs:
       contents: read
     env:
       HF_TOKEN: ${{ secrets.HF_TOKEN }}
-      HF_OWNER: Kolade1
-      EDNAI_HF_SPACE: Kolade1/ednai-natlas-runtime
+      HF_OWNER: KoladeOdunope
+      EDNAI_HF_SPACE: KoladeOdunope/ednai-natlas-runtime
       EDNAI_HF_HARDWARE: zero-a10g
     steps:
       - uses: actions/checkout@v4
