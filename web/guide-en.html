@@ -1,19 +1,31 @@
-<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>EDNAi Docs</title><link rel="stylesheet" href="/assets/styles.css"><style>.doc{max-width:900px;margin:40px auto}.doc h1{font-size:52px;letter-spacing:-.04em}.doc h2{margin-top:38px}.doc pre{overflow:auto;background:#0d1b1e;color:#e8fff3;padding:18px;border-radius:14px}.doc code{font-family:ui-monospace,monospace}.doc p,.doc li{color:#52625d;line-height:1.7}.lang{display:flex;gap:8px;margin:16px 0 30px}.lang a{padding:7px 10px;border:1px solid var(--line);border-radius:999px;text-decoration:none;color:var(--green);font-weight:800;font-size:12px}</style></head><body><header class="nav"><a class="brand" href="/"><span class="mark">E</span><span>EDN<span>Ai</span></span></a><nav><a href="/">Playground</a><a href="/challenge">Challenge readiness</a></nav></header><main class="doc"><span class="eyebrow">Developer documentation</span><h1>Build with N-ATLaS.</h1><div class="lang"><a href="/guide/en">English</a><a href="/guide/yo">Yorùbá</a></div><p>EDNAi gives Nigerian developers one stable layer for calling, evaluating, adapting and deploying <code>NCAIR1/N-ATLaS</code>.</p><h2>Python SDK</h2><pre><code>from ednai import EDNAi
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>EDNAi Docs — English</title><link rel="stylesheet" href="/assets/styles.css"><style>
+.doc{max-width:920px;margin:40px auto}.doc h1{font-size:clamp(42px,7vw,64px);letter-spacing:-.045em;line-height:1}.doc h2{margin-top:38px;font-size:25px}.doc h3{margin-top:24px}.doc pre{overflow:auto;background:#0d1b1e;color:#e8fff3;padding:18px;border-radius:14px}.doc code{font-family:ui-monospace,SFMono-Regular,Menlo,monospace}.doc p,.doc li{color:#52625d;line-height:1.72}.lang{display:flex;gap:8px;flex-wrap:wrap;margin:16px 0 30px}.lang a{padding:7px 10px;border:1px solid var(--line);border-radius:999px;text-decoration:none;color:var(--green);font-weight:800;font-size:12px}.lang a.active{background:var(--ink);color:#fff;border-color:var(--ink)}.callout{border:1px solid var(--line);background:#f8faf8;border-radius:14px;padding:16px 18px;margin:22px 0}.doc-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:12px;margin:22px 0}.doc-grid a{border:1px solid var(--line);background:#fff;border-radius:14px;padding:18px;text-decoration:none;color:var(--ink)}.doc-grid strong{display:block;font-size:18px}.doc-grid span{display:block;color:var(--muted);font-size:12px;margin-top:5px}@media(max-width:650px){.doc-grid{grid-template-columns:1fr}}
+</style></head><body><header class="nav"><a class="brand" href="/"><span class="mark">E</span><span>EDN<span>Ai</span></span></a><nav><a href="/">Playground</a><a href="/guide">All docs</a><a href="/challenge">Challenge readiness</a></nav></header><main class="doc"><span class="eyebrow">Developer documentation · English / Nigerian English</span><h1>Build with N-ATLaS.</h1><div class="lang"><a href="/guide/en" class="active">English</a><a href="/guide/yo">Yorùbá</a><a href="/guide/ha">Hausa</a><a href="/guide/ig">Igbo</a></div><p>EDNAi provides one stable developer layer for integrating, testing, evaluating, adapting and deploying the official <code>NCAIR1/N-ATLaS</code> model.</p><div class="callout"><strong>N-ATLaS only.</strong><p>EDNAi rejects model substitution. Qualifying inference must identify the upstream model as exactly <code>NCAIR1/N-ATLaS</code>.</p></div><h2>1. Python SDK</h2><pre><code>from ednai import EDNAi
 
-ai = EDNAi(base_url="https://your-gateway")
+ai = EDNAi(base_url="https://ednai-6znf.onrender.com")
 result = ai.generate(
-    "Explain transformer attention simply.",
+    "Explain prepaid electricity metering simply.",
+    system="Answer clearly in Nigerian English.",
     temperature=0.2,
+    max_tokens=300,
 )
-print(result.text)</code></pre><h2>TypeScript SDK</h2><pre><code>import { EDNAi } from "@ednai/sdk";
+print(result.text)</code></pre><h2>2. TypeScript SDK</h2><pre><code>import { EDNAi } from "@ednai/sdk";
 
-const ai = new EDNAi({ baseUrl: "https://your-gateway" });
+const ai = new EDNAi({
+  baseUrl: "https://ednai-6znf.onrender.com"
+});
 const result = await ai.generate("Ka bayyana API da Hausa.");
-console.log(result.text);</code></pre><h2>OpenAI-compatible API</h2><pre><code>POST /v1/chat/completions
+console.log(result.text);</code></pre><h2>3. OpenAI-compatible HTTP</h2><pre><code>POST /v1/chat/completions
 {
   "model": "NCAIR1/N-ATLaS",
-  "messages": [{"role":"user","content":"Kí ni API?"}]
-}</code></pre><h2>Evaluate</h2><pre><code>ednai eval benchmarks/natlas_smoke.jsonl \
-  --base-url http://localhost:8000 \
-  --output report.json</code></pre><h2>Adapt</h2><p>The included QLoRA starter trains lightweight adapters directly on N-ATLaS using NF4 4-bit quantization and LoRA.</p><pre><code>python fine_tuning/prepare_data.py --input raw.jsonl --output prepared.jsonl
-python fine_tuning/train_qlora.py --dataset prepared.jsonl --output-dir outputs/adapter</code></pre><p>Full source documentation lives in <code>docs/en/getting-started.md</code>.</p></main></body></html>
+  "messages": [
+    {"role":"user","content":"Kí ni API?"}
+  ],
+  "temperature": 0.2,
+  "max_tokens": 300
+}</code></pre><h2>4. Prompting and JSON mode</h2><p>Use a system message to request language, tone or task constraints. Leave JSON mode off for normal prose. Enable it only when the application requires machine-readable JSON.</p><h2>5. Evaluation</h2><pre><code>ednai eval benchmarks/natlas_smoke.jsonl \
+  --base-url https://ednai-6znf.onrender.com \
+  --output report.json</code></pre><p>The browser Evaluation Workbench supports multilingual regression cases, required/forbidden strings, JSON validity and latency reporting.</p><h2>6. Dataset Studio</h2><p>Dataset Studio accepts chat-format <code>messages[]</code> or instruction/input/output JSONL, validates each record, normalizes the data and produces training-ready JSONL without intentionally persisting the uploaded dataset.</p><h2>7. Fine-tuning</h2><pre><code>python fine_tuning/prepare_data.py --input raw.jsonl --output prepared.jsonl
+python fine_tuning/train_qlora.py \
+  --dataset prepared.jsonl \
+  --output-dir outputs/my-natlas-adapter</code></pre><p>The starter derives QLoRA/LoRA adapters directly from <code>NCAIR1/N-ATLaS</code>.</p><h2>8. Runtime modes</h2><ul><li><strong>ZeroGPU:</strong> hosted direct N-ATLaS runtime for demos and development; free quota can queue or temporarily exhaust.</li><li><strong>Local Transformers:</strong> load official N-ATLaS weights on your own machine/server.</li><li><strong>OpenAI-compatible N-ATLaS:</strong> point EDNAi at an upstream endpoint that truly serves N-ATLaS.</li></ul><h2>9. Official speech model registry</h2><ul><li>Nigerian English — <code>NCAIR1/NigerianAccentedEnglish</code></li><li>Yorùbá — <code>NCAIR1/Yoruba-ASR</code></li><li>Hausa — <code>NCAIR1/Hausa-ASR</code></li><li>Igbo — <code>NCAIR1/Igbo-ASR</code></li></ul><p>Repository guide: <code>docs/en/getting-started.md</code>.</p></main></body></html>
