@@ -26,7 +26,7 @@ from server.store import BetaStore
 settings = get_settings()
 ROOT = Path(__file__).resolve().parents[1]
 WEB = ROOT / "web"
-store = BetaStore(settings.ednai_database_path)
+store = BetaStore(settings.ednai_database_path, settings.ednai_database_url or None)
 
 app = FastAPI(
     title="EDNAi",
