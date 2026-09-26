@@ -84,3 +84,15 @@ def test_live_evaluation_fails_closed_without_natlas_runtime():
     })
     assert response.status_code == 503
     assert "N-ATLaS runtime" in response.json()["detail"]
+
+
+def test_speech_score_endpoint():
+    response = client.post("/api/studio/speech/score", json={
+        "reference": "Ka bayyana API da Hausa.",
+        "hypothesis": "Ka bayyana API da Hausa",
+    })
+    assert response.status_code == 200
+    body = response.json()
+    assert body["wer"] == 0
+    assert body["cer"] == 0
+    assert body["reference_words"] == 5
