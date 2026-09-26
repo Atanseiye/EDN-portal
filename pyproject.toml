@@ -23,7 +23,8 @@ server = [
   "uvicorn[standard]>=0.32,<1",
   "pydantic-settings>=2.6,<3",
   "python-multipart>=0.0.12,<1",
-  "gradio-client>=1.8,<2"
+  "gradio-client>=1.8,<2",
+  "psycopg[binary]>=3.2,<4"
 ]
 local = [
   "transformers>=4.57,<6",
