@@ -136,7 +136,7 @@ Apache-2.0.
 
 ## Speech development
 
-EDNAi includes a first-class Speech Studio and developer APIs for Nigerian voice applications.
+EDNAi's challenge submission uses only official NCAIR / N-ATLaS speech-recognition models. No third-party TTS or unrelated speech model is part of the submission path.
 
 ### Official NCAIR ASR
 
@@ -173,7 +173,30 @@ ednai transcribe sample.wav --language yoruba \
   --base-url https://ednai-6znf.onrender.com
 ```
 
-The ASR model ID is provenance-checked against the selected language. WER and CER scoring are available in Speech Studio and through `/api/studio/speech/score`.
+Browser/TypeScript applications can compose official speech input with N-ATLaS generation:
+
+```ts
+const result = await ai.voiceTurn(audioBlob, "yoruba", {
+  system: "Dáhùn ní Yorùbá tó rọrùn.",
+});
+
+console.log(result.transcription.text);
+console.log(result.generation.text);
+```
+
+This performs:
+
+```text
+audio
+  -> official NCAIR ASR
+  -> transcript
+  -> NCAIR1/N-ATLaS
+  -> text response
+```
+
+The ASR model ID is provenance-checked against the selected language. EDNAi rejects substituted speech models.
+
+WER and CER scoring are available in Speech Studio and through `/api/studio/speech/score`.
 
 Batch benchmark a JSONL manifest of audio/reference pairs:
 
@@ -182,27 +205,3 @@ ednai speech-eval examples/speech-benchmark.jsonl \
   --base-url https://ednai-6znf.onrender.com \
   --output speech-report.json
 ```
-
-### TTS
-
-NCAIR currently publishes no official N-ATLaS TTS checkpoint. EDNAi therefore does **not** label speech synthesis as N-ATLaS. The hosted interface and TypeScript SDK use matching browser/device voices only when available:
-
-```ts
-await ai.speak("Ẹ káàbọ̀ sí EDNAi.", "yoruba");
-```
-
-No silent fallback to a different language is performed.
-
-For browser applications, the TypeScript SDK can compose the entire voice-input flow:
-
-```ts
-const result = await ai.voiceTurn(audioBlob, "yoruba", {
-  system: "Dáhùn ní Yorùbá tó rọrùn.",
-  speak: true,
-});
-
-console.log(result.transcription.text);
-console.log(result.generation.text);
-```
-
-This performs official NCAIR ASR → N-ATLaS generation → optional device TTS while preserving the provenance boundary of each stage.
