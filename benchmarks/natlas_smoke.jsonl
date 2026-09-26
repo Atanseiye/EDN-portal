@@ -1,0 +1,12 @@
+{"id":"en-capital","prompt":"What is the capital of Nigeria? Answer in one short sentence.","language":"english","must_include":["Abuja"]}
+{"id":"en-arithmetic","prompt":"What is 17 plus 25? Return only the number.","language":"english","must_include":["42"]}
+{"id":"en-json","prompt":"Return a JSON object with keys country and capital for Nigeria.","language":"english","json_mode":true,"must_include":["Nigeria","Abuja"]}
+{"id":"yo-greeting","prompt":"Ṣàlàyé ní Yorùbá pé kí ni artificial intelligence, ní ọ̀rọ̀ díẹ̀.","language":"yoruba"}
+{"id":"yo-nigeria","prompt":"Kọ gbolohun kan ní Yorùbá nípa Nàìjíríà.","language":"yoruba"}
+{"id":"yo-dev","prompt":"Ṣàlàyé ní Yorùbá ohun tí API túmọ̀ sí fún developer.","language":"yoruba"}
+{"id":"ha-greeting","prompt":"Ka bayyana menene artificial intelligence a Hausa cikin jimla biyu.","language":"hausa"}
+{"id":"ha-api","prompt":"Ka bayyana API ga sabon developer da Hausa.","language":"hausa"}
+{"id":"ha-nigeria","prompt":"Rubuta jimla daya a Hausa game da Najeriya.","language":"hausa"}
+{"id":"ig-ai","prompt":"Kọwaa ihe artificial intelligence pụtara n'Igbo n'ahịrịokwu abụọ.","language":"igbo"}
+{"id":"ig-api","prompt":"Kọwaa API nye onye developer ọhụrụ n'Igbo.","language":"igbo"}
+{"id":"ig-nigeria","prompt":"Dee otu ahịrịokwu n'Igbo gbasara Naịjirịa.","language":"igbo"}
