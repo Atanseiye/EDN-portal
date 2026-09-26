@@ -19,6 +19,7 @@ def test_health_and_model_discovery():
 def test_playground_and_guides_are_real_pages():
     assert client.get("/").status_code == 200
     assert "Build with" in client.get("/").text
+    assert client.head("/").status_code == 200
     assert client.get("/guide/en").status_code == 200
     assert client.get("/guide/yo").status_code == 200
     assert client.get("/challenge").status_code == 200
@@ -34,6 +35,18 @@ def test_wrong_model_is_rejected_before_inference():
     )
     assert r.status_code == 400
     assert "NCAIR1/N-ATLaS" in r.json()["detail"]
+
+
+def test_capabilities_expose_direct_natlas_tooling():
+    body = client.get("/v1/capabilities").json()
+    assert body["model"] == NATLAS_MODEL_ID
+    assert "python-sdk" in body["interfaces"]
+    assert body["asr_models"]["yoruba"] == "NCAIR1/Yoruba-ASR"
+
+
+def test_disabled_runtime_probe_fails_closed():
+    r = client.post("/api/runtime/probe")
+    assert r.status_code == 503
 
 
 def test_disabled_runtime_fails_closed():
