@@ -145,6 +145,8 @@ def health():
         "provider": settings.ednai_provider,
         "provider_configured": provider is not None,
         "direct_natlas_integration": settings.qualifying_provider,
+        "asr_provider_configured": provider is not None and callable(getattr(provider, "transcribe", None)),
+        "tts_mode": "browser_device_non_qualifying",
     }
 
 
@@ -160,7 +162,8 @@ def speech_capabilities():
             "provider": "NCAIR1",
             "official_natlas_components": True,
             "languages": NATLAS_ASR_MODELS,
-            "runtime_available": provider is not None and callable(getattr(provider, "transcribe", None)),
+            "runtime_configured": provider is not None and callable(getattr(provider, "transcribe", None)),
+            "runtime_verified": False,
             "input": ["microphone", "wav", "mp3", "m4a", "ogg", "webm"],
         },
         "tts": {
@@ -407,6 +410,9 @@ def readiness():
         "interactive_playground": True,
         "fine_tuning_starter": True,
         "evaluation_tooling": True,
+        "speech_studio": True,
+        "official_ncair_asr_tooling": True,
+        "tts_provenance_boundary": True,
         "bilingual_documentation": True,
         "multilingual_documentation_en_yo_ha_ig": True,
         "direct_natlas_runtime_configured": settings.qualifying_provider,
