@@ -1,6 +1,16 @@
 export const NATLAS_MODEL_ID = "NCAIR1/N-ATLaS" as const;
 
 export type Role = "system" | "user" | "assistant";
+export type SpeechLanguage = "english" | "yoruba" | "hausa" | "igbo";
+
+export interface Transcription {
+  text: string;
+  model: string;
+  language: SpeechLanguage;
+  provider?: string | null;
+  latency_ms?: number | null;
+  raw: Record<string, unknown>;
+}
 
 export interface Message {
   role: Role;
@@ -76,6 +86,35 @@ export class EDNAi {
       throw new Error("EDNAi request failed (" + response.status + "): " + detail);
     }
     return response.json() as Promise<Generation>;
+  }
+
+  async transcribe(audio: Blob, language: SpeechLanguage, filename = "audio.webm"): Promise<Transcription> {
+    const headers: Record<string, string> = {};
+    if (this.apiKey) headers.authorization = "Bearer " + this.apiKey;
+
+    const form = new FormData();
+    form.append("language", language);
+    form.append("file", audio, filename);
+
+    const response = await this.fetchImpl(this.baseUrl + "/v1/audio/transcriptions", {
+      method: "POST",
+      headers,
+      body: form,
+    });
+
+    if (!response.ok) {
+      const detail = await response.text();
+      throw new Error("EDNAi transcription failed (" + response.status + "): " + detail);
+    }
+    return response.json() as Promise<Transcription>;
+  }
+
+  async speechCapabilities(): Promise<Record<string, unknown>> {
+    const response = await this.fetchImpl(this.baseUrl + "/v1/audio/capabilities");
+    if (!response.ok) {
+      throw new Error("EDNAi speech capability discovery failed (" + response.status + ")");
+    }
+    return response.json() as Promise<Record<string, unknown>>;
   }
 
   async models(): Promise<Array<Record<string, unknown>>> {
