@@ -91,6 +91,27 @@ curl -X POST https://ednai-6znf.onrender.com/api/runtime/probe
 
 Probe yìí ń jẹ́risi provenance model, ó sì máa fail bí upstream model kì í ṣe `NCAIR1/N-ATLaS`.
 
+
+## Speech Studio àti ASR osise
+
+EDNAi ń fún developer ní àwọn speech-recognition model osise NCAIR ní gateway, SDK, CLI àti Speech Studio.
+
+```python
+result = client.transcribe("audio.wav", language="yoruba")
+print(result.text)
+print(result.model)
+```
+
+EDNAi máa ń ṣàyẹ̀wò model ID tí runtime dá padà kí ó bá èdè tí a yàn mu; kò gba ASR model substitution.
+
+## Ààlà TTS
+
+NCAIR kò tíì ṣe official N-ATLaS TTS checkpoint. EDNAi yà speech synthesis sọ́tọ̀ kúrò ní qualifying N-ATLaS provenance. Speech Studio máa ń lo browser/device voice tó bá Yorùbá mu nígbà tí voice bẹ́ẹ̀ bá wà; kò ní fi voice èdè míì rọ́pò rẹ̀ láì sọ.
+
+```ts
+await ai.speak("Ẹ káàbọ̀ sí EDNAi.", "yoruba");
+```
+
 ## Speech models
 
 - Nigerian English — `NCAIR1/NigerianAccentedEnglish`
