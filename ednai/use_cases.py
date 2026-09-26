@@ -47,6 +47,11 @@ USE_CASES: dict[str, dict[str, Any]] = {
         "output_label": "Assistant response",
         "temperature": 0.35,
         "max_tokens": 500,
+        "example_inputs": {
+            "message": "Explain what an API is to a first-time developer in simple terms.",
+            "persona": "developer onboarding assistant",
+            "context": "The user is learning how to build applications with EDNAi.",
+        },
         "fields": [
             _field(
                 "message",
@@ -75,6 +80,12 @@ USE_CASES: dict[str, dict[str, Any]] = {
         "output_label": "Translation",
         "temperature": 0.1,
         "max_tokens": 700,
+        "example_inputs": {
+            "source_language": "english",
+            "target_language": "yoruba",
+            "text": "Digital tools should be understandable and useful to everyone.",
+            "notes": "Keep the translation clear and natural.",
+        },
         "fields": [
             _field(
                 "source_language",
@@ -110,6 +121,12 @@ USE_CASES: dict[str, dict[str, Any]] = {
         "output_label": "Learning material",
         "temperature": 0.3,
         "max_tokens": 900,
+        "example_inputs": {
+            "topic": "Photosynthesis",
+            "learner_level": "JSS 2 / beginner",
+            "objective": "Explain how plants use sunlight, water and carbon dioxide to make food.",
+            "format": "lesson_quiz",
+        },
         "fields": [
             _field(
                 "topic",
@@ -149,6 +166,11 @@ USE_CASES: dict[str, dict[str, Any]] = {
         "output_label": "Preservation record",
         "temperature": 0.2,
         "max_tokens": 900,
+        "example_inputs": {
+            "material": "Record this short oral-history excerpt exactly as supplied, then explain only what can be inferred from the text: \"Our grandparents met under the old tree whenever the community needed to settle an important matter.\"",
+            "material_type": "oral_history",
+            "known_context": "The speaker described this as a family memory. No date or location was provided.",
+        },
         "fields": [
             _field(
                 "material",
@@ -183,6 +205,11 @@ USE_CASES: dict[str, dict[str, Any]] = {
         "output_label": "Citizen guidance",
         "temperature": 0.15,
         "max_tokens": 800,
+        "example_inputs": {
+            "service": "Public-service application",
+            "question": "How should I prepare before starting an online application?",
+            "official_context": "Applicants should confirm the current requirements on the responsible agency's official channel before submitting personal information or making payment.",
+        },
         "fields": [
             _field(
                 "service",
@@ -211,6 +238,11 @@ USE_CASES: dict[str, dict[str, Any]] = {
         "output_label": "Accessible version",
         "temperature": 0.2,
         "max_tokens": 650,
+        "example_inputs": {
+            "content": "Enable two-factor authentication, keep your verification code private, and review the recipient before approving any transaction.",
+            "audience": "first-time smartphone user",
+            "channel": "whatsapp",
+        },
         "fields": [
             _field(
                 "content",
@@ -245,6 +277,11 @@ USE_CASES: dict[str, dict[str, Any]] = {
         "output_label": "Research analysis",
         "temperature": 0.15,
         "max_tokens": 1000,
+        "example_inputs": {
+            "task": "analyze",
+            "question": "What themes appear across these interview notes, and which claims need more evidence?",
+            "material": "[Interview A] Users value local-language explanations.\\n[Interview B] Connectivity makes long workflows difficult.\\n[Interview C] The participant prefers short step-by-step instructions.",
+        },
         "fields": [
             _field(
                 "task",
@@ -278,6 +315,12 @@ USE_CASES: dict[str, dict[str, Any]] = {
         "output_label": "Original lyrics",
         "temperature": 0.65,
         "max_tokens": 900,
+        "example_inputs": {
+            "theme": "community, learning and hope",
+            "mood": "uplifting",
+            "structure": "two_verses_chorus",
+            "details": "Write for a youth community gathering. Keep the lyrics original and easy to sing.",
+        },
         "fields": [
             _field(
                 "theme",
