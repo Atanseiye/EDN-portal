@@ -80,5 +80,20 @@ def doctor(base_url: str = typer.Option("http://localhost:8000", "--base-url")):
         raise typer.Exit(1)
 
 
+@app.command()
+def serve(
+    host: str = typer.Option("0.0.0.0", "--host"),
+    port: int = typer.Option(8000, "--port"),
+    reload: bool = typer.Option(False, "--reload"),
+):
+    """Run the EDNAi gateway, playground and developer docs."""
+    try:
+        import uvicorn
+    except ImportError as exc:
+        console.print("[red]Server dependencies are missing.[/red] Install with: pip install -e \".[server]\"")
+        raise typer.Exit(1) from exc
+    uvicorn.run("server.main:app", host=host, port=port, reload=reload)
+
+
 if __name__ == "__main__":
     app()
