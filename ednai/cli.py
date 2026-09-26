@@ -10,6 +10,7 @@ from rich.table import Table
 from .client import EDNAi
 from .evals import load_jsonl, run_benchmark, summarize
 from .providers import NATLAS_MODEL_ID
+from .speech_eval import score_transcript
 
 app = typer.Typer(help="EDNAi — developer tooling for N-ATLaS")
 console = Console()
@@ -63,6 +64,80 @@ def speech_capabilities_cmd(
     """Show EDNAi ASR models and TTS capability boundaries."""
     client = EDNAi(base_url)
     console.print_json(data=client.speech_capabilities())
+
+
+@app.command("speech-eval")
+def speech_eval_cmd(
+    manifest: Path = typer.Argument(..., exists=True, file_okay=True, dir_okay=False),
+    base_url: str = typer.Option("http://localhost:8000", "--base-url"),
+    output: Path | None = typer.Option(None, "--output"),
+):
+    """Benchmark official NCAIR ASR from a JSONL audio/reference manifest."""
+    client = EDNAi(base_url)
+    rows = []
+    base = manifest.parent
+
+    for line_no, line in enumerate(manifest.read_text(encoding="utf-8").splitlines(), 1):
+        if not line.strip():
+            continue
+        item = json.loads(line)
+        audio = Path(item["audio"])
+        if not audio.is_absolute():
+            audio = base / audio
+        reference = str(item["reference"])
+        language = str(item.get("language", "english"))
+        case_id = str(item.get("id", f"line-{line_no}"))
+
+        result = client.transcribe(audio, language)
+        metrics = score_transcript(reference, result.text)
+        rows.append({
+            "id": case_id,
+            "audio": str(audio),
+            "language": result.language,
+            "reference": reference,
+            "hypothesis": result.text,
+            "model": result.model,
+            "latency_ms": result.latency_ms,
+            **metrics,
+        })
+
+    if not rows:
+        raise typer.BadParameter("Manifest contains no benchmark rows.")
+
+    avg_wer = sum(float(row["wer"]) for row in rows) / len(rows)
+    avg_cer = sum(float(row["cer"]) for row in rows) / len(rows)
+    report = {
+        "cases": len(rows),
+        "average_wer": round(avg_wer, 6),
+        "average_cer": round(avg_cer, 6),
+        "results": rows,
+    }
+
+    table = Table(title="EDNAi official NCAIR ASR benchmark")
+    table.add_column("Case")
+    table.add_column("Language")
+    table.add_column("WER")
+    table.add_column("CER")
+    table.add_column("Latency")
+    for row in rows:
+        table.add_row(
+            row["id"],
+            row["language"],
+            f"{float(row['wer']):.1%}",
+            f"{float(row['cer']):.1%}",
+            f"{row['latency_ms']} ms" if row["latency_ms"] is not None else "-",
+        )
+    console.print(table)
+    console.print(
+        f"Average WER [bold]{avg_wer:.1%}[/bold] · "
+        f"Average CER [bold]{avg_cer:.1%}[/bold]"
+    )
+    if output:
+        output.write_text(
+            json.dumps(report, ensure_ascii=False, indent=2),
+            encoding="utf-8",
+        )
+        console.print(f"Saved speech benchmark to {output}")
 
 
 @app.command()
