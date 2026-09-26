@@ -22,6 +22,7 @@ from ednai.providers import (
 )
 from server.config import get_settings
 from server.store import BetaStore
+from server.studio import EvalRunRequest, router as studio_router, run_studio_eval
 
 settings = get_settings()
 ROOT = Path(__file__).resolve().parents[1]
@@ -40,6 +41,7 @@ app.add_middleware(
     allow_headers=["*"],
 )
 app.mount("/assets", StaticFiles(directory=WEB), name="assets")
+app.include_router(studio_router)
 
 
 def build_provider() -> Provider | None:
@@ -147,6 +149,11 @@ def capabilities():
             "igbo": "NCAIR1/Igbo-ASR",
         },
     }
+
+
+@app.post("/api/studio/evaluate")
+def studio_evaluate(data: EvalRunRequest):
+    return run_studio_eval(provider, data)
 
 
 @app.post("/api/runtime/probe")
