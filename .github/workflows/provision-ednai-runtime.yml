@@ -6,6 +6,8 @@ on:
     branches: [ednai]
     paths:
       - ".github/workflows/provision-ednai-runtime.yml"
+      - "scripts/provision_ednai_runtime.py"
+      - "runtime/hf_space/**"
 
 jobs:
   provision:
