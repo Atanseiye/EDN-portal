@@ -1,6 +1,24 @@
 const $=(id)=>document.getElementById(id);
 let history=[];
 
+async function readApiResponse(response){
+  const text=await response.text();
+  let body=null;
+  if(text){
+    try{body=JSON.parse(text);}
+    catch(_){body=null;}
+  }
+  if(!response.ok){
+    const message=(body&&body.detail)||(body&&body.error)||text.trim()||("Request failed ("+response.status+")");
+    const error=new Error(message);
+    error.status=response.status;
+    error.retryAfter=response.headers.get("retry-after");
+    throw error;
+  }
+  if(body!==null)return body;
+  throw new Error("Server returned an unreadable response.");
+}
+
 function addMessage(role,text){
   const div=document.createElement("div");
   div.className="message "+role;
@@ -48,15 +66,14 @@ async function runPrompt(){
         json_mode:$("jsonMode").checked
       })
     });
-    const body=await r.json();
-    if(!r.ok)throw new Error(body.detail||"Request failed");
+    const body=await readApiResponse(r);
     addMessage("assistant",body.text);
     history.push({role:"assistant",content:body.text});
     const latency=body.latency_ms??Math.round(performance.now()-started);
     $("meta").textContent=`${body.provider||"EDNAi"} · ${latency} ms · ${body.model}`;
   }catch(e){
     addMessage("assistant",`Runtime error: ${e.message}`);
-    $("meta").textContent="Request failed";
+    $("meta").textContent=e.status===429?"ZeroGPU quota temporarily exhausted":"Request failed";
   }finally{
     $("sendBtn").disabled=false;
     $("runBtn").disabled=false;
@@ -314,8 +331,7 @@ if($("probeRuntimeBtn"))$("probeRuntimeBtn").addEventListener("click",async func
   $("runtimeProbe").textContent="Running…";
   try{
     const response=await fetch("/api/runtime/probe",{method:"POST"});
-    const result=await response.json();
-    if(!response.ok)throw new Error(result.detail||"Probe failed");
+    const result=await readApiResponse(response);
     $("runtimeProbe").textContent=result.provenance_verified?"Verified":"Unverified";
   }catch(error){
     $("runtimeProbe").textContent="Unavailable";
