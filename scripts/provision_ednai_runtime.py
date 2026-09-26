@@ -32,10 +32,17 @@ def main():
     print("Verifying gated N-ATLaS access...")
     hf_hub_download(MODEL_ID, "config.json", token=token)
 
+    requested = os.getenv("EDNAI_HF_HARDWARE", ZERO_GPU)
+    if requested != ZERO_GPU:
+        raise SystemExit(
+            f"Refusing {requested}. EDNAi provisioner only permits {ZERO_GPU}."
+        )
+
     api.create_repo(
         repo_id=SPACE_ID,
         repo_type="space",
         space_sdk="gradio",
+        space_hardware=ZERO_GPU,
         private=False,
         exist_ok=True,
         token=token,
