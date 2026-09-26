@@ -1,146 +1,102 @@
-# EDNAi — Getting Started
+# EDNAi — Getting Started (English / Nigerian English)
 
-EDNAi is a developer layer for the official `NCAIR1/N-ATLaS` model. It provides consistent SDKs, a gateway, evaluation tools, adaptation scripts and deployment helpers.
+EDNAi is a developer layer for the official `NCAIR1/N-ATLaS` model. It provides consistent SDKs, a gateway, evaluation tools, dataset preparation, adaptation tooling and runtime helpers.
 
-## Python
+## Core guarantee
 
-Install:
+EDNAi does not substitute another general-purpose model. Qualifying inference must identify the upstream model as exactly `NCAIR1/N-ATLaS`.
 
-```bash
-pip install -e .
-```
-
-Use:
+## Python SDK
 
 ```python
 from ednai import EDNAi
 
-client = EDNAi(base_url="https://your-ednai-gateway.example")
-
+client = EDNAi(base_url="https://ednai-6znf.onrender.com")
 response = client.generate(
-    "Explain electricity metering in simple Nigerian English.",
-    system="Answer clearly and concisely.",
+    "Explain prepaid electricity metering simply.",
+    system="Answer clearly in Nigerian English.",
     temperature=0.2,
     max_tokens=300,
 )
-
 print(response.text)
-print(response.provider, response.latency_ms)
 ```
 
-Async:
-
-```python
-from ednai import AsyncEDNAi
-
-client = AsyncEDNAi(base_url="https://your-ednai-gateway.example")
-response = await client.generate("Kí ni API?", system="Dáhùn ní Yorùbá.")
-```
-
-## TypeScript
+## TypeScript SDK
 
 ```ts
 import { EDNAi } from "@ednai/sdk";
 
-const ai = new EDNAi({ baseUrl: "https://your-ednai-gateway.example" });
-
-const result = await ai.generate("Ka bayyana API da Hausa.", {
-  temperature: 0.2,
-  maxTokens: 300,
+const ai = new EDNAi({
+  baseUrl: "https://ednai-6znf.onrender.com"
 });
 
+const result = await ai.generate("Ka bayyana API da Hausa.");
 console.log(result.text);
 ```
 
-## OpenAI-compatible HTTP
+## OpenAI-compatible API
 
 ```bash
-curl -X POST https://your-ednai-gateway.example/v1/chat/completions \
+curl -X POST https://ednai-6znf.onrender.com/v1/chat/completions \
   -H "Content-Type: application/json" \
   -d '{
-    "model": "NCAIR1/N-ATLaS",
-    "messages": [{"role":"user","content":"Kọwaa API n\u0027Igbo."}],
-    "temperature": 0.2,
-    "max_tokens": 300
+    "model":"NCAIR1/N-ATLaS",
+    "messages":[{"role":"user","content":"Kí ni API?"}],
+    "temperature":0.2,
+    "max_tokens":300
   }'
 ```
 
-EDNAi rejects any different model ID on the qualifying runtime.
+## Prompting and JSON mode
 
-## Runtime modes
+Use a system message to specify language, tone or task constraints. Leave JSON mode off for normal prose. Enable it only when the application requires machine-readable JSON.
 
-### Local Transformers
-
-Set:
-
-```text
-EDNAI_PROVIDER=local
-EDNAI_MODEL=NCAIR1/N-ATLaS
-HF_TOKEN=...
-```
-
-Install `ednai[local]`. The base model is loaded directly from the official NCAIR Hugging Face repository.
-
-### OpenAI-compatible N-ATLaS deployment
-
-Set:
-
-```text
-EDNAI_PROVIDER=openai_compatible
-EDNAI_UPSTREAM_BASE_URL=https://your-natlas-server.example/v1
-EDNAI_UPSTREAM_API_KEY=...
-```
-
-The gateway still requires the request model ID to be `NCAIR1/N-ATLaS`.
-
-### EDNAi Gradio runtime
-
-Set:
-
-```text
-EDNAI_PROVIDER=gradio_space
-EDNAI_GRADIO_SPACE_ID=<account>/<space>
-HF_TOKEN=...
-```
-
-## Evaluate
+## Evaluation
 
 ```bash
 ednai eval benchmarks/natlas_smoke.jsonl \
-  --base-url https://your-ednai-gateway.example \
+  --base-url https://ednai-6znf.onrender.com \
   --output report.json
 ```
 
-Each benchmark case can specify:
-- prompt;
-- language;
-- required strings;
-- forbidden strings;
-- JSON validity.
+Benchmark cases can validate required strings, forbidden strings, JSON validity and latency. For semantic quality, add human review or task-specific metrics.
 
-For research-grade evaluation, add human review or task-specific metrics rather than treating keyword checks as semantic quality measurement.
+## Dataset Studio
 
-## Adapt
+Dataset Studio accepts:
+- chat-format `messages[]`;
+- instruction/input/output JSONL.
 
-See `fine_tuning/README.md`.
+It validates records, normalizes the dataset and produces training-ready JSONL without intentionally persisting uploaded content.
 
-EDNAi's QLoRA starter:
-- starts from `NCAIR1/N-ATLaS`;
-- uses 4-bit NF4;
-- trains lightweight LoRA adapters;
-- saves the adapter separately from the base weights.
+## Fine-tuning
 
-## Speech
-
-```python
-from ednai.speech import asr_model_for
-
-print(asr_model_for("yoruba"))
-# NCAIR1/Yoruba-ASR
+```bash
+python fine_tuning/prepare_data.py --input raw.jsonl --output prepared.jsonl
+python fine_tuning/train_qlora.py \
+  --dataset prepared.jsonl \
+  --output-dir outputs/my-natlas-adapter
 ```
 
-Supported official speech repositories:
-- Nigerian English: `NCAIR1/NigerianAccentedEnglish`
-- Yorùbá: `NCAIR1/Yoruba-ASR`
-- Hausa: `NCAIR1/Hausa-ASR`
-- Igbo: `NCAIR1/Igbo-ASR`
+The QLoRA starter derives adapters directly from `NCAIR1/N-ATLaS`.
+
+## Runtime modes
+
+- **ZeroGPU** — hosted development/demo runtime. Free quota may queue or temporarily exhaust.
+- **Local Transformers** — load official N-ATLaS weights on your own machine or server.
+- **OpenAI-compatible N-ATLaS** — connect EDNAi to an endpoint that truly serves N-ATLaS.
+
+## Runtime verification
+
+```bash
+curl -X POST https://ednai-6znf.onrender.com/api/runtime/probe
+```
+
+The probe verifies model provenance and fails if the upstream model identity is not exactly `NCAIR1/N-ATLaS`.
+
+## Speech model registry
+
+- Nigerian English — `NCAIR1/NigerianAccentedEnglish`
+- Yorùbá — `NCAIR1/Yoruba-ASR`
+- Hausa — `NCAIR1/Hausa-ASR`
+- Igbo — `NCAIR1/Igbo-ASR`
