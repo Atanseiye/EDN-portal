@@ -10,6 +10,7 @@ from ednai.providers import (
     ProviderError,
 )
 from ednai.speech import asr_model_for, normalize_speech_language
+from ednai.speech_eval import character_error_rate, score_transcript, word_error_rate
 
 
 def test_speech_language_aliases_resolve_to_official_ncair_models():
@@ -88,3 +89,12 @@ def test_gradio_asr_rejects_substituted_model(monkeypatch, tmp_path):
 
     with pytest.raises(ProviderError, match="provenance"):
         GradioSpaceProvider("owner/runtime").transcribe(audio, "english")
+
+
+def test_speech_error_rates_preserve_language_characters():
+    assert word_error_rate("Ẹ káàbọ̀ sí EDNAi", "Ẹ káàbọ̀ sí EDNAi") == 0
+    assert character_error_rate("Nnọọ", "Nnọọ") == 0
+    report = score_transcript("Ka bayyana API da Hausa.", "Ka bayyana API da Hausa")
+    assert report["wer"] == 0
+    assert report["cer"] == 0
+    assert report["reference_words"] == 5
