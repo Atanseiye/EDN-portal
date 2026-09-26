@@ -104,14 +104,6 @@ print(result.model)
 
 EDNAi máa ń ṣàyẹ̀wò model ID tí runtime dá padà kí ó bá èdè tí a yàn mu; kò gba ASR model substitution.
 
-## Ààlà TTS
-
-NCAIR kò tíì ṣe official N-ATLaS TTS checkpoint. EDNAi yà speech synthesis sọ́tọ̀ kúrò ní qualifying N-ATLaS provenance. Speech Studio máa ń lo browser/device voice tó bá Yorùbá mu nígbà tí voice bẹ́ẹ̀ bá wà; kò ní fi voice èdè míì rọ́pò rẹ̀ láì sọ.
-
-```ts
-await ai.speak("Ẹ káàbọ̀ sí EDNAi.", "yoruba");
-```
-
 ## Speech models
 
 - Nigerian English — `NCAIR1/NigerianAccentedEnglish`
