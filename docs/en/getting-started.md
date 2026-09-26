@@ -119,3 +119,25 @@ The returned model ID is checked against the selected language. EDNAi rejects AS
 - Yorùbá — `NCAIR1/Yoruba-ASR`
 - Hausa — `NCAIR1/Hausa-ASR`
 - Igbo — `NCAIR1/Igbo-ASR`
+
+
+## Use Case Studio
+
+EDNAi provides eight structured N-ATLaS application workflows: `chatbot`, `translation`, `education`, `culture`, `government`, `digital_inclusion`, `research` and `song`.
+
+```python
+result = client.run_use_case(
+    "education",
+    {
+        "topic": "Photosynthesis",
+        "learner_level": "JSS 2",
+        "objective": "Explain how plants make food.",
+        "format": "lesson_quiz",
+    },
+    language="english",
+)
+print(result.text)
+```
+
+Discover them with `GET /v1/use-cases` and execute with `POST /v1/use-cases/{use_case}`. Song generation produces original text lyrics only.
+
