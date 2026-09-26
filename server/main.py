@@ -106,6 +106,11 @@ def challenge_page():
     return FileResponse(WEB / "challenge.html")
 
 
+@app.get("/guide", include_in_schema=False)
+def guide_index():
+    return FileResponse(WEB / "guide.html")
+
+
 @app.get("/guide/en", include_in_schema=False)
 def english_guide():
     return FileResponse(WEB / "guide-en.html")
@@ -114,6 +119,16 @@ def english_guide():
 @app.get("/guide/yo", include_in_schema=False)
 def yoruba_guide():
     return FileResponse(WEB / "guide-yo.html")
+
+
+@app.get("/guide/ha", include_in_schema=False)
+def hausa_guide():
+    return FileResponse(WEB / "guide-ha.html")
+
+
+@app.get("/guide/ig", include_in_schema=False)
+def igbo_guide():
+    return FileResponse(WEB / "guide-ig.html")
 
 
 @app.get("/health")
@@ -142,7 +157,7 @@ def capabilities():
         "runtime_modes": ["local_transformers", "gradio_zerogpu", "openai_compatible_natlas"],
         "evaluation": ["jsonl-benchmarks", "json-validity", "keyword-regression", "language-smoke", "latency"],
         "adaptation": ["qlora", "lora", "nf4-4bit", "adapter-only-output"],
-        "documentation_languages": ["english", "yoruba"],
+        "documentation_languages": ["english", "yoruba", "hausa", "igbo"],
         "asr_models": {
             "english": "NCAIR1/NigerianAccentedEnglish",
             "yoruba": "NCAIR1/Yoruba-ASR",
@@ -309,6 +324,7 @@ def readiness():
         "fine_tuning_starter": True,
         "evaluation_tooling": True,
         "bilingual_documentation": True,
+        "multilingual_documentation_en_yo_ha_ig": True,
         "direct_natlas_runtime_configured": settings.qualifying_provider,
         "minimum_two_external_beta_testers": beta["beta_target_met"],
     }
