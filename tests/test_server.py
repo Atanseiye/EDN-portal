@@ -25,6 +25,8 @@ def test_playground_and_guides_are_real_pages():
     assert "Fine-tune Planner" in page
     assert "Runtime & SDK" in page
     assert "Speech Studio" in page
+    assert "Use Case Studio" in page
+    assert "8 N-ATLaS workflows" in page
     assert "Automatic Speech Recognition" in page
     assert "Device Speech Synthesis" not in page
     assert "Official NCAIR / N-ATLaS ASR only" in page
@@ -58,6 +60,17 @@ def test_capabilities_expose_direct_natlas_tooling():
     body = client.get("/v1/capabilities").json()
     assert body["model"] == NATLAS_MODEL_ID
     assert "python-sdk" in body["interfaces"]
+    assert "use-case-studio" in body["interfaces"]
+    assert set(body["use_cases"]) == {
+        "chatbot",
+        "translation",
+        "education",
+        "culture",
+        "government",
+        "digital_inclusion",
+        "research",
+        "song",
+    }
     assert body["asr_models"]["yoruba"] == "NCAIR1/Yoruba-ASR"
     assert body["documentation_languages"] == ["english", "yoruba", "hausa", "igbo"]
 
