@@ -35,7 +35,7 @@ model.eval()
 model.to("cuda")
 
 
-@spaces.GPU(duration=120)
+@spaces.GPU(duration=60)
 def generate(
     messages_json: str,
     temperature: float = 0.2,
