@@ -30,7 +30,7 @@
     <a class="hero-secondary" href="/guide">Read the docs</a>
     <span class="shortcut-hint">⌘/Ctrl + K <small>command menu</small></span>
   </div>
-  <div class="hero-tags"><span>Python SDK</span><span>TypeScript SDK</span><span>OpenAI-compatible API</span><span>Evaluation</span><span>Dataset Studio</span><span>QLoRA</span></div>
+  <div class="hero-tags"><span>Python SDK</span><span>TypeScript SDK</span><span>OpenAI-compatible API</span><span>Speech Studio</span><span>Evaluation</span><span>Dataset Studio</span><span>QLoRA</span></div>
 </section>
 
 <section class="launchpad panel" id="launchpad">
@@ -104,11 +104,15 @@
     <button class="template-card" type="button" data-template="extract">
       <span class="template-icon">{ }</span><strong>Structured extraction</strong><small>Machine-readable JSON output</small><em>Use template →</em>
     </button>
+    <button class="template-card" type="button" data-template="voice">
+      <span class="template-icon">◉</span><strong>Voice application</strong><small>ASR → N-ATLaS → speech output</small><em>Open Speech Studio →</em>
+    </button>
   </div>
 </section>
 
 <nav class="console-tabs" aria-label="EDNAi developer workspaces">
   <button class="console-tab active" data-panel="playground">Playground</button>
+  <button class="console-tab" data-panel="speech">Speech Studio</button>
   <button class="console-tab" data-panel="evaluate">Evaluation</button>
   <button class="console-tab" data-panel="dataset">Dataset Studio</button>
   <button class="console-tab" data-panel="finetune">Fine-tune Planner</button>
@@ -145,6 +149,134 @@
   </section>
 </section>
 
+
+
+<section class="console-panel" id="panel-speech">
+  <div class="workspace-head">
+    <div>
+      <span class="eyebrow">Speech engineering</span>
+      <h2>Speech Studio</h2>
+      <p>Build Nigerian voice experiences with official NCAIR speech recognition and clearly separated device speech synthesis.</p>
+    </div>
+    <div class="speech-trust">
+      <span class="trust-badge good">Official NCAIR ASR</span>
+      <span class="trust-badge neutral">Device TTS · supplementary</span>
+    </div>
+  </div>
+
+  <div class="speech-grid">
+    <article class="panel speech-card">
+      <div class="section-head">
+        <div>
+          <span class="eyebrow">Speech → text</span>
+          <h3>Automatic Speech Recognition</h3>
+        </div>
+        <span id="asrStatus" class="status">Ready</span>
+      </div>
+
+      <label class="speech-field">
+        Language
+        <select id="asrLanguage">
+          <option value="english">English / Nigerian English</option>
+          <option value="yoruba">Yorùbá</option>
+          <option value="hausa">Hausa</option>
+          <option value="igbo">Igbo</option>
+        </select>
+      </label>
+
+      <button id="asrDropZone" class="audio-dropzone" type="button">
+        <span class="audio-icon">◉</span>
+        <strong>Drop an audio file here</strong>
+        <small>or click to choose WAV, MP3, M4A, OGG or WebM · max 25 MB</small>
+      </button>
+      <input id="asrFile" type="file" accept="audio/*,.wav,.mp3,.m4a,.ogg,.webm" hidden>
+
+      <div class="record-row">
+        <button id="recordAudioBtn" class="ghost record-button" type="button"><span class="record-dot"></span> Record microphone</button>
+        <span id="recordingTimer" class="recording-timer">Not recording</span>
+      </div>
+
+      <audio id="asrPreview" class="audio-preview hidden" controls></audio>
+
+      <div class="speech-actions">
+        <button id="transcribeBtn" class="primary" type="button">Transcribe audio</button>
+        <button id="clearAudioBtn" class="ghost" type="button">Clear</button>
+      </div>
+
+      <div class="speech-result">
+        <div class="section-head compact">
+          <h3>Transcript</h3>
+          <div class="inline-actions">
+            <button id="copyTranscriptBtn" class="text-button" type="button" disabled>Copy</button>
+            <button id="useTranscriptBtn" class="text-button" type="button" disabled>Use in Playground →</button>
+          </div>
+        </div>
+        <textarea id="asrTranscript" readonly placeholder="Your transcription will appear here."></textarea>
+        <p id="asrMeta" class="hint">Select or record audio to begin.</p>
+      </div>
+    </article>
+
+    <article class="panel speech-card">
+      <div class="section-head">
+        <div>
+          <span class="eyebrow">Text → speech</span>
+          <h3>Device Speech Synthesis</h3>
+        </div>
+        <span id="ttsStatus" class="status">Checking voices…</span>
+      </div>
+
+      <div class="tts-provenance-note">
+        <strong>Not an N-ATLaS model.</strong>
+        <span>NCAIR currently publishes no official TTS checkpoint. EDNAi uses a matching voice already available on this device and never presents it as N-ATLaS.</span>
+      </div>
+
+      <div class="two">
+        <label class="speech-field">
+          Language
+          <select id="ttsLanguage">
+            <option value="english">English / Nigerian English</option>
+            <option value="yoruba">Yorùbá</option>
+            <option value="hausa">Hausa</option>
+            <option value="igbo">Igbo</option>
+          </select>
+        </label>
+        <label class="speech-field">
+          Available voice
+          <select id="ttsVoice"></select>
+        </label>
+      </div>
+
+      <label class="speech-field">
+        Text to speak
+        <textarea id="ttsText" rows="7" placeholder="Enter text, use a transcript, or bring in the last N-ATLaS response."></textarea>
+      </label>
+
+      <div class="range-grid">
+        <label>Speed <span id="ttsRateValue">1.0×</span><input id="ttsRate" type="range" min="0.6" max="1.5" step="0.1" value="1"></label>
+        <label>Pitch <span id="ttsPitchValue">1.0</span><input id="ttsPitch" type="range" min="0.5" max="1.5" step="0.1" value="1"></label>
+      </div>
+
+      <div class="speech-actions">
+        <button id="speakBtn" class="primary" type="button">Speak</button>
+        <button id="stopSpeakingBtn" class="ghost" type="button">Stop</button>
+        <button id="useLastReplyBtn" class="ghost" type="button">Use last N-ATLaS reply</button>
+      </div>
+
+      <p id="ttsVoiceHelp" class="hint">EDNAi will enable speech only when a matching device voice is available.</p>
+    </article>
+  </div>
+
+  <article class="panel voice-pipeline-card">
+    <div>
+      <span class="eyebrow">Voice application pattern</span>
+      <h3>Build a complete voice loop</h3>
+      <p>Record speech, transcribe it with an official NCAIR model, send the transcript to N-ATLaS, then read the answer aloud using the device TTS layer.</p>
+    </div>
+    <div class="voice-pipeline">
+      <span>Microphone</span><b>→</b><span>NCAIR ASR</span><b>→</b><span>N-ATLaS</span><b>→</b><span>Device TTS</span>
+    </div>
+  </article>
+</section>
 
 <section class="console-panel" id="panel-evaluate">
   <div class="workspace-head">
@@ -278,6 +410,7 @@ ai.generate("Báwo ni?")</code></pre></article>
   <input id="commandSearch" class="command-search" placeholder="Search tools, docs or actions…" autocomplete="off">
   <div id="commandList" class="command-list">
     <button type="button" data-command="playground"><span>⌘</span><strong>Playground</strong><small>Run N-ATLaS prompts</small></button>
+    <button type="button" data-command="speech"><span>◉</span><strong>Speech Studio</strong><small>ASR, recording and TTS</small></button>
     <button type="button" data-command="evaluate"><span>✓</span><strong>Evaluation</strong><small>Run multilingual benchmarks</small></button>
     <button type="button" data-command="dataset"><span>▦</span><strong>Dataset Studio</strong><small>Validate training JSONL</small></button>
     <button type="button" data-command="finetune"><span>↗</span><strong>Fine-tune Planner</strong><small>Generate a QLoRA plan</small></button>
