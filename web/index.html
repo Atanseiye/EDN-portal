@@ -213,6 +213,20 @@
         </div>
         <textarea id="asrTranscript" readonly placeholder="Your transcription will appear here."></textarea>
         <p id="asrMeta" class="hint">Select or record audio to begin.</p>
+
+        <details class="speech-eval-box">
+          <summary>Evaluate transcript against a reference</summary>
+          <label class="speech-field">
+            Reference transcript
+            <textarea id="asrReference" rows="4" placeholder="Paste the human reference transcript here."></textarea>
+          </label>
+          <button id="scoreTranscriptBtn" class="ghost" type="button">Calculate WER / CER</button>
+          <div class="speech-metrics">
+            <div><span>WER</span><strong id="asrWer">—</strong></div>
+            <div><span>CER</span><strong id="asrCer">—</strong></div>
+            <div><span>Reference words</span><strong id="asrRefWords">—</strong></div>
+          </div>
+        </details>
       </div>
     </article>
 
