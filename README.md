@@ -7,8 +7,11 @@ EDNAi is an open developer platform that makes Nigeria's N-ATLaS model easier to
 It is being built for the **National AI Innovation Challenge 2026 — Developer Infrastructure** problem statement.
 
 **Live developer playground:** https://ednai-6znf.onrender.com  
-**English docs:** https://ednai-6znf.onrender.com/guide/en  
+**Documentation hub:** https://ednai-6znf.onrender.com/guide  
+**English / Nigerian English docs:** https://ednai-6znf.onrender.com/guide/en  
 **Yorùbá docs:** https://ednai-6znf.onrender.com/guide/yo  
+**Hausa docs:** https://ednai-6znf.onrender.com/guide/ha  
+**Igbo docs:** https://ednai-6znf.onrender.com/guide/ig  
 **Challenge readiness:** https://ednai-6znf.onrender.com/challenge  
 **OpenAPI:** https://ednai-6znf.onrender.com/docs
 
@@ -23,7 +26,7 @@ It is being built for the **National AI Innovation Challenge 2026 — Developer 
 - Nigerian-language ASR model registry.
 - Evaluation harness and multilingual smoke benchmark.
 - QLoRA/LoRA fine-tuning starter kit.
-- English + Yorùbá developer documentation.
+- First-class English / Nigerian English, Yorùbá, Hausa and Igbo developer documentation.
 - Challenge-readiness and external beta-test evidence endpoints.
 
 EDNAi deliberately refuses to identify a different general-purpose model as N-ATLaS.
