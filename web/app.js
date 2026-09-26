@@ -139,7 +139,22 @@ function renderOnboarding(){
 function completeOnboarding(step){
   onboarding[step]=true;
   try{localStorage.setItem("ednai-onboarding",JSON.stringify(onboarding));}catch(_){}
-  renderOnboarding();
+  if($("asrLanguage")){
+  $("asrLanguage").addEventListener("change",updateSelectedAsrModel);
+  updateSelectedAsrModel();
+}
+
+if($("copyAsrPythonBtn"))$("copyAsrPythonBtn").addEventListener("click",async()=>{
+  await copyText($("asrPythonCode").textContent);
+  showToast("Python ASR example copied.","success");
+});
+
+if($("copyAsrCurlBtn"))$("copyAsrCurlBtn").addEventListener("click",async()=>{
+  await copyText($("asrCurlCode").textContent);
+  showToast("cURL ASR example copied.","success");
+});
+
+renderOnboarding();
 }
 
 async function readApiResponse(response){
@@ -637,13 +652,18 @@ document.addEventListener("keydown",event=>{
 
 
 /* ---------- Speech Studio ---------- */
-const ttsLocalePreferences={
-  english:["en-NG","en-GB","en-US","en"],
-  yoruba:["yo-NG","yo"],
-  hausa:["ha-NG","ha"],
-  igbo:["ig-NG","ig"]
+const officialAsrModels={
+  english:"NCAIR1/NigerianAccentedEnglish",
+  yoruba:"NCAIR1/Yoruba-ASR",
+  hausa:"NCAIR1/Hausa-ASR",
+  igbo:"NCAIR1/Igbo-ASR"
 };
 
+function updateSelectedAsrModel(){
+  if($("selectedAsrModel")){
+    $("selectedAsrModel").textContent=officialAsrModels[$("asrLanguage").value]||"";
+  }
+}
 let selectedAudioBlob=null;
 let selectedAudioName="audio.webm";
 let selectedAudioUrl=null;
@@ -709,7 +729,6 @@ function clearAudio(){
   if($("asrCer"))$("asrCer").textContent="—";
   if($("asrRefWords"))$("asrRefWords").textContent="—";
   if($("copyTranscriptBtn"))$("copyTranscriptBtn").disabled=true;
-  if($("useTranscriptTtsBtn"))$("useTranscriptTtsBtn").disabled=true;
   if($("useTranscriptBtn"))$("useTranscriptBtn").disabled=true;
   if($("asrDropZone")){
     const strong=$("asrDropZone").querySelector("strong");
@@ -814,9 +833,7 @@ if($("transcribeBtn"))$("transcribeBtn").addEventListener("click",async()=>{
     $("asrTranscript").value=result.text||"";
     $("asrMeta").textContent=result.model+" · "+(result.provider||"EDNAi")+" · "+latency+" ms";
     $("copyTranscriptBtn").disabled=!result.text;
-    $("useTranscriptTtsBtn").disabled=!result.text;
     $("useTranscriptBtn").disabled=!result.text;
-    if(result.text && !$("ttsText").value.trim())$("ttsText").value=result.text;
     setAsrStatus("Transcribed","good");
     showToast("Official NCAIR transcription completed.","success");
   }catch(error){
@@ -856,131 +873,6 @@ if($("scoreTranscriptBtn"))$("scoreTranscriptBtn").addEventListener("click",asyn
   }finally{
     setButtonLoading($("scoreTranscriptBtn"),false);
   }
-});
-
-if($("useTranscriptTtsBtn"))$("useTranscriptTtsBtn").addEventListener("click",()=>{
-  const transcript=$("asrTranscript").value.trim();
-  if(!transcript)return;
-  $("ttsText").value=transcript;
-  const language=$("asrLanguage").value;
-  $("ttsLanguage").value=language;
-  refreshTtsVoices();
-  $("ttsText").focus();
-  showToast("Transcript loaded into TTS.","success");
-});
-
-if($("useTranscriptBtn"))$("useTranscriptBtn").addEventListener("click",()=>{
-  const transcript=$("asrTranscript").value.trim();
-  if(!transcript)return;
-  $("prompt").value=transcript;
-  consolePanel("playground");
-  $("panel-playground").scrollIntoView({behavior:"smooth",block:"start"});
-  setTimeout(()=>$("prompt").focus(),300);
-});
-
-function matchingTtsVoices(language){
-  if(!("speechSynthesis" in window))return [];
-  const voices=window.speechSynthesis.getVoices();
-  const preferences=ttsLocalePreferences[language]||[];
-  const scored=[];
-  voices.forEach(voice=>{
-    const lang=(voice.lang||"").toLowerCase();
-    let score=999;
-    preferences.forEach((pref,index)=>{
-      const p=pref.toLowerCase();
-      if(lang===p)score=Math.min(score,index*10);
-      else if(lang.startsWith(p+"-")||p.startsWith(lang+"-"))score=Math.min(score,index*10+1);
-    });
-    if(score<999)scored.push({voice,score});
-  });
-  return scored.sort((a,b)=>a.score-b.score||a.voice.name.localeCompare(b.voice.name)).map(item=>item.voice);
-}
-
-function refreshTtsVoices(){
-  if(!$("ttsVoice"))return;
-  const language=$("ttsLanguage").value;
-  const select=$("ttsVoice");
-  const voices=matchingTtsVoices(language);
-  select.innerHTML="";
-  voices.forEach((voice,index)=>{
-    const option=document.createElement("option");
-    option.value=String(index);
-    option.textContent=voice.name+" · "+voice.lang+(voice.default?" · default":"");
-    select.appendChild(option);
-  });
-  const available=voices.length>0;
-  select.disabled=!available;
-  $("speakBtn").disabled=!available;
-  $("ttsStatus").textContent=available?voices.length+" voice"+(voices.length===1?"":"s")+" found":"No matching voice";
-  $("ttsStatus").className="status "+(available?"good":"warn");
-  const languageLabel=$("ttsLanguage").selectedOptions[0].textContent;
-  $("ttsVoiceHelp").textContent=available
-    ?"Using voices installed by this device/browser for "+languageLabel+"."
-    :"No matching "+languageLabel+" voice is installed on this device. EDNAi will not silently fall back to a different language.";
-}
-
-if($("ttsLanguage"))$("ttsLanguage").addEventListener("change",refreshTtsVoices);
-if("speechSynthesis" in window){
-  window.speechSynthesis.addEventListener("voiceschanged",refreshTtsVoices);
-}
-setTimeout(refreshTtsVoices,50);
-setTimeout(refreshTtsVoices,600);
-
-if($("ttsRate"))$("ttsRate").addEventListener("input",()=>{
-  $("ttsRateValue").textContent=Number($("ttsRate").value).toFixed(1)+"×";
-});
-if($("ttsPitch"))$("ttsPitch").addEventListener("input",()=>{
-  $("ttsPitchValue").textContent=Number($("ttsPitch").value).toFixed(1);
-});
-
-if($("speakBtn"))$("speakBtn").addEventListener("click",()=>{
-  const textValue=$("ttsText").value.trim();
-  if(!textValue){
-    showToast("Add some text to speak first.","error");
-    return;
-  }
-  if(!("speechSynthesis" in window)){
-    showToast("Speech synthesis is not supported in this browser.","error");
-    return;
-  }
-  const voices=matchingTtsVoices($("ttsLanguage").value);
-  const voice=voices[Number($("ttsVoice").value)||0];
-  if(!voice){
-    refreshTtsVoices();
-    showToast("No matching device voice is available for this language.","error");
-    return;
-  }
-  window.speechSynthesis.cancel();
-  const utterance=new SpeechSynthesisUtterance(textValue);
-  utterance.voice=voice;
-  utterance.lang=voice.lang;
-  utterance.rate=Number($("ttsRate").value);
-  utterance.pitch=Number($("ttsPitch").value);
-  utterance.onstart=()=>{
-    $("ttsStatus").textContent="Speaking";
-    $("ttsStatus").className="status good";
-  };
-  utterance.onend=refreshTtsVoices;
-  utterance.onerror=event=>{
-    $("ttsStatus").textContent="Playback failed";
-    $("ttsStatus").className="status warn";
-    showToast("Device speech playback failed: "+event.error,"error");
-  };
-  window.speechSynthesis.speak(utterance);
-});
-
-if($("stopSpeakingBtn"))$("stopSpeakingBtn").addEventListener("click",()=>{
-  if("speechSynthesis" in window)window.speechSynthesis.cancel();
-  refreshTtsVoices();
-});
-
-if($("useLastReplyBtn"))$("useLastReplyBtn").addEventListener("click",()=>{
-  if(!lastAssistantText){
-    showToast("Run N-ATLaS first so there is a response to speak.","error");
-    return;
-  }
-  $("ttsText").value=lastAssistantText;
-  showToast("Last N-ATLaS response loaded.","success");
 });
 
 renderOnboarding();
