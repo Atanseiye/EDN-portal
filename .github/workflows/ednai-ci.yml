@@ -1,0 +1,42 @@
+name: EDNAi CI
+
+on:
+  push:
+    branches: [ednai]
+  pull_request:
+    branches: [ednai]
+
+jobs:
+  python:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+      - name: Install EDNAi
+        run: pip install -e ".[server,dev]"
+      - name: Compile Python
+        run: python -m compileall -q ednai server fine_tuning runtime/hf_space scripts
+      - name: Test
+        run: pytest -q
+
+  typescript:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: packages/js
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: packages/js/package.json
+      - name: Install
+        run: npm install
+      - name: Typecheck
+        run: npm run typecheck
+      - name: Build
+        run: npm run build
