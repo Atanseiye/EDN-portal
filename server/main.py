@@ -6,7 +6,7 @@ from typing import Literal
 
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import FileResponse
+from fastapi.responses import FileResponse, Response
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, Field
 
@@ -88,6 +88,11 @@ class BetaFeedback(BaseModel):
     consent: bool
 
 
+@app.head("/", include_in_schema=False)
+def root_head():
+    return Response(status_code=200)
+
+
 @app.get("/", include_in_schema=False)
 def playground():
     return FileResponse(WEB / "index.html")
@@ -123,6 +128,52 @@ def health():
 @app.get("/v1/models")
 def models():
     return {"object": "list", "data": [ModelInfo(id=NATLAS_MODEL_ID).model_dump()]}
+
+
+@app.get("/v1/capabilities")
+def capabilities():
+    return {
+        "product": "EDNAi",
+        "model": NATLAS_MODEL_ID,
+        "interfaces": ["python-sdk", "typescript-sdk", "openai-compatible-http", "playground"],
+        "runtime_modes": ["local_transformers", "gradio_zerogpu", "openai_compatible_natlas"],
+        "evaluation": ["jsonl-benchmarks", "json-validity", "keyword-regression", "language-smoke", "latency"],
+        "adaptation": ["qlora", "lora", "nf4-4bit", "adapter-only-output"],
+        "documentation_languages": ["english", "yoruba"],
+        "asr_models": {
+            "english": "NCAIR1/NigerianAccentedEnglish",
+            "yoruba": "NCAIR1/Yoruba-ASR",
+            "hausa": "NCAIR1/Hausa-ASR",
+            "igbo": "NCAIR1/Igbo-ASR",
+        },
+    }
+
+
+@app.post("/api/runtime/probe")
+def runtime_probe():
+    if provider is None:
+        raise HTTPException(status_code=503, detail="No direct N-ATLaS runtime is configured.")
+    started = time.perf_counter()
+    try:
+        generation = provider.generate(
+            [Message(role="user", content="Reply with exactly: EDNAI_OK")],
+            model=NATLAS_MODEL_ID,
+            temperature=0,
+            max_tokens=16,
+            json_mode=False,
+        )
+    except ProviderError as exc:
+        raise HTTPException(status_code=502, detail=str(exc)) from exc
+    if generation.model != NATLAS_MODEL_ID:
+        raise HTTPException(status_code=502, detail="Runtime returned an unexpected model identity.")
+    return {
+        "ok": bool(generation.text.strip()),
+        "model": generation.model,
+        "provider": generation.provider,
+        "output": generation.text.strip(),
+        "latency_ms": generation.latency_ms or round((time.perf_counter() - started) * 1000, 2),
+        "provenance_verified": True,
+    }
 
 
 def _generate(req: GenerateRequest) -> Generation:
