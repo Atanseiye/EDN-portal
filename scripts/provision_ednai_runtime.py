@@ -1,11 +1,15 @@
-"""Create EDNAi's zero-cost N-ATLaS runtime Space.
+"""Provision the EDNAi zero-cost direct N-ATLaS runtime on Hugging Face ZeroGPU.
 
-This script intentionally permits only Hugging Face ZeroGPU hardware.
-Run it locally with an HF token that can create Spaces and read NCAIR1/N-ATLaS.
+The provisioner is fail-closed:
+- only NCAIR1/N-ATLaS is verified;
+- only zero-a10g hardware is permitted;
+- the HF token is stored only as a Space secret;
+- success is reported only after the Space reaches a usable runtime stage.
 """
 from __future__ import annotations
 
 import os
+import time
 from pathlib import Path
 
 from huggingface_hub import HfApi, get_token, hf_hub_download
@@ -17,7 +21,7 @@ MODEL_ID = "NCAIR1/N-ATLaS"
 ZERO_GPU = "zero-a10g"
 
 
-def main():
+def main() -> None:
     token = os.getenv("HF_TOKEN") or get_token()
     if not token:
         raise SystemExit(
@@ -29,14 +33,14 @@ def main():
     if user and user.lower() != OWNER.lower():
         raise SystemExit(f"Authenticated as {user}; expected {OWNER}.")
 
-    print("Verifying gated N-ATLaS access...")
-    hf_hub_download(MODEL_ID, "config.json", token=token)
-
     requested = os.getenv("EDNAI_HF_HARDWARE", ZERO_GPU)
     if requested != ZERO_GPU:
         raise SystemExit(
             f"Refusing {requested}. EDNAi provisioner only permits {ZERO_GPU}."
         )
+
+    print("Verifying gated N-ATLaS access...", flush=True)
+    hf_hub_download(MODEL_ID, "config.json", token=token)
 
     api.create_repo(
         repo_id=SPACE_ID,
@@ -47,6 +51,7 @@ def main():
         exist_ok=True,
         token=token,
     )
+
     api.upload_folder(
         repo_id=SPACE_ID,
         repo_type="space",
@@ -55,6 +60,7 @@ def main():
         commit_message="Deploy EDNAi direct N-ATLaS runtime",
         token=token,
     )
+
     api.add_space_secret(
         repo_id=SPACE_ID,
         key="HF_TOKEN",
@@ -62,24 +68,55 @@ def main():
         token=token,
     )
 
-    requested = os.getenv("EDNAI_HF_HARDWARE", ZERO_GPU)
-    if requested != ZERO_GPU:
+    print(f"Space: https://huggingface.co/spaces/{SPACE_ID}", flush=True)
+
+    deadline = time.time() + 480
+    last_stage = None
+    runtime = None
+
+    while time.time() < deadline:
+        runtime = api.get_space_runtime(repo_id=SPACE_ID, token=token)
+        stage = str(runtime.stage)
+
+        if stage != last_stage:
+            print(
+                f"Stage: {stage}; hardware={runtime.hardware}; "
+                f"requested={runtime.requested_hardware}",
+                flush=True,
+            )
+            last_stage = stage
+
+        normalized = stage.upper()
+        if normalized in {"RUNNING", "RUNNING_APP_STARTING"}:
+            break
+
+        if any(
+            marker in normalized
+            for marker in ("ERROR", "FAILED", "BROKEN", "CONFIG_ERROR")
+        ):
+            raise SystemExit(f"Hugging Face Space failed to start: {stage}")
+
+        time.sleep(10)
+    else:
         raise SystemExit(
-            f"Refusing {requested}. EDNAi provisioner only permits {ZERO_GPU}."
+            f"Timed out waiting for {SPACE_ID}. Last stage: {last_stage}"
         )
 
-    api.request_space_hardware(
-        repo_id=SPACE_ID,
-        hardware=ZERO_GPU,
-        token=token,
-    )
-    runtime = api.get_space_runtime(repo_id=SPACE_ID, token=token)
-    print(f"Space: https://huggingface.co/spaces/{SPACE_ID}")
-    print(f"Stage: {runtime.stage}")
-    print(f"Hardware: {runtime.hardware}; requested: {runtime.requested_hardware}")
-    print("\nWhen the Space is Running, set:")
-    print("EDNAI_PROVIDER=gradio_space")
-    print(f"EDNAI_GRADIO_SPACE_ID={SPACE_ID}")
+    if runtime is None:
+        raise SystemExit("Runtime status could not be read.")
+
+    if (
+        str(runtime.hardware) != ZERO_GPU
+        and str(runtime.requested_hardware) != ZERO_GPU
+    ):
+        raise SystemExit(
+            "Runtime is not configured for ZeroGPU: "
+            f"hardware={runtime.hardware}, requested={runtime.requested_hardware}"
+        )
+
+    print("\nRuntime is ready. Configure EDNAi with:", flush=True)
+    print("EDNAI_PROVIDER=gradio_space", flush=True)
+    print(f"EDNAI_GRADIO_SPACE_ID={SPACE_ID}", flush=True)
 
 
 if __name__ == "__main__":
