@@ -14,6 +14,7 @@ from pydantic import BaseModel, Field
 from ednai.evals import EvalCase, EvalResult, score, summarize
 from ednai.models import Message
 from ednai.providers import NATLAS_MODEL_ID, Provider, ProviderError
+from ednai.speech_eval import score_transcript
 from fine_tuning.prepare_data import normalize_row
 
 router = APIRouter(prefix="/api/studio", tags=["Developer Studio"])
@@ -38,6 +39,11 @@ class EvalRunRequest(BaseModel):
 class DatasetInspectRequest(BaseModel):
     jsonl: str = Field(min_length=1, max_length=2_000_000)
     preview_rows: int = Field(default=3, ge=1, le=10)
+
+
+class SpeechScoreRequest(BaseModel):
+    reference: str = Field(min_length=1, max_length=50_000)
+    hypothesis: str = Field(min_length=1, max_length=50_000)
 
 
 class FineTunePlanRequest(BaseModel):
@@ -255,6 +261,11 @@ print(f"{result.model} · {result.latency_ms} ms")
         media_type="application/zip",
         headers={"Content-Disposition": 'attachment; filename="ednai-natlas-starter.zip"'},
     )
+
+
+@router.post("/speech/score")
+def speech_score(data: SpeechScoreRequest):
+    return score_transcript(data.reference, data.hypothesis)
 
 
 @router.post("/dataset/inspect")
