@@ -206,6 +206,10 @@ def starter_zip() -> StreamingResponse:
 
 Install EDNAi, connect a qualifying N-ATLaS runtime, and run `python app.py`.
 
+For official NCAIR speech recognition, place an audio file beside `voice.py` and run:
+
+    python voice.py sample.wav yoruba
+
 Evaluate with:
 
     ednai eval benchmarks/smoke.jsonl --base-url http://localhost:8000
@@ -218,6 +222,18 @@ result = ai.generate(
     temperature=0.2,
 )
 print(result.text)
+""",
+        "ednai-starter/voice.py": """import sys
+from ednai import EDNAi
+
+audio = sys.argv[1] if len(sys.argv) > 1 else "sample.wav"
+language = sys.argv[2] if len(sys.argv) > 2 else "english"
+
+ai = EDNAi(base_url="http://localhost:8000")
+result = ai.transcribe(audio, language=language)
+
+print(result.text)
+print(f"{result.model} · {result.latency_ms} ms")
 """,
         "ednai-starter/.env.example": "EDNAI_BASE_URL=http://localhost:8000\n",
         "ednai-starter/benchmarks/smoke.jsonl": (
