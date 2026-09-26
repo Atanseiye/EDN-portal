@@ -148,7 +148,8 @@ class GradioSpaceProvider(Provider):
             raise ProviderError("Install ednai[server] to use a Gradio N-ATLaS runtime") from exc
         started = time.perf_counter()
         try:
-            client = Client(self.space_id)
+            client_kwargs = {"hf_token": self.hf_token} if self.hf_token else {}
+            client = Client(self.space_id, **client_kwargs)
             result = client.predict(
                 json.dumps([m.model_dump() for m in messages], ensure_ascii=False),
                 float(temperature),
@@ -158,7 +159,7 @@ class GradioSpaceProvider(Provider):
             )
         except Exception as exc:
             message = str(exc)
-            if "ZeroGPU quota" in message or "exceeded your ZeroGPU quota" in message:
+            if ("ZeroGPU quota" in message or "exceeded your ZeroGPU quota" in message or "ZeroGPU runs limit" in message):
                 retry_after = _parse_retry_after_seconds(message)
                 retry_text = (
                     f" Try again in about {retry_after // 3600}h "
@@ -212,7 +213,8 @@ class GradioSpaceProvider(Provider):
 
         started = time.perf_counter()
         try:
-            client = Client(self.space_id)
+            client_kwargs = {"hf_token": self.hf_token} if self.hf_token else {}
+            client = Client(self.space_id, **client_kwargs)
             result = client.predict(
                 handle_file(str(audio_path)),
                 language,
@@ -220,7 +222,7 @@ class GradioSpaceProvider(Provider):
             )
         except Exception as exc:
             message = str(exc)
-            if "ZeroGPU quota" in message or "exceeded your ZeroGPU quota" in message:
+            if ("ZeroGPU quota" in message or "exceeded your ZeroGPU quota" in message or "ZeroGPU runs limit" in message):
                 retry_after = _parse_retry_after_seconds(message)
                 raise ProviderQuotaError(
                     "The free NCAIR ASR ZeroGPU quota is temporarily exhausted.",
