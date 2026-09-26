@@ -32,4 +32,14 @@ python fine_tuning/train_qlora.py \
 print(result.text)
 print(result.model)</code></pre><pre><code>curl -X POST https://ednai-6znf.onrender.com/v1/audio/transcriptions \
   -F 'language=yoruba' \
-  -F 'file=@audio.wav'</code></pre><p>The returned model ID is checked against the selected language. EDNAi rejects ASR model substitution.</p><h2>10. Official speech model registry</h2><ul><li>Nigerian English — <code>NCAIR1/NigerianAccentedEnglish</code></li><li>Yorùbá — <code>NCAIR1/Yoruba-ASR</code></li><li>Hausa — <code>NCAIR1/Hausa-ASR</code></li><li>Igbo — <code>NCAIR1/Igbo-ASR</code></li></ul><p>Repository guide: <code>docs/en/getting-started.md</code>.</p></main></body></html>
+  -F 'file=@audio.wav'</code></pre><p>The returned model ID is checked against the selected language. EDNAi rejects ASR model substitution.</p><h2>10. Official speech model registry</h2><ul><li>Nigerian English — <code>NCAIR1/NigerianAccentedEnglish</code></li><li>Yorùbá — <code>NCAIR1/Yoruba-ASR</code></li><li>Hausa — <code>NCAIR1/Hausa-ASR</code></li><li>Igbo — <code>NCAIR1/Igbo-ASR</code></li></ul><p>Repository guide: <code>docs/en/getting-started.md</code>.</p><h2>Use Case Studio</h2><p>EDNAi includes eight structured N-ATLaS workflows: multilingual chatbot, translation, educational tools, cultural preservation, government services, digital inclusion, research applications and original song-lyrics generation.</p><pre><code>result = ai.run_use_case(
+    "education",
+    {
+        "topic": "Photosynthesis",
+        "learner_level": "JSS 2",
+        "objective": "Explain how plants make food.",
+        "format": "lesson_quiz"
+    },
+    language="english"
+)
+print(result.text)</code></pre><p>The same workflows are available through <code>GET /v1/use-cases</code>, <code>POST /v1/use-cases/{use_case}</code>, TypeScript and the CLI. Song generation is text-only lyrics; it does not introduce another audio model.</p></main></body></html>
