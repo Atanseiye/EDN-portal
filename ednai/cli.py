@@ -41,6 +41,31 @@ def models_cmd(base_url: str = typer.Option("http://localhost:8000", "--base-url
 
 
 @app.command()
+def transcribe(
+    audio: Path = typer.Argument(..., exists=True, file_okay=True, dir_okay=False),
+    language: str = typer.Option("english", "--language", "-l"),
+    base_url: str = typer.Option("http://localhost:8000", "--base-url"),
+):
+    """Transcribe audio with the official NCAIR ASR model for a Nigerian language."""
+    client = EDNAi(base_url)
+    result = client.transcribe(audio, language)
+    console.print(result.text)
+    console.print(
+        f"\n[dim]{result.model} · {result.provider or 'gateway'} · "
+        f"{result.latency_ms} ms[/dim]"
+    )
+
+
+@app.command("speech-capabilities")
+def speech_capabilities_cmd(
+    base_url: str = typer.Option("http://localhost:8000", "--base-url"),
+):
+    """Show EDNAi ASR models and TTS capability boundaries."""
+    client = EDNAi(base_url)
+    console.print_json(data=client.speech_capabilities())
+
+
+@app.command()
 def eval(
     benchmark: Path,
     base_url: str = typer.Option("http://localhost:8000", "--base-url"),
