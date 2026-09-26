@@ -13,7 +13,7 @@ def test_general_purpose_substitution_is_rejected(model):
         assert_natlas_model(model)
 
 
-def test_gradio_public_space_client_does_not_forward_hf_token(monkeypatch):
+def test_gradio_client_uses_server_side_hf_token_for_authenticated_quota(monkeypatch):
     import json
     import sys
     import types
@@ -45,7 +45,7 @@ def test_gradio_public_space_client_does_not_forward_hf_token(monkeypatch):
 
     provider = GradioSpaceProvider(
         "KoladeOdunope/ednai-natlas-runtime",
-        hf_token="must-not-be-forwarded",
+        hf_token="server-side-token",
     )
     result = provider.generate(
         [Message(role="user", content="Reply EDNAI_OK")],
@@ -54,7 +54,7 @@ def test_gradio_public_space_client_does_not_forward_hf_token(monkeypatch):
     )
 
     assert seen["args"] == ("KoladeOdunope/ednai-natlas-runtime",)
-    assert seen["kwargs"] == {}
+    assert seen["kwargs"] == {"hf_token": "server-side-token"}
     assert seen["predict_kwargs"]["api_name"] == "/generate"
     assert result.model == NATLAS_MODEL_ID
 
