@@ -18,3 +18,17 @@ Configure the Space secret:
 - `HF_TOKEN`: a Hugging Face token with accepted access to `NCAIR1/N-ATLaS`.
 
 Select **ZeroGPU** hardware. Do not substitute another foundation model.
+
+
+## Speech API
+
+The Space exposes a Gradio `/transcribe` endpoint used by the EDNAi gateway.
+
+Inputs:
+
+1. audio file
+2. canonical language: `english`, `yoruba`, `hausa`, or `igbo`
+
+The response is structured JSON containing `text`, `model`, `language`, and `provider`. The gateway rejects a response whose model ID does not match the official model registered for the chosen language.
+
+TTS is intentionally not hosted here because NCAIR currently publishes no official N-ATLaS TTS checkpoint.
