@@ -53,9 +53,9 @@ async function runPrompt(){
     addMessage("assistant",body.text);
     history.push({role:"assistant",content:body.text});
     const latency=body.latency_ms??Math.round(performance.now()-started);
-    $("meta").textContent=\`\${body.provider||"EDNAi"} · \${latency} ms · \${body.model}\`;
+    $("meta").textContent=`${body.provider||"EDNAi"} · ${latency} ms · ${body.model}`;
   }catch(e){
-    addMessage("assistant",\`Runtime error: \${e.message}\`);
+    addMessage("assistant",`Runtime error: ${e.message}`);
     $("meta").textContent="Request failed";
   }finally{
     $("sendBtn").disabled=false;
