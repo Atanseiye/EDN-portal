@@ -1,9 +1,41 @@
+from __future__ import annotations
+
 from .providers import NATLAS_ASR_MODELS
 
-def asr_model_for(language: str) -> str:
+LANGUAGE_ALIASES = {
+    "en": "english",
+    "en-ng": "english",
+    "english": "english",
+    "nigerian english": "english",
+    "yo": "yoruba",
+    "yor": "yoruba",
+    "yoruba": "yoruba",
+    "ha": "hausa",
+    "hau": "hausa",
+    "hausa": "hausa",
+    "ig": "igbo",
+    "ibo": "igbo",
+    "igbo": "igbo",
+}
+
+BROWSER_TTS_LOCALES = {
+    "english": ["en-NG", "en-GB", "en-US"],
+    "yoruba": ["yo-NG", "yo"],
+    "hausa": ["ha-NG", "ha"],
+    "igbo": ["ig-NG", "ig"],
+}
+
+
+def normalize_speech_language(language: str) -> str:
     key = language.strip().lower()
     try:
-        return NATLAS_ASR_MODELS[key]
+        return LANGUAGE_ALIASES[key]
     except KeyError as exc:
         supported = ", ".join(sorted(NATLAS_ASR_MODELS))
-        raise ValueError(f"Unsupported language {language!r}. Choose: {supported}") from exc
+        raise ValueError(
+            f"Unsupported speech language {language!r}. Choose: {supported}"
+        ) from exc
+
+
+def asr_model_for(language: str) -> str:
+    return NATLAS_ASR_MODELS[normalize_speech_language(language)]
