@@ -46,9 +46,22 @@ def main() -> None:
         )
 
     print("Verifying gated N-ATLaS and official ASR access...", flush=True)
+    missing_access = []
     for repo_id in [MODEL_ID, *ASR_MODEL_IDS]:
-        hf_hub_download(repo_id, "config.json", token=token)
-        print(f"  access verified: {repo_id}", flush=True)
+        try:
+            hf_hub_download(repo_id, "config.json", token=token)
+            print(f"  access verified: {repo_id}", flush=True)
+        except Exception:
+            missing_access.append(repo_id)
+            print(f"  access missing:  {repo_id}", flush=True)
+
+    if missing_access:
+        raise SystemExit(
+            "Missing Hugging Face gated access for: "
+            + ", ".join(missing_access)
+            + ". Accept/request access for these repositories using the same "
+              "account that owns HF_TOKEN, then rerun this workflow."
+        )
 
     api.create_repo(
         repo_id=SPACE_ID,
