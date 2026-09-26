@@ -1,0 +1,72 @@
+name: EDNAi Use Case Smoke
+
+on:
+  push:
+    branches: [ednai]
+    paths:
+      - ".github/workflows/ednai-usecase-smoke.yml"
+  workflow_dispatch:
+
+jobs:
+  smoke:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Verify use case registry
+        run: |
+          set -euo pipefail
+          curl --fail --silent --show-error --max-time 60             https://ednai-6znf.onrender.com/v1/use-cases             -o /tmp/use-cases.json
+          python - <<'PY'
+          import json
+          body=json.load(open("/tmp/use-cases.json"))
+          expected={
+              "chatbot","translation","education","culture",
+              "government","digital_inclusion","research","song",
+          }
+          assert set(body["use_cases"]) == expected, body
+          assert set(body["languages"]) == {"english","yoruba","hausa","igbo"}, body
+          print("Use-case registry verified:", sorted(expected))
+          PY
+
+      - name: Run production N-ATLaS use case
+        run: |
+          set -euo pipefail
+          cat >/tmp/request.json <<'JSON'
+          {
+            "language": "english",
+            "inputs": {
+              "message": "Explain what an API is in one short sentence.",
+              "persona": "developer onboarding assistant"
+            },
+            "temperature": 0,
+            "max_tokens": 64,
+            "json_mode": false
+          }
+          JSON
+
+          success=0
+          for attempt in 1 2 3; do
+            echo "Use-case attempt $attempt"
+            code=$(curl --silent --show-error --max-time 240               -X POST https://ednai-6znf.onrender.com/v1/use-cases/chatbot               -H "Content-Type: application/json"               --data-binary @/tmp/request.json               -o /tmp/result.json               -w "%{http_code}") || true
+            if [ "$code" = "200" ]; then
+              success=1
+              break
+            fi
+            echo "HTTP $code"
+            cat /tmp/result.json || true
+            sleep 15
+          done
+
+          if [ "$success" -ne 1 ]; then
+            exit 1
+          fi
+
+          cat /tmp/result.json
+          python - <<'PY'
+          import json
+          body=json.load(open("/tmp/result.json"))
+          assert body["use_case"] == "chatbot", body
+          assert body["language"] == "english", body
+          assert body["model"] == "NCAIR1/N-ATLaS", body
+          assert body["text"].strip(), body
+          print("Live use-case provenance verified:", body["model"])
+          PY
