@@ -97,7 +97,7 @@ function consolePanel(name){
   document.querySelectorAll(".console-tab").forEach(function(tab){
     tab.classList.toggle("active",tab.dataset.panel===name);
   });
-  history.replaceState(null,"","#"+name);
+  window.history.replaceState(null,"","#"+name);
   if(name==="runtime")refreshRuntimeWorkspace();
 }
 
