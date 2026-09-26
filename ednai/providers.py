@@ -3,12 +3,13 @@ from __future__ import annotations
 import json
 import re
 import time
+from pathlib import Path
 from abc import ABC, abstractmethod
 from typing import Any
 
 import httpx
 
-from .models import Generation, Message
+from .models import Generation, Message, Transcription
 
 NATLAS_MODEL_ID = "NCAIR1/N-ATLaS"
 NATLAS_ASR_MODELS = {
@@ -45,6 +46,16 @@ def assert_natlas_model(model: str) -> str:
         raise ProviderError(
             f"EDNAi's qualifying runtime is locked to {NATLAS_MODEL_ID}; "
             f"received {normalized!r}. General-purpose model substitution is not allowed."
+        )
+    return normalized
+
+
+def assert_asr_language(language: str) -> str:
+    normalized = language.strip().lower()
+    if normalized not in NATLAS_ASR_MODELS:
+        supported = ", ".join(sorted(NATLAS_ASR_MODELS))
+        raise ProviderError(
+            f"Unsupported ASR language {language!r}. Choose one of: {supported}."
         )
     return normalized
 
@@ -189,6 +200,63 @@ class GradioSpaceProvider(Provider):
             raw=payload if isinstance(payload, dict) else {"result": payload},
         )
 
+    def transcribe(self, audio_path: str | Path, language: str) -> Transcription:
+        language = assert_asr_language(language)
+        expected_model = NATLAS_ASR_MODELS[language]
+        try:
+            from gradio_client import Client, handle_file
+        except ImportError as exc:
+            raise ProviderError(
+                "Install ednai[server] to use the hosted NCAIR ASR runtime"
+            ) from exc
+
+        started = time.perf_counter()
+        try:
+            client = Client(self.space_id)
+            result = client.predict(
+                handle_file(str(audio_path)),
+                language,
+                api_name="/transcribe",
+            )
+        except Exception as exc:
+            message = str(exc)
+            if "ZeroGPU quota" in message or "exceeded your ZeroGPU quota" in message:
+                retry_after = _parse_retry_after_seconds(message)
+                raise ProviderQuotaError(
+                    "The free NCAIR ASR ZeroGPU quota is temporarily exhausted.",
+                    retry_after_seconds=retry_after,
+                ) from exc
+            raise ProviderError(
+                f"NCAIR ASR runtime request failed: {message or type(exc).__name__}"
+            ) from exc
+
+        if isinstance(result, str):
+            try:
+                payload = json.loads(result)
+            except json.JSONDecodeError:
+                payload = {"text": result}
+        else:
+            payload = result
+
+        if not isinstance(payload, dict):
+            raise ProviderError("NCAIR ASR runtime must return structured provenance")
+
+        upstream_model = str(payload.get("model", "")).strip()
+        if upstream_model != expected_model:
+            raise ProviderError(
+                f"ASR provenance check failed: expected {expected_model}, "
+                f"received {upstream_model or '<missing model id>'}."
+            )
+
+        return Transcription(
+            text=str(payload.get("text", "")).strip(),
+            model=upstream_model,
+            language=language,
+            provider=self.name,
+            latency_ms=round((time.perf_counter() - started) * 1000, 2),
+            raw=payload,
+        )
+
 
 class LocalTransformersProvider(Provider):
     name = "local_transformers"
@@ -198,6 +266,8 @@ class LocalTransformersProvider(Provider):
         self.device_map = device_map
         self._model = None
         self._tokenizer = None
+        self._asr_pipeline = None
+        self._asr_model_id = None
 
     def _load(self):
         if self._model is not None:
@@ -256,4 +326,36 @@ class LocalTransformersProvider(Provider):
             model=NATLAS_MODEL_ID,
             provider=self.name,
             latency_ms=round((time.perf_counter() - started) * 1000, 2),
+        )
+
+
+    def transcribe(self, audio_path: str | Path, language: str) -> Transcription:
+        language = assert_asr_language(language)
+        model_id = NATLAS_ASR_MODELS[language]
+        try:
+            import torch
+            from transformers import pipeline
+        except ImportError as exc:
+            raise ProviderError("Install ednai[local] to run NCAIR ASR locally") from exc
+
+        if self._asr_pipeline is None or self._asr_model_id != model_id:
+            self._asr_pipeline = pipeline(
+                "automatic-speech-recognition",
+                model=model_id,
+                token=self.hf_token,
+                torch_dtype=torch.float16 if torch.cuda.is_available() else torch.float32,
+                device=0 if torch.cuda.is_available() else -1,
+            )
+            self._asr_model_id = model_id
+
+        started = time.perf_counter()
+        raw = self._asr_pipeline(str(audio_path))
+        text = str(raw.get("text", "") if isinstance(raw, dict) else raw).strip()
+        return Transcription(
+            text=text,
+            model=model_id,
+            language=language,
+            provider=self.name,
+            latency_ms=round((time.perf_counter() - started) * 1000, 2),
+            raw=raw if isinstance(raw, dict) else {"result": raw},
         )
