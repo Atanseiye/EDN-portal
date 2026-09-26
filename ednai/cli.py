@@ -41,6 +41,46 @@ def models_cmd(base_url: str = typer.Option("http://localhost:8000", "--base-url
     console.print_json(data=client.models())
 
 
+@app.command("use-case")
+def use_case_cmd(
+    use_case: str = typer.Argument(..., help="chatbot, translation, education, culture, government, digital_inclusion, research, or song"),
+    inputs: str = typer.Option(..., "--inputs", help="JSON object containing use-case inputs"),
+    language: str = typer.Option("english", "--language", "-l"),
+    base_url: str = typer.Option("http://localhost:8000", "--base-url"),
+    output: Path | None = typer.Option(None, "--output"),
+):
+    """Run a structured N-ATLaS use-case workflow."""
+    try:
+        payload = json.loads(inputs)
+    except json.JSONDecodeError as exc:
+        raise typer.BadParameter(f"--inputs must be valid JSON: {exc}") from exc
+    if not isinstance(payload, dict):
+        raise typer.BadParameter("--inputs must decode to a JSON object.")
+
+    client = EDNAi(base_url)
+    result = client.run_use_case(use_case, payload, language=language)
+    console.print(result.text)
+    console.print(
+        f"\n[dim]{result.use_case} · {result.language} · {result.model} · "
+        f"{result.latency_ms} ms[/dim]"
+    )
+    if output:
+        output.write_text(
+            json.dumps(result.model_dump(), ensure_ascii=False, indent=2),
+            encoding="utf-8",
+        )
+        console.print(f"Saved result to {output}")
+
+
+@app.command("use-cases")
+def use_cases_cmd(
+    base_url: str = typer.Option("http://localhost:8000", "--base-url"),
+):
+    """List structured N-ATLaS application workflows."""
+    client = EDNAi(base_url)
+    console.print_json(data=client.use_cases())
+
+
 @app.command()
 def transcribe(
     audio: Path = typer.Argument(..., exists=True, file_okay=True, dir_okay=False),
