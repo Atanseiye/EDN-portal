@@ -35,11 +35,16 @@ The stable identifier is not persisted in plaintext.
 
 ## Counting
 
-The challenge dashboard counts distinct tester hashes where:
+Public beta submissions enter a pending-review state. The challenge dashboard counts distinct tester hashes only where:
 - `external_tester = true`;
-- `consent = true`.
+- `consent = true`;
+- `verified_external = true` after evidence review.
 
-Multiple feedback records from the same developer count as one external beta tester.
+Multiple approved records from the same developer still count as one external beta tester. A self-declared checkbox alone can never satisfy the requirement.
+
+Review endpoints are protected by `EDNAI_ADMIN_TOKEN`:
+- `GET /api/admin/beta/pending`
+- `POST /api/admin/beta/{evidence_id}/verify`
 
 ## Recommended internal target
 
