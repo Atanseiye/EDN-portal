@@ -175,6 +175,14 @@ ednai transcribe sample.wav --language yoruba \
 
 The ASR model ID is provenance-checked against the selected language. WER and CER scoring are available in Speech Studio and through `/api/studio/speech/score`.
 
+Batch benchmark a JSONL manifest of audio/reference pairs:
+
+```bash
+ednai speech-eval examples/speech-benchmark.jsonl \
+  --base-url https://ednai-6znf.onrender.com \
+  --output speech-report.json
+```
+
 ### TTS
 
 NCAIR currently publishes no official N-ATLaS TTS checkpoint. EDNAi therefore does **not** label speech synthesis as N-ATLaS. The hosted interface and TypeScript SDK use matching browser/device voices only when available:
@@ -184,3 +192,17 @@ await ai.speak("Ẹ káàbọ̀ sí EDNAi.", "yoruba");
 ```
 
 No silent fallback to a different language is performed.
+
+For browser applications, the TypeScript SDK can compose the entire voice-input flow:
+
+```ts
+const result = await ai.voiceTurn(audioBlob, "yoruba", {
+  system: "Dáhùn ní Yorùbá tó rọrùn.",
+  speak: true,
+});
+
+console.log(result.transcription.text);
+console.log(result.generation.text);
+```
+
+This performs official NCAIR ASR → N-ATLaS generation → optional device TTS while preserving the provenance boundary of each stage.
