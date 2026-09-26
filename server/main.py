@@ -25,7 +25,7 @@ from ednai.providers import (
     ProviderQuotaError,
     assert_natlas_model,
 )
-from ednai.speech import BROWSER_TTS_LOCALES, normalize_speech_language
+from ednai.speech import normalize_speech_language
 from server.config import get_settings
 from server.store import BetaStore
 from server.studio import EvalRunRequest, router as studio_router, run_studio_eval
@@ -146,7 +146,6 @@ def health():
         "provider_configured": provider is not None,
         "direct_natlas_integration": settings.qualifying_provider,
         "asr_provider_configured": provider is not None and callable(getattr(provider, "transcribe", None)),
-        "tts_mode": "browser_device_non_qualifying",
     }
 
 
@@ -165,18 +164,6 @@ def speech_capabilities():
             "runtime_configured": provider is not None and callable(getattr(provider, "transcribe", None)),
             "runtime_verified": False,
             "input": ["microphone", "wav", "mp3", "m4a", "ogg", "webm"],
-        },
-        "tts": {
-            "provider": "browser_speech_synthesis",
-            "official_ncair_model": False,
-            "qualifying_natlas_component": False,
-            "hosted_server_model": None,
-            "locales": BROWSER_TTS_LOCALES,
-            "note": (
-                "NCAIR currently publishes no official N-ATLaS TTS checkpoint. "
-                "EDNAi therefore keeps hosted TTS separate from N-ATLaS provenance "
-                "and uses matching device voices only when available."
-            ),
         },
     }
 
@@ -249,7 +236,7 @@ def capabilities():
         "asr_models": NATLAS_ASR_MODELS,
         "speech": {
             "asr": "official-ncair-natlas-components",
-            "tts": "browser-device-only-non-qualifying",
+            "submission_scope": "official-natlas-only",
         },
     }
 
@@ -412,7 +399,6 @@ def readiness():
         "evaluation_tooling": True,
         "speech_studio": True,
         "official_ncair_asr_tooling": True,
-        "tts_provenance_boundary": True,
         "bilingual_documentation": True,
         "multilingual_documentation_en_yo_ha_ig": True,
         "direct_natlas_runtime_configured": settings.qualifying_provider,
