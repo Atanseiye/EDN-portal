@@ -24,6 +24,11 @@ def test_playground_and_guides_are_real_pages():
     assert "Dataset Studio" in page
     assert "Fine-tune Planner" in page
     assert "Runtime & SDK" in page
+    assert "Developer launchpad" in page
+    assert "Your first N-ATLaS request in minutes." in page
+    assert "Try a template." in page
+    assert 'id="commandPalette"' in page
+    assert "/api/studio/starter.zip" in page
     assert client.head("/").status_code == 200
     assert client.get("/guide").status_code == 200
     assert client.get("/guide/en").status_code == 200
