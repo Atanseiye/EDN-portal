@@ -1,0 +1,68 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#0d1b1e">
+<title>EDNAi — Build with N-ATLaS</title>
+<link rel="stylesheet" href="/assets/styles.css">
+</head>
+<body>
+<header class="nav">
+  <a class="brand" href="/"><span class="mark">E</span><span>EDN<span>Ai</span></span></a>
+  <nav><a href="/guide/en">Docs</a><a href="/challenge">Challenge readiness</a><a href="/docs">API</a></nav>
+</header>
+<main>
+<section class="hero">
+  <span class="eyebrow">Nigerian AI developer infrastructure</span>
+  <h1>Build with <em>N-ATLaS</em><br>without fighting the plumbing.</h1>
+  <p>One developer layer for integration, testing, evaluation, adaptation and deployment of Nigeria's N-ATLaS model.</p>
+  <div class="hero-tags"><span>Python SDK</span><span>TypeScript SDK</span><span>Playground</span><span>Eval</span><span>QLoRA</span></div>
+</section>
+
+<section class="shell">
+  <aside class="panel settings">
+    <div class="section-head"><div><span class="eyebrow">Runtime</span><h2>Playground</h2></div><span id="runtimeStatus" class="status">Checking…</span></div>
+    <label>Model<input value="NCAIR1/N-ATLaS" disabled></label>
+    <label>System prompt<textarea id="system" rows="4" placeholder="You are a helpful Nigerian AI assistant."></textarea></label>
+    <div class="two">
+      <label>Temperature<input id="temperature" type="number" min="0" max="2" step=".1" value=".2"></label>
+      <label>Max tokens<input id="maxTokens" type="number" min="1" max="4096" value="512"></label>
+    </div>
+    <label class="toggle"><input id="jsonMode" type="checkbox"> <span>JSON mode</span></label>
+    <button id="runBtn" class="primary">Run N-ATLaS</button>
+    <p class="hint">EDNAi refuses model substitution. The qualifying runtime is locked to <code>NCAIR1/N-ATLaS</code>.</p>
+  </aside>
+
+  <section class="panel conversation">
+    <div class="section-head">
+      <div><span class="eyebrow">Prompt</span><h2>Test a response</h2></div>
+      <button id="clearBtn" class="ghost">Clear</button>
+    </div>
+    <div id="messages" class="messages">
+      <div class="message assistant"><span>EDNAi</span><p>Try English, Yorùbá, Hausa or Igbo. Your request will show the active N-ATLaS provider and latency.</p></div>
+    </div>
+    <div class="composer">
+      <textarea id="prompt" rows="4" placeholder="Ask N-ATLaS something…"></textarea>
+      <div class="composer-foot"><span id="meta">Ready</span><button id="sendBtn" class="primary">Send</button></div>
+    </div>
+  </section>
+</section>
+
+<section class="developer-grid">
+<article><span class="index">01</span><h3>Integrate</h3><p>Python and TypeScript clients plus an OpenAI-compatible gateway.</p><pre><code>from ednai import EDNAi
+ai = EDNAi(base_url=...)
+ai.generate("Báwo ni?")</code></pre></article>
+<article><span class="index">02</span><h3>Evaluate</h3><p>Run versioned multilingual benchmarks and export machine-readable reports.</p><pre><code>ednai eval benchmarks/natlas_smoke.jsonl</code></pre></article>
+<article><span class="index">03</span><h3>Adapt</h3><p>Starter scripts for LoRA/QLoRA directly on NCAIR1/N-ATLaS.</p><pre><code>python fine_tuning/train_qlora.py ...</code></pre></article>
+<article><span class="index">04</span><h3>Deploy</h3><p>Local Transformers, OpenAI-compatible inference or EDNAi ZeroGPU runtime.</p></article>
+</section>
+
+<section class="beta panel">
+  <div><span class="eyebrow">External developer validation</span><h2>Beta-tested by builders, not just us.</h2><p>Developers testing EDNAi can submit structured feedback that counts toward the challenge only when they are external testers.</p></div>
+  <a class="primary linkbtn" href="/challenge">View validation status</a>
+</section>
+</main>
+<footer><strong>EDNAi</strong> · An Energy Data Network developer product · Built directly on NCAIR1/N-ATLaS.</footer>
+<script src="/assets/app.js"></script>
+</body></html>
