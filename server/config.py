@@ -14,6 +14,7 @@ class Settings(BaseSettings):
     hf_token: str = ""
     ednai_admin_token: str = "change-me"
     ednai_database_path: str = "/tmp/ednai.sqlite3"
+    ednai_database_url: str = ""
     cors_origins: str = "http://localhost:8000"
 
     model_config = SettingsConfigDict(env_file=".env", extra="ignore")
