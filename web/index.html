@@ -30,7 +30,7 @@
     <a class="hero-secondary" href="/guide">Read the docs</a>
     <span class="shortcut-hint">⌘/Ctrl + K <small>command menu</small></span>
   </div>
-  <div class="hero-tags"><span>Python SDK</span><span>TypeScript SDK</span><span>OpenAI-compatible API</span><span>Speech Studio</span><span>Evaluation</span><span>Dataset Studio</span><span>QLoRA</span></div>
+  <div class="hero-tags"><span>Python SDK</span><span>TypeScript SDK</span><span>OpenAI-compatible API</span><span>Use Case Studio</span><span>Speech Studio</span><span>Evaluation</span><span>Dataset Studio</span><span>QLoRA</span></div>
 </section>
 
 <section class="launchpad panel" id="launchpad">
@@ -112,6 +112,7 @@
 
 <nav class="console-tabs" aria-label="EDNAi developer workspaces">
   <button class="console-tab active" data-panel="playground">Playground</button>
+  <button class="console-tab" data-panel="usecases">Use Cases</button>
   <button class="console-tab" data-panel="speech">Speech Studio</button>
   <button class="console-tab" data-panel="evaluate">Evaluation</button>
   <button class="console-tab" data-panel="dataset">Dataset Studio</button>
@@ -150,6 +151,94 @@
 </section>
 
 
+
+
+<section class="console-panel" id="panel-usecases">
+  <div class="workspace-head">
+    <div>
+      <span class="eyebrow">N-ATLaS application workflows</span>
+      <h2>Use Case Studio</h2>
+      <p>Go from an official N-ATLaS use case to a working request, result and integration snippet without hand-building prompts.</p>
+    </div>
+    <span class="status good">8 N-ATLaS workflows</span>
+  </div>
+
+  <div class="usecase-layout">
+    <article class="panel usecase-catalog-panel">
+      <div class="section-head">
+        <div><span class="eyebrow">Choose a workflow</span><h3>What are you building?</h3></div>
+      </div>
+      <div id="useCaseCatalog" class="usecase-catalog">
+        <p class="hint">Loading N-ATLaS use cases…</p>
+      </div>
+    </article>
+
+    <article class="panel usecase-builder-panel">
+      <div class="usecase-builder-head">
+        <div class="usecase-selected-icon" id="useCaseIcon">CHAT</div>
+        <div>
+          <span class="eyebrow">Selected workflow</span>
+          <h3 id="useCaseTitle">Multilingual Chatbot</h3>
+          <p id="useCaseDescription">Loading workflow definition…</p>
+        </div>
+      </div>
+
+      <div class="usecase-language-row">
+        <label>
+          Response language
+          <select id="useCaseLanguage">
+            <option value="english">English / Nigerian English</option>
+            <option value="yoruba">Yorùbá</option>
+            <option value="hausa">Hausa</option>
+            <option value="igbo">Igbo</option>
+          </select>
+        </label>
+        <button id="loadUseCaseExampleBtn" class="ghost" type="button">Load example</button>
+      </div>
+
+      <div id="useCaseFields" class="usecase-fields"></div>
+
+      <details class="usecase-advanced">
+        <summary>Generation settings</summary>
+        <div class="two">
+          <label>Temperature<input id="useCaseTemperature" type="number" min="0" max="2" step=".05" value=".3"></label>
+          <label>Max tokens<input id="useCaseMaxTokens" type="number" min="1" max="4096" value="700"></label>
+        </div>
+        <label class="toggle"><input id="useCaseJsonMode" type="checkbox"> <span>JSON mode</span></label>
+      </details>
+
+      <div class="usecase-run-row">
+        <button id="runUseCaseBtn" class="primary" type="button">Run with N-ATLaS</button>
+        <span id="useCaseStatus" class="hint" aria-live="polite">Ready</span>
+      </div>
+
+      <div class="usecase-result-block">
+        <div class="section-head compact">
+          <div><span class="eyebrow">Result</span><h3 id="useCaseOutputLabel">N-ATLaS output</h3></div>
+          <div class="inline-actions">
+            <button id="copyUseCaseResultBtn" class="text-button" type="button" disabled>Copy</button>
+            <button id="useCaseToPlaygroundBtn" class="text-button" type="button" disabled>Use in Playground →</button>
+          </div>
+        </div>
+        <div id="useCaseResult" class="usecase-result empty">Run the workflow to see the N-ATLaS response here.</div>
+        <p id="useCaseMeta" class="hint"></p>
+      </div>
+
+      <div class="usecase-code-block">
+        <div class="section-head compact">
+          <div><span class="eyebrow">Developer integration</span><h3>Use this workflow in your app</h3></div>
+          <button id="copyUseCaseCodeBtn" class="copy-chip" type="button">Copy</button>
+        </div>
+        <div class="stack-tabs" role="tablist" aria-label="Use case code language">
+          <button class="stack-tab usecase-stack active" type="button" data-usecase-stack="python">Python</button>
+          <button class="stack-tab usecase-stack" type="button" data-usecase-stack="typescript">TypeScript</button>
+          <button class="stack-tab usecase-stack" type="button" data-usecase-stack="curl">cURL</button>
+        </div>
+        <pre class="speech-code usecase-code"><code id="useCaseCode"></code></pre>
+      </div>
+    </article>
+  </div>
+</section>
 
 <section class="console-panel" id="panel-speech">
   <div class="workspace-head">
@@ -420,6 +509,7 @@ ai.generate("Báwo ni?")</code></pre></article>
   <input id="commandSearch" class="command-search" placeholder="Search tools, docs or actions…" autocomplete="off">
   <div id="commandList" class="command-list">
     <button type="button" data-command="playground"><span>⌘</span><strong>Playground</strong><small>Run N-ATLaS prompts</small></button>
+    <button type="button" data-command="usecases"><span>◇</span><strong>Use Case Studio</strong><small>8 production-oriented N-ATLaS workflows</small></button>
     <button type="button" data-command="speech"><span>◉</span><strong>Speech Studio</strong><small>Official NCAIR ASR and N-ATLaS handoff</small></button>
     <button type="button" data-command="evaluate"><span>✓</span><strong>Evaluation</strong><small>Run multilingual benchmarks</small></button>
     <button type="button" data-command="dataset"><span>▦</span><strong>Dataset Studio</strong><small>Validate training JSONL</small></button>
