@@ -6,6 +6,12 @@ EDNAi is an open developer platform that makes Nigeria's N-ATLaS model easier to
 
 It is being built for the **National AI Innovation Challenge 2026 — Developer Infrastructure** problem statement.
 
+**Live developer playground:** https://ednai-6znf.onrender.com  
+**English docs:** https://ednai-6znf.onrender.com/guide/en  
+**Yorùbá docs:** https://ednai-6znf.onrender.com/guide/yo  
+**Challenge readiness:** https://ednai-6znf.onrender.com/challenge  
+**OpenAPI:** https://ednai-6znf.onrender.com/docs
+
 ## What EDNAi ships
 
 - Python SDK with sync + async clients.
@@ -21,6 +27,13 @@ It is being built for the **National AI Innovation Challenge 2026 — Developer 
 - Challenge-readiness and external beta-test evidence endpoints.
 
 EDNAi deliberately refuses to identify a different general-purpose model as N-ATLaS.
+
+## Start a new N-ATLaS project
+
+```bash
+ednai init my-natlas-app
+cd my-natlas-app
+```
 
 ## Quick start — SDK
 
@@ -88,6 +101,21 @@ The starter kit always derives adapters from `NCAIR1/N-ATLaS`.
 
 ```bash
 ednai eval benchmarks/natlas_smoke.jsonl --base-url http://localhost:8000
+```
+
+Compare a base runtime with an adapted N-ATLaS runtime:
+
+```bash
+ednai compare benchmarks/natlas_smoke.jsonl \
+  --baseline-url http://localhost:8000 \
+  --candidate-url http://localhost:8001 \
+  --output comparison.json
+```
+
+Live provenance check after a runtime is configured:
+
+```bash
+curl -X POST https://ednai-6znf.onrender.com/api/runtime/probe
 ```
 
 ## Challenge validation
