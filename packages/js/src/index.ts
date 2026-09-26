@@ -37,81 +37,12 @@ export interface Generation {
   raw: Record<string, unknown>;
 }
 
-export interface DeviceTTSOptions {
-  rate?: number;
-  pitch?: number;
-  voiceName?: string;
-}
-
-const DEVICE_TTS_LOCALES: Record<SpeechLanguage, string[]> = {
-  english: ["en-NG", "en-GB", "en-US", "en"],
-  yoruba: ["yo-NG", "yo"],
-  hausa: ["ha-NG", "ha"],
-  igbo: ["ig-NG", "ig"],
-};
-
-export function matchingDeviceVoices(language: SpeechLanguage): SpeechSynthesisVoice[] {
-  if (typeof window === "undefined" || !("speechSynthesis" in window)) return [];
-  const preferences = DEVICE_TTS_LOCALES[language];
-  return window.speechSynthesis.getVoices()
-    .map((voice) => {
-      const lang = voice.lang.toLowerCase();
-      let score = Number.POSITIVE_INFINITY;
-      preferences.forEach((preference, index) => {
-        const wanted = preference.toLowerCase();
-        if (lang === wanted) score = Math.min(score, index * 10);
-        else if (lang.startsWith(wanted + "-") || wanted.startsWith(lang + "-")) {
-          score = Math.min(score, index * 10 + 1);
-        }
-      });
-      return { voice, score };
-    })
-    .filter((item) => Number.isFinite(item.score))
-    .sort((a, b) => a.score - b.score || a.voice.name.localeCompare(b.voice.name))
-    .map((item) => item.voice);
-}
-
-export function speakWithDeviceVoice(
-  text: string,
-  language: SpeechLanguage,
-  options: DeviceTTSOptions = {},
-): Promise<void> {
-  if (typeof window === "undefined" || !("speechSynthesis" in window)) {
-    return Promise.reject(new Error("Device speech synthesis is not available in this environment."));
-  }
-  const voices = matchingDeviceVoices(language);
-  const voice = options.voiceName
-    ? voices.find((item) => item.name === options.voiceName)
-    : voices[0];
-  if (!voice) {
-    return Promise.reject(
-      new Error("No matching device voice is available for " + language + "."),
-    );
-  }
-
-  return new Promise<void>((resolve, reject) => {
-    window.speechSynthesis.cancel();
-    const utterance = new SpeechSynthesisUtterance(text);
-    utterance.voice = voice;
-    utterance.lang = voice.lang;
-    utterance.rate = options.rate ?? 1;
-    utterance.pitch = options.pitch ?? 1;
-    utterance.onend = () => resolve();
-    utterance.onerror = (event) => reject(
-      new Error("Device speech synthesis failed: " + event.error),
-    );
-    window.speechSynthesis.speak(utterance);
-  });
-}
-
 export interface VoiceTurnOptions {
   filename?: string;
   system?: string;
   temperature?: number;
   maxTokens?: number;
   jsonMode?: boolean;
-  speak?: boolean;
-  tts?: DeviceTTSOptions;
 }
 
 export interface VoiceTurnResult {
@@ -199,14 +130,6 @@ export class EDNAi {
     return response.json() as Promise<Record<string, unknown>>;
   }
 
-  speak(
-    text: string,
-    language: SpeechLanguage,
-    options: DeviceTTSOptions = {},
-  ): Promise<void> {
-    return speakWithDeviceVoice(text, language, options);
-  }
-
   async voiceTurn(
     audio: Blob,
     language: SpeechLanguage,
@@ -223,9 +146,6 @@ export class EDNAi {
       maxTokens: options.maxTokens,
       jsonMode: options.jsonMode,
     });
-    if (options.speak) {
-      await this.speak(generation.text, language, options.tts);
-    }
     return { transcription, generation };
   }
 
