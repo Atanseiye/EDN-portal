@@ -69,6 +69,7 @@ def test_project_starter_is_a_real_zip():
     with zipfile.ZipFile(io.BytesIO(response.content)) as archive:
         names = set(archive.namelist())
         assert "ednai-starter/app.py" in names
+        assert "ednai-starter/use_case.py" in names
         assert "ednai-starter/benchmarks/smoke.jsonl" in names
         assert "ednai-starter/data/example.jsonl" in names
 
