@@ -57,3 +57,39 @@ def test_gradio_public_space_client_does_not_forward_hf_token(monkeypatch):
     assert seen["kwargs"] == {}
     assert seen["predict_kwargs"]["api_name"] == "/generate"
     assert result.model == NATLAS_MODEL_ID
+
+
+def test_gradio_quota_error_is_structured(monkeypatch):
+    import sys
+    import types
+
+    from ednai.models import Message
+    from ednai.providers import GradioSpaceProvider, ProviderQuotaError
+
+    class QuotaClient:
+        def __init__(self, *args, **kwargs):
+            pass
+
+        def predict(self, *args, **kwargs):
+            raise RuntimeError(
+                "You have exceeded your ZeroGPU quota "
+                "(180s requested vs. 175s left). Try again in 23:55:13."
+            )
+
+    monkeypatch.setitem(
+        sys.modules,
+        "gradio_client",
+        types.SimpleNamespace(Client=QuotaClient),
+    )
+
+    provider = GradioSpaceProvider("KoladeOdunope/ednai-natlas-runtime")
+
+    with pytest.raises(ProviderQuotaError) as caught:
+        provider.generate(
+            [Message(role="user", content="hello")],
+            temperature=0,
+            max_tokens=16,
+        )
+
+    assert caught.value.retry_after_seconds == 86113
+    assert "temporarily exhausted" in str(caught.value)
