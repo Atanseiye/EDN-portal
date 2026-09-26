@@ -110,3 +110,25 @@ EDNAi máa ń ṣàyẹ̀wò model ID tí runtime dá padà kí ó bá èdè tí
 - Yorùbá — `NCAIR1/Yoruba-ASR`
 - Hausa — `NCAIR1/Hausa-ASR`
 - Igbo — `NCAIR1/Igbo-ASR`
+
+
+## Use Case Studio
+
+EDNAi ní workflow N-ATLaS mẹ́jọ: `chatbot`, `translation`, `education`, `culture`, `government`, `digital_inclusion`, `research` àti `song`.
+
+```python
+result = client.run_use_case(
+    "education",
+    {
+        "topic": "Photosynthesis",
+        "learner_level": "JSS 2",
+        "objective": "Ṣàlàyé bí ewéko ṣe ń ṣe oúnjẹ.",
+        "format": "lesson_quiz",
+    },
+    language="yoruba",
+)
+print(result.text)
+```
+
+Lo `GET /v1/use-cases` láti rí gbogbo workflow, àti `POST /v1/use-cases/{use_case}` láti ṣiṣẹ́ wọn. Song generation jẹ́ original lyrics text nìkan.
+
