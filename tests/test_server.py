@@ -25,8 +25,11 @@ def test_playground_and_guides_are_real_pages():
     assert "Fine-tune Planner" in page
     assert "Runtime & SDK" in page
     assert client.head("/").status_code == 200
+    assert client.get("/guide").status_code == 200
     assert client.get("/guide/en").status_code == 200
     assert client.get("/guide/yo").status_code == 200
+    assert client.get("/guide/ha").status_code == 200
+    assert client.get("/guide/ig").status_code == 200
     assert client.get("/challenge").status_code == 200
 
 
@@ -47,6 +50,7 @@ def test_capabilities_expose_direct_natlas_tooling():
     assert body["model"] == NATLAS_MODEL_ID
     assert "python-sdk" in body["interfaces"]
     assert body["asr_models"]["yoruba"] == "NCAIR1/Yoruba-ASR"
+    assert body["documentation_languages"] == ["english", "yoruba", "hausa", "igbo"]
 
 
 def test_disabled_runtime_probe_fails_closed():
