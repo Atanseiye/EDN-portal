@@ -1,5 +1,6 @@
 const $=(id)=>document.getElementById(id);
 let history=[];
+let lastAssistantText="";
 
 const quickstartSamples={
   python:`from ednai import EDNAi
@@ -168,6 +169,9 @@ function addMessage(role,text){
   p.textContent=text;
   div.append(who,p);
   $("messages").appendChild(div);
+  if(role==="assistant" && !String(text).startsWith("Runtime error:")){
+    lastAssistantText=String(text);
+  }
   $("messages").scrollTop=$("messages").scrollHeight;
 }
 async function health(){
@@ -553,6 +557,12 @@ if($("quickstartNavBtn"))$("quickstartNavBtn").addEventListener("click",scrollTo
 
 document.querySelectorAll(".template-card").forEach(card=>{
   card.addEventListener("click",()=>{
+    if(card.dataset.template==="voice"){
+      consolePanel("speech");
+      const speech=$("panel-speech");
+      if(speech)speech.scrollIntoView({behavior:"smooth",block:"start"});
+      return;
+    }
     const template=promptTemplates[card.dataset.template];
     if(!template)return;
     $("system").value=template.system;
@@ -625,6 +635,312 @@ document.addEventListener("keydown",event=>{
   }
 });
 
+
+/* ---------- Speech Studio ---------- */
+const ttsLocalePreferences={
+  english:["en-NG","en-GB","en-US","en"],
+  yoruba:["yo-NG","yo"],
+  hausa:["ha-NG","ha"],
+  igbo:["ig-NG","ig"]
+};
+
+let selectedAudioBlob=null;
+let selectedAudioName="audio.webm";
+let selectedAudioUrl=null;
+let mediaRecorder=null;
+let mediaStream=null;
+let recordingChunks=[];
+let recordingStartedAt=0;
+let recordingTimerHandle=null;
+
+function setAsrStatus(text,state){
+  if(!$("asrStatus"))return;
+  $("asrStatus").textContent=text;
+  $("asrStatus").className="status "+(state||"");
+}
+
+function resetRecordingTimer(){
+  clearInterval(recordingTimerHandle);
+  recordingTimerHandle=null;
+  if($("recordingTimer"))$("recordingTimer").textContent="Not recording";
+}
+
+function updateRecordingTimer(){
+  if(!$("recordingTimer"))return;
+  const elapsed=Math.max(0,Math.floor((Date.now()-recordingStartedAt)/1000));
+  const minutes=String(Math.floor(elapsed/60)).padStart(2,"0");
+  const seconds=String(elapsed%60).padStart(2,"0");
+  $("recordingTimer").textContent=minutes+":"+seconds;
+}
+
+function setAudioBlob(blob,name){
+  selectedAudioBlob=blob;
+  selectedAudioName=name||"audio.webm";
+  if(selectedAudioUrl)URL.revokeObjectURL(selectedAudioUrl);
+  selectedAudioUrl=URL.createObjectURL(blob);
+  if($("asrPreview")){
+    $("asrPreview").src=selectedAudioUrl;
+    $("asrPreview").classList.remove("hidden");
+  }
+  if($("asrDropZone")){
+    const strong=$("asrDropZone").querySelector("strong");
+    const small=$("asrDropZone").querySelector("small");
+    if(strong)strong.textContent=selectedAudioName;
+    if(small)small.textContent=(blob.size/1024/1024).toFixed(2)+" MB · ready to transcribe";
+  }
+  setAsrStatus("Audio ready","good");
+}
+
+function clearAudio(){
+  selectedAudioBlob=null;
+  selectedAudioName="audio.webm";
+  if(selectedAudioUrl){
+    URL.revokeObjectURL(selectedAudioUrl);
+    selectedAudioUrl=null;
+  }
+  if($("asrFile"))$("asrFile").value="";
+  if($("asrPreview")){
+    $("asrPreview").removeAttribute("src");
+    $("asrPreview").classList.add("hidden");
+  }
+  if($("asrTranscript"))$("asrTranscript").value="";
+  if($("asrMeta"))$("asrMeta").textContent="Select or record audio to begin.";
+  if($("copyTranscriptBtn"))$("copyTranscriptBtn").disabled=true;
+  if($("useTranscriptBtn"))$("useTranscriptBtn").disabled=true;
+  if($("asrDropZone")){
+    const strong=$("asrDropZone").querySelector("strong");
+    const small=$("asrDropZone").querySelector("small");
+    if(strong)strong.textContent="Drop an audio file here";
+    if(small)small.textContent="or click to choose WAV, MP3, M4A, OGG or WebM · max 25 MB";
+  }
+  setAsrStatus("Ready","");
+}
+
+if($("asrDropZone")){
+  $("asrDropZone").addEventListener("click",()=>$("asrFile").click());
+  ["dragenter","dragover"].forEach(type=>$("asrDropZone").addEventListener(type,event=>{
+    event.preventDefault();
+    $("asrDropZone").classList.add("dragover");
+  }));
+  ["dragleave","drop"].forEach(type=>$("asrDropZone").addEventListener(type,event=>{
+    event.preventDefault();
+    $("asrDropZone").classList.remove("dragover");
+  }));
+  $("asrDropZone").addEventListener("drop",event=>{
+    const file=event.dataTransfer.files&&event.dataTransfer.files[0];
+    if(!file)return;
+    if(file.size>25*1024*1024){
+      showToast("Audio files are limited to 25 MB.","error");
+      return;
+    }
+    setAudioBlob(file,file.name);
+  });
+}
+if($("asrFile"))$("asrFile").addEventListener("change",()=>{
+  const file=$("asrFile").files&&$("asrFile").files[0];
+  if(!file)return;
+  if(file.size>25*1024*1024){
+    showToast("Audio files are limited to 25 MB.","error");
+    $("asrFile").value="";
+    return;
+  }
+  setAudioBlob(file,file.name);
+});
+
+async function toggleRecording(){
+  if(mediaRecorder&&mediaRecorder.state==="recording"){
+    mediaRecorder.stop();
+    return;
+  }
+  if(!navigator.mediaDevices||!navigator.mediaDevices.getUserMedia||typeof MediaRecorder==="undefined"){
+    showToast("Microphone recording is not supported in this browser.","error");
+    return;
+  }
+  try{
+    mediaStream=await navigator.mediaDevices.getUserMedia({audio:true});
+    const preferred=MediaRecorder.isTypeSupported("audio/webm;codecs=opus")
+      ?"audio/webm;codecs=opus"
+      :"";
+    mediaRecorder=new MediaRecorder(mediaStream,preferred?{mimeType:preferred}:undefined);
+    recordingChunks=[];
+    mediaRecorder.ondataavailable=event=>{
+      if(event.data&&event.data.size)recordingChunks.push(event.data);
+    };
+    mediaRecorder.onstop=()=>{
+      const type=mediaRecorder.mimeType||"audio/webm";
+      const blob=new Blob(recordingChunks,{type});
+      setAudioBlob(blob,"microphone-recording.webm");
+      mediaStream.getTracks().forEach(track=>track.stop());
+      mediaStream=null;
+      $("recordAudioBtn").classList.remove("recording");
+      $("recordAudioBtn").innerHTML='<span class="record-dot"></span> Record microphone';
+      resetRecordingTimer();
+    };
+    mediaRecorder.start(250);
+    recordingStartedAt=Date.now();
+    updateRecordingTimer();
+    recordingTimerHandle=setInterval(updateRecordingTimer,500);
+    $("recordAudioBtn").classList.add("recording");
+    $("recordAudioBtn").innerHTML='<span class="record-dot"></span> Stop recording';
+    setAsrStatus("Recording","warn");
+  }catch(error){
+    showToast("Microphone access failed: "+error.message,"error");
+  }
+}
+if($("recordAudioBtn"))$("recordAudioBtn").addEventListener("click",toggleRecording);
+if($("clearAudioBtn"))$("clearAudioBtn").addEventListener("click",clearAudio);
+
+if($("transcribeBtn"))$("transcribeBtn").addEventListener("click",async()=>{
+  if(!selectedAudioBlob){
+    showToast("Upload or record audio first.","error");
+    return;
+  }
+  const button=$("transcribeBtn");
+  setButtonLoading(button,true);
+  setAsrStatus("Transcribing","warn");
+  if($("asrMeta"))$("asrMeta").textContent="Sending audio to the official NCAIR ASR runtime…";
+  try{
+    const form=new FormData();
+    form.append("language",$("asrLanguage").value);
+    form.append("file",selectedAudioBlob,selectedAudioName);
+    const started=performance.now();
+    const response=await fetch("/v1/audio/transcriptions",{method:"POST",body:form});
+    const result=await readApiResponse(response);
+    const latency=result.latency_ms??Math.round(performance.now()-started);
+    $("asrTranscript").value=result.text||"";
+    $("asrMeta").textContent=result.model+" · "+(result.provider||"EDNAi")+" · "+latency+" ms";
+    $("copyTranscriptBtn").disabled=!result.text;
+    $("useTranscriptBtn").disabled=!result.text;
+    if(result.text && !$("ttsText").value.trim())$("ttsText").value=result.text;
+    setAsrStatus("Transcribed","good");
+    showToast("Official NCAIR transcription completed.","success");
+  }catch(error){
+    setAsrStatus(error.status===429?"Quota exhausted":"Failed","warn");
+    $("asrMeta").textContent=error.message;
+    showToast(error.message,"error");
+  }finally{
+    setButtonLoading(button,false);
+  }
+});
+
+if($("copyTranscriptBtn"))$("copyTranscriptBtn").addEventListener("click",async()=>{
+  await copyText($("asrTranscript").value);
+  showToast("Transcript copied.","success");
+});
+if($("useTranscriptBtn"))$("useTranscriptBtn").addEventListener("click",()=>{
+  const transcript=$("asrTranscript").value.trim();
+  if(!transcript)return;
+  $("prompt").value=transcript;
+  consolePanel("playground");
+  $("panel-playground").scrollIntoView({behavior:"smooth",block:"start"});
+  setTimeout(()=>$("prompt").focus(),300);
+});
+
+function matchingTtsVoices(language){
+  if(!("speechSynthesis" in window))return [];
+  const voices=window.speechSynthesis.getVoices();
+  const preferences=ttsLocalePreferences[language]||[];
+  const scored=[];
+  voices.forEach(voice=>{
+    const lang=(voice.lang||"").toLowerCase();
+    let score=999;
+    preferences.forEach((pref,index)=>{
+      const p=pref.toLowerCase();
+      if(lang===p)score=Math.min(score,index*10);
+      else if(lang.startsWith(p+"-")||p.startsWith(lang+"-"))score=Math.min(score,index*10+1);
+    });
+    if(score<999)scored.push({voice,score});
+  });
+  return scored.sort((a,b)=>a.score-b.score||a.voice.name.localeCompare(b.voice.name)).map(item=>item.voice);
+}
+
+function refreshTtsVoices(){
+  if(!$("ttsVoice"))return;
+  const language=$("ttsLanguage").value;
+  const select=$("ttsVoice");
+  const voices=matchingTtsVoices(language);
+  select.innerHTML="";
+  voices.forEach((voice,index)=>{
+    const option=document.createElement("option");
+    option.value=String(index);
+    option.textContent=voice.name+" · "+voice.lang+(voice.default?" · default":"");
+    select.appendChild(option);
+  });
+  const available=voices.length>0;
+  select.disabled=!available;
+  $("speakBtn").disabled=!available;
+  $("ttsStatus").textContent=available?voices.length+" voice"+(voices.length===1?"":"s")+" found":"No matching voice";
+  $("ttsStatus").className="status "+(available?"good":"warn");
+  const languageLabel=$("ttsLanguage").selectedOptions[0].textContent;
+  $("ttsVoiceHelp").textContent=available
+    ?"Using voices installed by this device/browser for "+languageLabel+"."
+    :"No matching "+languageLabel+" voice is installed on this device. EDNAi will not silently fall back to a different language.";
+}
+
+if($("ttsLanguage"))$("ttsLanguage").addEventListener("change",refreshTtsVoices);
+if("speechSynthesis" in window){
+  window.speechSynthesis.addEventListener("voiceschanged",refreshTtsVoices);
+}
+setTimeout(refreshTtsVoices,50);
+setTimeout(refreshTtsVoices,600);
+
+if($("ttsRate"))$("ttsRate").addEventListener("input",()=>{
+  $("ttsRateValue").textContent=Number($("ttsRate").value).toFixed(1)+"×";
+});
+if($("ttsPitch"))$("ttsPitch").addEventListener("input",()=>{
+  $("ttsPitchValue").textContent=Number($("ttsPitch").value).toFixed(1);
+});
+
+if($("speakBtn"))$("speakBtn").addEventListener("click",()=>{
+  const textValue=$("ttsText").value.trim();
+  if(!textValue){
+    showToast("Add some text to speak first.","error");
+    return;
+  }
+  if(!("speechSynthesis" in window)){
+    showToast("Speech synthesis is not supported in this browser.","error");
+    return;
+  }
+  const voices=matchingTtsVoices($("ttsLanguage").value);
+  const voice=voices[Number($("ttsVoice").value)||0];
+  if(!voice){
+    refreshTtsVoices();
+    showToast("No matching device voice is available for this language.","error");
+    return;
+  }
+  window.speechSynthesis.cancel();
+  const utterance=new SpeechSynthesisUtterance(textValue);
+  utterance.voice=voice;
+  utterance.lang=voice.lang;
+  utterance.rate=Number($("ttsRate").value);
+  utterance.pitch=Number($("ttsPitch").value);
+  utterance.onstart=()=>{
+    $("ttsStatus").textContent="Speaking";
+    $("ttsStatus").className="status good";
+  };
+  utterance.onend=refreshTtsVoices;
+  utterance.onerror=event=>{
+    $("ttsStatus").textContent="Playback failed";
+    $("ttsStatus").className="status warn";
+    showToast("Device speech playback failed: "+event.error,"error");
+  };
+  window.speechSynthesis.speak(utterance);
+});
+
+if($("stopSpeakingBtn"))$("stopSpeakingBtn").addEventListener("click",()=>{
+  if("speechSynthesis" in window)window.speechSynthesis.cancel();
+  refreshTtsVoices();
+});
+
+if($("useLastReplyBtn"))$("useLastReplyBtn").addEventListener("click",()=>{
+  if(!lastAssistantText){
+    showToast("Run N-ATLaS first so there is a response to speak.","error");
+    return;
+  }
+  $("ttsText").value=lastAssistantText;
+  showToast("Last N-ATLaS response loaded.","success");
+});
+
 renderOnboarding();
 let savedStack="python";
 try{savedStack=localStorage.getItem("ednai-quickstart-stack")||"python";}catch(_){}
@@ -632,4 +948,4 @@ renderQuickstart(savedStack,false);
 
 workspaceRestore();
 const requestedPanel=(location.hash||"#playground").slice(1);
-if(["playground","evaluate","dataset","finetune","runtime","overview"].includes(requestedPanel))consolePanel(requestedPanel);
+if(["playground","speech","evaluate","dataset","finetune","runtime","overview"].includes(requestedPanel))consolePanel(requestedPanel);
