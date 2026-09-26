@@ -18,13 +18,6 @@ LANGUAGE_ALIASES = {
     "igbo": "igbo",
 }
 
-BROWSER_TTS_LOCALES = {
-    "english": ["en-NG", "en-GB", "en-US"],
-    "yoruba": ["yo-NG", "yo"],
-    "hausa": ["ha-NG", "ha"],
-    "igbo": ["ig-NG", "ig"],
-}
-
 
 def normalize_speech_language(language: str) -> str:
     key = language.strip().lower()
