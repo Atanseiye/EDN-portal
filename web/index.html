@@ -13,14 +13,23 @@
   <nav><a href="/guide/en">Docs</a><a href="/challenge">Challenge readiness</a><a href="/docs">API</a></nav>
 </header>
 <main>
-<section class="hero">
+<section class="hero console-hero">
   <span class="eyebrow">Nigerian AI developer infrastructure</span>
   <h1>Build with <em>N-ATLaS</em><br>without fighting the plumbing.</h1>
   <p>One developer layer for integration, testing, evaluation, adaptation and deployment of Nigeria's N-ATLaS model.</p>
   <div class="hero-tags"><span>Python SDK</span><span>TypeScript SDK</span><span>Playground</span><span>Eval</span><span>QLoRA</span></div>
 </section>
 
-<section class="shell">
+<nav class="console-tabs" aria-label="EDNAi developer workspaces">
+  <button class="console-tab active" data-panel="playground">Playground</button>
+  <button class="console-tab" data-panel="evaluate">Evaluation</button>
+  <button class="console-tab" data-panel="dataset">Dataset Studio</button>
+  <button class="console-tab" data-panel="finetune">Fine-tune Planner</button>
+  <button class="console-tab" data-panel="runtime">Runtime & SDK</button>
+  <button class="console-tab" data-panel="overview">Overview</button>
+</nav>
+
+<section class="shell console-panel active" id="panel-playground">
   <aside class="panel settings">
     <div class="section-head"><div><span class="eyebrow">Runtime</span><h2>Playground</h2></div><span id="runtimeStatus" class="status">Checking…</span></div>
     <label>Model<input value="NCAIR1/N-ATLaS" disabled></label>
@@ -49,7 +58,116 @@
   </section>
 </section>
 
-<section class="developer-grid">
+
+<section class="console-panel" id="panel-evaluate">
+  <div class="workspace-head">
+    <div><span class="eyebrow">Regression engineering</span><h2>Evaluation Workbench</h2><p>Run repeatable multilingual checks against the live N-ATLaS runtime.</p></div>
+    <div class="workspace-actions"><button id="loadSmokeBtn" class="ghost">Load smoke suite</button><button id="runEvalBtn" class="secondary">Run benchmark</button></div>
+  </div>
+  <div class="workbench-two">
+    <article class="panel">
+      <div class="section-head"><div><span class="eyebrow">Benchmark</span><h3>JSONL cases</h3></div><button id="downloadBenchmarkBtn" class="ghost">Download</button></div>
+      <textarea id="benchmarkEditor" class="code-editor" spellcheck="false"></textarea>
+      <p class="hint">Fields: id, prompt, language, must_include, must_not_include, json_mode. Maximum 50 live cases.</p>
+    </article>
+    <article class="panel">
+      <div class="section-head"><div><span class="eyebrow">Results</span><h3>Benchmark report</h3></div><span id="evalStatus" class="status">Not run</span></div>
+      <div class="metric-grid">
+        <div><span>Pass rate</span><strong id="evalPassRate">—</strong></div>
+        <div><span>Passed</span><strong id="evalPassed">—</strong></div>
+        <div><span>Median latency</span><strong id="evalLatency">—</strong></div>
+        <div><span>Cases</span><strong id="evalTotal">—</strong></div>
+      </div>
+      <div class="table-wrap"><table class="data-table"><thead><tr><th>Case</th><th>Status</th><th>Checks</th><th>Latency</th></tr></thead><tbody id="evalRows"><tr><td colspan="4" class="empty-cell">Run a benchmark to see results.</td></tr></tbody></table></div>
+      <details class="raw-details"><summary>Raw JSON report</summary><pre id="evalRaw">{}</pre></details>
+    </article>
+  </div>
+</section>
+
+<section class="console-panel" id="panel-dataset">
+  <div class="workspace-head">
+    <div><span class="eyebrow">Training data engineering</span><h2>Dataset Studio</h2><p>Validate and normalize supervised fine-tuning data before it reaches N-ATLaS.</p></div>
+    <div class="workspace-actions"><button id="loadDatasetExampleBtn" class="ghost">Load example</button><button id="inspectDatasetBtn" class="secondary">Inspect dataset</button></div>
+  </div>
+  <div class="workbench-two">
+    <article class="panel">
+      <div class="section-head"><div><span class="eyebrow">Input</span><h3>Training JSONL</h3></div><button id="uploadDatasetBtn" class="ghost">Open file</button></div>
+      <input id="datasetFile" type="file" accept=".jsonl,.json,.txt" hidden>
+      <textarea id="datasetEditor" class="code-editor" spellcheck="false"></textarea>
+      <p class="hint">Supports chat-format messages[] and instruction/input/output rows. Dataset Studio does not persist the content.</p>
+    </article>
+    <article class="panel">
+      <div class="section-head"><div><span class="eyebrow">Quality report</span><h3>Inspection</h3></div><span id="datasetStatus" class="status">Not inspected</span></div>
+      <div class="metric-grid">
+        <div><span>Valid examples</span><strong id="datasetValid">—</strong></div>
+        <div><span>Invalid</span><strong id="datasetInvalid">—</strong></div>
+        <div><span>Messages</span><strong id="datasetMessages">—</strong></div>
+        <div><span>Token estimate</span><strong id="datasetTokens">—</strong></div>
+      </div>
+      <div id="datasetErrors" class="error-box hidden"></div>
+      <div class="section-head compact"><h3>Normalized preview</h3><button id="downloadNormalizedBtn" class="ghost" disabled>Download JSONL</button></div>
+      <pre id="datasetPreview" class="preview-box">Inspect a dataset to generate a normalized preview.</pre>
+    </article>
+  </div>
+</section>
+
+<section class="console-panel" id="panel-finetune">
+  <div class="workspace-head">
+    <div><span class="eyebrow">Adaptation planning</span><h2>Fine-tune Planner</h2><p>Generate a reproducible QLoRA training contract for NCAIR1/N-ATLaS.</p></div>
+    <button id="planFineTuneBtn" class="secondary">Generate plan</button>
+  </div>
+  <div class="workbench-two">
+    <article class="panel">
+      <div class="form-grid">
+        <label>Examples<input id="ftExamples" type="number" value="500" min="1"></label>
+        <label>Epochs<input id="ftEpochs" type="number" value="2" step=".1" min=".1"></label>
+        <label>Learning rate<input id="ftLearningRate" type="number" value=".0002" step=".0001"></label>
+        <label>Micro batch<input id="ftBatch" type="number" value="1" min="1"></label>
+        <label>Grad accumulation<input id="ftGradAccum" type="number" value="16" min="1"></label>
+        <label>Max length<input id="ftMaxLength" type="number" value="2048" min="128"></label>
+        <label>LoRA r<input id="ftLoraR" type="number" value="16" min="1"></label>
+        <label>LoRA alpha<input id="ftLoraAlpha" type="number" value="32" min="1"></label>
+      </div>
+      <label class="full-field">Output directory<input id="ftOutput" value="outputs/my-natlas-adapter"></label>
+    </article>
+    <article class="panel">
+      <div class="metric-grid">
+        <div><span>Base model</span><strong>N-ATLaS</strong></div>
+        <div><span>Method</span><strong id="ftMethod">QLoRA</strong></div>
+        <div><span>Effective batch</span><strong id="ftEffectiveBatch">—</strong></div>
+        <div><span>Optimizer steps</span><strong id="ftSteps">—</strong></div>
+      </div>
+      <div class="section-head compact"><h3>Training command</h3><button id="copyTrainCommandBtn" class="ghost">Copy</button></div>
+      <pre id="ftCommand" class="preview-box">Generate a plan to see the reproducible training command.</pre>
+      <div id="ftWarnings" class="warning-list"></div>
+    </article>
+  </div>
+</section>
+
+<section class="console-panel" id="panel-runtime">
+  <div class="workspace-head">
+    <div><span class="eyebrow">Integration & deployment</span><h2>Runtime & SDK</h2><p>Inspect model provenance, platform capabilities and live gateway health.</p></div>
+    <div class="workspace-actions"><button id="refreshRuntimeBtn" class="ghost">Refresh</button><button id="probeRuntimeBtn" class="secondary">Probe N-ATLaS</button></div>
+  </div>
+  <div class="workbench-two">
+    <article class="panel">
+      <div class="metric-grid">
+        <div><span>Model</span><strong id="runtimeModel">N-ATLaS</strong></div>
+        <div><span>Provider</span><strong id="runtimeProvider">—</strong></div>
+        <div><span>Direct integration</span><strong id="runtimeDirect">—</strong></div>
+        <div><span>Probe</span><strong id="runtimeProbe">Not run</strong></div>
+      </div>
+      <div class="runtime-pipeline"><span>Developer</span><b>→</b><span>EDNAi Gateway</span><b>→</b><span>NCAIR1/N-ATLaS</span></div>
+      <details class="raw-details"><summary>Health payload</summary><pre id="healthRaw">{}</pre></details>
+    </article>
+    <article class="panel">
+      <div class="section-head"><div><span class="eyebrow">Manifest</span><h3>Capabilities</h3></div><a class="ghost action-link" href="/api/studio/starter.zip">Download starter</a></div>
+      <div id="capabilities" class="capabilities"><p class="hint">Loading capabilities…</p></div>
+    </article>
+  </div>
+</section>
+
+<section class="developer-grid console-panel" id="panel-overview">
 <article><span class="index">01</span><h3>Integrate</h3><p>Python and TypeScript clients plus an OpenAI-compatible gateway.</p><pre><code>from ednai import EDNAi
 ai = EDNAi(base_url=...)
 ai.generate("Báwo ni?")</code></pre></article>
