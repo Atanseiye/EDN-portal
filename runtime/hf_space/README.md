@@ -30,5 +30,3 @@ Inputs:
 2. canonical language: `english`, `yoruba`, `hausa`, or `igbo`
 
 The response is structured JSON containing `text`, `model`, `language`, and `provider`. The gateway rejects a response whose model ID does not match the official model registered for the chosen language.
-
-TTS is intentionally not hosted here because NCAIR currently publishes no official N-ATLaS TTS checkpoint.
