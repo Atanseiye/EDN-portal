@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import re
 import time
 from abc import ABC, abstractmethod
 from typing import Any
@@ -20,6 +21,22 @@ NATLAS_ASR_MODELS = {
 
 class ProviderError(RuntimeError):
     pass
+
+
+class ProviderQuotaError(ProviderError):
+    def __init__(self, message: str, retry_after_seconds: int | None = None):
+        super().__init__(message)
+        self.retry_after_seconds = retry_after_seconds
+
+
+def _parse_retry_after_seconds(message: str) -> int | None:
+    match = re.search(r"Try again in\s+(?:(\d+):)?(\d{1,2}):(\d{2})", message)
+    if not match:
+        return None
+    hours = int(match.group(1) or 0)
+    minutes = int(match.group(2))
+    seconds = int(match.group(3))
+    return hours * 3600 + minutes * 60 + seconds
 
 
 def assert_natlas_model(model: str) -> str:
@@ -119,14 +136,33 @@ class GradioSpaceProvider(Provider):
         except ImportError as exc:
             raise ProviderError("Install ednai[server] to use a Gradio N-ATLaS runtime") from exc
         started = time.perf_counter()
-        client = Client(self.space_id)
-        result = client.predict(
-            json.dumps([m.model_dump() for m in messages], ensure_ascii=False),
-            float(temperature),
-            int(max_tokens),
-            bool(json_mode),
-            api_name="/generate",
-        )
+        try:
+            client = Client(self.space_id)
+            result = client.predict(
+                json.dumps([m.model_dump() for m in messages], ensure_ascii=False),
+                float(temperature),
+                int(max_tokens),
+                bool(json_mode),
+                api_name="/generate",
+            )
+        except Exception as exc:
+            message = str(exc)
+            if "ZeroGPU quota" in message or "exceeded your ZeroGPU quota" in message:
+                retry_after = _parse_retry_after_seconds(message)
+                retry_text = (
+                    f" Try again in about {retry_after // 3600}h "
+                    f"{(retry_after % 3600) // 60}m."
+                    if retry_after
+                    else " Please try again after the free quota resets."
+                )
+                raise ProviderQuotaError(
+                    "The free N-ATLaS ZeroGPU runtime quota is temporarily exhausted."
+                    + retry_text,
+                    retry_after_seconds=retry_after,
+                ) from exc
+            raise ProviderError(
+                f"N-ATLaS Gradio runtime request failed: {message or type(exc).__name__}"
+            ) from exc
         if isinstance(result, str):
             try:
                 payload = json.loads(result)
