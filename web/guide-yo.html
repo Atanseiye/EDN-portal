@@ -1,14 +1,27 @@
-<!doctype html><html lang="yo"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>EDNAi — Ìtọ́sọ́nà</title><link rel="stylesheet" href="/assets/styles.css"><style>.doc{max-width:900px;margin:40px auto}.doc h1{font-size:52px;letter-spacing:-.04em}.doc h2{margin-top:38px}.doc pre{overflow:auto;background:#0d1b1e;color:#e8fff3;padding:18px;border-radius:14px}.doc code{font-family:ui-monospace,monospace}.doc p,.doc li{color:#52625d;line-height:1.7}.lang{display:flex;gap:8px;margin:16px 0 30px}.lang a{padding:7px 10px;border:1px solid var(--line);border-radius:999px;text-decoration:none;color:var(--green);font-weight:800;font-size:12px}</style></head><body><header class="nav"><a class="brand" href="/"><span class="mark">E</span><span>EDN<span>Ai</span></span></a><nav><a href="/">Playground</a><a href="/challenge">Challenge readiness</a></nav></header><main class="doc"><span class="eyebrow">Ìtọ́sọ́nà fún developer</span><h1>Kọ́ ohun tuntun pẹ̀lú N-ATLaS.</h1><div class="lang"><a href="/guide/en">English</a><a href="/guide/yo">Yorùbá</a></div><p>EDNAi ń fún developer ní layer kan ṣoṣo láti pe, dán wò, ṣe adaptation àti deploy <code>NCAIR1/N-ATLaS</code>.</p><h2>Python</h2><pre><code>from ednai import EDNAi
+<!doctype html><html lang="yo"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>EDNAi — Ìtọ́sọ́nà Yorùbá</title><link rel="stylesheet" href="/assets/styles.css"><style>
+.doc{max-width:920px;margin:40px auto}.doc h1{font-size:clamp(42px,7vw,64px);letter-spacing:-.045em;line-height:1}.doc h2{margin-top:38px;font-size:25px}.doc h3{margin-top:24px}.doc pre{overflow:auto;background:#0d1b1e;color:#e8fff3;padding:18px;border-radius:14px}.doc code{font-family:ui-monospace,SFMono-Regular,Menlo,monospace}.doc p,.doc li{color:#52625d;line-height:1.72}.lang{display:flex;gap:8px;flex-wrap:wrap;margin:16px 0 30px}.lang a{padding:7px 10px;border:1px solid var(--line);border-radius:999px;text-decoration:none;color:var(--green);font-weight:800;font-size:12px}.lang a.active{background:var(--ink);color:#fff;border-color:var(--ink)}.callout{border:1px solid var(--line);background:#f8faf8;border-radius:14px;padding:16px 18px;margin:22px 0}.doc-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:12px;margin:22px 0}.doc-grid a{border:1px solid var(--line);background:#fff;border-radius:14px;padding:18px;text-decoration:none;color:var(--ink)}.doc-grid strong{display:block;font-size:18px}.doc-grid span{display:block;color:var(--muted);font-size:12px;margin-top:5px}@media(max-width:650px){.doc-grid{grid-template-columns:1fr}}
+</style></head><body><header class="nav"><a class="brand" href="/"><span class="mark">E</span><span>EDN<span>Ai</span></span></a><nav><a href="/">Playground</a><a href="/guide">Gbogbo docs</a><a href="/challenge">Challenge readiness</a></nav></header><main class="doc"><span class="eyebrow">Ìtọ́sọ́nà developer · Yorùbá</span><h1>Kọ́ pẹ̀lú N-ATLaS.</h1><div class="lang"><a href="/guide/en">English</a><a href="/guide/yo" class="active">Yorùbá</a><a href="/guide/ha">Hausa</a><a href="/guide/ig">Igbo</a></div><p>EDNAi jẹ́ layer kan fún developer láti so model osise <code>NCAIR1/N-ATLaS</code> mọ́ app, dán án wò, ṣe evaluation, adaptation àti deployment.</p><div class="callout"><strong>N-ATLaS nìkan.</strong><p>EDNAi kò gba kí model míì rọ́pò N-ATLaS. Qualifying runtime gbọ́dọ̀ dá model ID <code>NCAIR1/N-ATLaS</code> padà.</p></div><h2>1. Python SDK</h2><pre><code>from ednai import EDNAi
 
-ai = EDNAi(base_url="https://your-gateway")
+ai = EDNAi(base_url="https://ednai-6znf.onrender.com")
 result = ai.generate(
-    "Kí ni API?",
-    system="Dáhùn ní Yorùbá."
+    "Ṣàlàyé ohun tí API jẹ́.",
+    system="Dáhùn ní Yorùbá tó rọrùn.",
+    temperature=0.2,
+    max_tokens=300,
 )
-print(result.text)</code></pre><h2>TypeScript</h2><pre><code>import { EDNAi } from "@ednai/sdk";
+print(result.text)</code></pre><h2>2. TypeScript SDK</h2><pre><code>import { EDNAi } from "@ednai/sdk";
 
-const ai = new EDNAi({ baseUrl: "https://your-gateway" });
+const ai = new EDNAi({
+  baseUrl: "https://ednai-6znf.onrender.com"
+});
 const result = await ai.generate("Kí ni API?");
-console.log(result.text);</code></pre><h2>Evaluation</h2><pre><code>ednai eval benchmarks/natlas_smoke.jsonl --base-url http://localhost:8000</code></pre><h2>Fine-tuning</h2><p>Starter kit náà bẹ̀rẹ̀ láti N-ATLaS gan-an, ó sì ń kọ́ LoRA adapter pẹ̀lú QLoRA.</p><pre><code>python fine_tuning/train_qlora.py \
+console.log(result.text);</code></pre><h2>3. OpenAI-compatible HTTP</h2><pre><code>POST /v1/chat/completions
+{
+  "model": "NCAIR1/N-ATLaS",
+  "messages": [
+    {"role":"user","content":"Ṣàlàyé transformer attention."}
+  ]
+}</code></pre><h2>4. Prompt àti JSON mode</h2><p>Lo system prompt láti sọ èdè, tone tàbí constraint. Má tan JSON mode fún ìdáhùn prose deede; tan-an nígbà tí app rẹ nílò JSON tó ṣeé ka lọ́nà machine.</p><h2>5. Evaluation</h2><pre><code>ednai eval benchmarks/natlas_smoke.jsonl \
+  --base-url https://ednai-6znf.onrender.com</code></pre><p>Evaluation Workbench lè ṣe multilingual regression checks, JSON validity, required/forbidden strings àti latency.</p><h2>6. Dataset Studio</h2><p>Dataset Studio gba <code>messages[]</code> tàbí instruction/input/output JSONL, ó ń validate row kọ̀ọ̀kan, normalize data, ó sì ń fún ọ ní training-ready JSONL.</p><h2>7. Fine-tuning</h2><pre><code>python fine_tuning/train_qlora.py \
   --dataset prepared.jsonl \
-  --output-dir outputs/adapter</code></pre><p>Ìtọ́sọ́nà tó pé wà ní <code>docs/yo/ibere.md</code>.</p></main></body></html>
+  --output-dir outputs/my-natlas-adapter</code></pre><p>QLoRA/LoRA adapter náà bẹ̀rẹ̀ láti <code>NCAIR1/N-ATLaS</code> gan-an.</p><h2>8. Runtime modes</h2><ul><li><strong>ZeroGPU:</strong> hosted N-ATLaS runtime fún development àti demo; free quota lè queue tàbí tán fún ìgbà díẹ̀.</li><li><strong>Local Transformers:</strong> load official N-ATLaS weights lórí server tirẹ.</li><li><strong>OpenAI-compatible N-ATLaS:</strong> so EDNAi mọ́ endpoint tó ń ṣiṣẹ́ N-ATLaS gidi.</li></ul><h2>9. Speech models osise</h2><ul><li>Nigerian English — <code>NCAIR1/NigerianAccentedEnglish</code></li><li>Yorùbá — <code>NCAIR1/Yoruba-ASR</code></li><li>Hausa — <code>NCAIR1/Hausa-ASR</code></li><li>Igbo — <code>NCAIR1/Igbo-ASR</code></li></ul><p>Repository guide: <code>docs/yo/ibere.md</code>.</p></main></body></html>
