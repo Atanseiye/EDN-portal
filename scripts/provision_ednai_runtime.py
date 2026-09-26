@@ -18,6 +18,12 @@ ROOT = Path(__file__).resolve().parents[1]
 OWNER = os.getenv("HF_OWNER", "KoladeOdunope")
 SPACE_ID = os.getenv("EDNAI_HF_SPACE", f"{OWNER}/ednai-natlas-runtime")
 MODEL_ID = "NCAIR1/N-ATLaS"
+ASR_MODEL_IDS = [
+    "NCAIR1/NigerianAccentedEnglish",
+    "NCAIR1/Yoruba-ASR",
+    "NCAIR1/Hausa-ASR",
+    "NCAIR1/Igbo-ASR",
+]
 ZERO_GPU = "zero-a10g"
 
 
@@ -39,8 +45,10 @@ def main() -> None:
             f"Refusing {requested}. EDNAi provisioner only permits {ZERO_GPU}."
         )
 
-    print("Verifying gated N-ATLaS access...", flush=True)
-    hf_hub_download(MODEL_ID, "config.json", token=token)
+    print("Verifying gated N-ATLaS and official ASR access...", flush=True)
+    for repo_id in [MODEL_ID, *ASR_MODEL_IDS]:
+        hf_hub_download(repo_id, "config.json", token=token)
+        print(f"  access verified: {repo_id}", flush=True)
 
     api.create_repo(
         repo_id=SPACE_ID,
