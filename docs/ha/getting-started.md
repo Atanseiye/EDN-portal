@@ -91,6 +91,27 @@ curl -X POST https://ednai-6znf.onrender.com/api/runtime/probe
 
 Probe ɗin yana tabbatar da provenance na model kuma zai fail idan upstream model ba `NCAIR1/N-ATLaS` ba ne.
 
+
+## Speech Studio da official ASR
+
+EDNAi yana ba developer official NCAIR speech-recognition models ta gateway, SDK, CLI da Speech Studio.
+
+```python
+result = client.transcribe("audio.wav", language="hausa")
+print(result.text)
+print(result.model)
+```
+
+EDNAi yana tabbatar da model ID da runtime ya dawo da shi ya dace da harshen da aka zaɓa; baya yarda da ASR model substitution.
+
+## Iyakar TTS
+
+NCAIR bai fitar da official N-ATLaS TTS checkpoint ba. EDNAi yana ware speech synthesis daga qualifying N-ATLaS provenance. Speech Studio yana amfani da browser/device voice mai dacewa da Hausa ne kawai idan yana samuwa; baya yin fallback zuwa wani harshe a ɓoye.
+
+```ts
+await ai.speak("Barka da zuwa EDNAi.", "hausa");
+```
+
 ## Speech models
 
 - Nigerian English — `NCAIR1/NigerianAccentedEnglish`
