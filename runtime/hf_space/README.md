@@ -1,6 +1,6 @@
 ---
 title: EDNAi N-ATLaS Runtime
-emoji: 🇳🇬
+emoji: 🤖
 colorFrom: green
 colorTo: yellow
 sdk: gradio
