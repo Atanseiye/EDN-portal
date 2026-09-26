@@ -136,7 +136,7 @@ Apache-2.0.
 
 ## Speech development
 
-EDNAi's challenge submission uses only official NCAIR / N-ATLaS speech-recognition models. No third-party TTS or unrelated speech model is part of the submission path.
+EDNAi's challenge submission uses only official NCAIR / N-ATLaS speech-recognition models. No unrelated speech model is part of the submission path.
 
 ### Official NCAIR ASR
 
