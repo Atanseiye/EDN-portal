@@ -4,7 +4,7 @@ import time
 from pathlib import Path
 from typing import Literal
 
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, Header, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse, Response
 from fastapi.staticfiles import StaticFiles
@@ -239,7 +239,41 @@ def beta_feedback(data: BetaFeedback):
         evidence_id = store.add(**data.model_dump())
     except ValueError as exc:
         raise HTTPException(status_code=400, detail=str(exc)) from exc
-    return {"ok": True, "evidence_id": evidence_id}
+    return {
+        "ok": True,
+        "evidence_id": evidence_id,
+        "status": "pending_review",
+        "note": "External-tester evidence is counted only after review.",
+    }
+
+
+def _require_admin(authorization: str | None) -> None:
+    token = settings.ednai_admin_token
+    if token in {"", "change-me"}:
+        raise HTTPException(
+            status_code=503,
+            detail="Beta evidence review is disabled until EDNAI_ADMIN_TOKEN is configured.",
+        )
+    if authorization != f"Bearer {token}":
+        raise HTTPException(status_code=401, detail="Unauthorized")
+
+
+@app.get("/api/admin/beta/pending")
+def beta_pending(authorization: str | None = Header(default=None)):
+    _require_admin(authorization)
+    return {"data": store.pending()}
+
+
+@app.post("/api/admin/beta/{evidence_id}/verify")
+def beta_verify(evidence_id: str, authorization: str | None = Header(default=None)):
+    _require_admin(authorization)
+    try:
+        return {"ok": True, "verification": store.verify_external(evidence_id)}
+    except KeyError:
+        raise HTTPException(
+            status_code=404,
+            detail="Evidence not found or it was not submitted as consented external feedback.",
+        )
 
 
 @app.get("/api/challenge/readiness")
@@ -263,5 +297,5 @@ def readiness():
         "model": NATLAS_MODEL_ID,
         "checks": checks,
         "validation": beta,
-        "note": "EDNAi never counts internal or synthetic testing toward the external beta-test requirement.",
+        "note": "EDNAi counts only reviewed, consented external developers; self-declared or synthetic submissions do not satisfy the beta requirement.",
     }
