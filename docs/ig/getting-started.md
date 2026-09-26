@@ -104,14 +104,6 @@ print(result.model)
 
 EDNAi na-enyocha model ID runtime weghachiri ka ọ kwekọọ na asụsụ ahọpụtara; ọ naghị ekwe ASR model substitution.
 
-## Oke TTS
-
-NCAIR enwebeghị official N-ATLaS TTS checkpoint. EDNAi na-ekewa speech synthesis na qualifying N-ATLaS provenance. Speech Studio na-eji browser/device voice dabara na Igbo naanị mgbe voice dị; ọ naghị eji asụsụ ọzọ n'azụ onye developer.
-
-```ts
-await ai.speak("Nnọọ na EDNAi.", "igbo");
-```
-
 ## Speech models
 
 - Nigerian English — `NCAIR1/NigerianAccentedEnglish`
