@@ -26,4 +26,14 @@ console.log(result.text);</code></pre><h2>3. OpenAI-compatible HTTP</h2><pre><co
   --dataset prepared.jsonl \
   --output-dir outputs/my-natlas-adapter</code></pre><p>QLoRA/LoRA adapter na-amalite kpọmkwem site na <code>NCAIR1/N-ATLaS</code>.</p><h2>8. Runtime modes</h2><ul><li><strong>ZeroGPU:</strong> hosted N-ATLaS runtime maka development na demo; free quota nwere ike ịbanye queue ma ọ bụ gwụ nwa oge.</li><li><strong>Local Transformers:</strong> budata ma load official N-ATLaS weights na server gị.</li><li><strong>OpenAI-compatible N-ATLaS:</strong> jikọọ EDNAi na endpoint nke na-arụ N-ATLaS n'ezie.</li></ul><h2>9. Speech Studio na ASR</h2><p>EDNAi na-enye official NCAIR speech-recognition models site na <code>POST /v1/audio/transcriptions</code>, Python/TypeScript SDK, CLI na Speech Studio.</p><pre><code>result = ai.transcribe("audio.wav", language="igbo")
 print(result.text)
-print(result.model)</code></pre><p>EDNAi na-enyocha model ID ka ọ kwekọọ na asụsụ ahọpụtara; ọ naghị ekwe ASR model substitution.</p><h2>10. Official speech models</h2><ul><li>Nigerian English — <code>NCAIR1/NigerianAccentedEnglish</code></li><li>Yorùbá — <code>NCAIR1/Yoruba-ASR</code></li><li>Hausa — <code>NCAIR1/Hausa-ASR</code></li><li>Igbo — <code>NCAIR1/Igbo-ASR</code></li></ul><p>Nduzi repository zuru ezu: <code>docs/ig/getting-started.md</code>.</p></main></body></html>
+print(result.model)</code></pre><p>EDNAi na-enyocha model ID ka ọ kwekọọ na asụsụ ahọpụtara; ọ naghị ekwe ASR model substitution.</p><h2>10. Official speech models</h2><ul><li>Nigerian English — <code>NCAIR1/NigerianAccentedEnglish</code></li><li>Yorùbá — <code>NCAIR1/Yoruba-ASR</code></li><li>Hausa — <code>NCAIR1/Hausa-ASR</code></li><li>Igbo — <code>NCAIR1/Igbo-ASR</code></li></ul><p>Nduzi repository zuru ezu: <code>docs/ig/getting-started.md</code>.</p><h2>Use Case Studio</h2><p>EDNAi nwere workflow N-ATLaS asatọ: multilingual chatbot, translation, educational tools, cultural preservation, government services, digital inclusion, research applications na original song-lyrics generation.</p><pre><code>result = ai.run_use_case(
+    "education",
+    {
+        "topic": "Photosynthesis",
+        "learner_level": "JSS 2",
+        "objective": "Kọwaa otú osisi si emepụta nri.",
+        "format": "lesson_quiz"
+    },
+    language="igbo"
+)
+print(result.text)</code></pre><p>Workflows ndị a dịkwa na <code>GET /v1/use-cases</code>, <code>POST /v1/use-cases/{use_case}</code>, TypeScript na CLI. Song generation bụ naanị lyrics n'ụdị text; ọ naghị etinye audio model ọzọ.</p></main></body></html>
