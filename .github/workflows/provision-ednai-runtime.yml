@@ -1,4 +1,5 @@
 name: Provision EDNAi N-ATLaS Runtime
+# verifies RUNNING state before success
 
 on:
   workflow_dispatch:
