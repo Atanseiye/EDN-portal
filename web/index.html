@@ -105,7 +105,7 @@
       <span class="template-icon">{ }</span><strong>Structured extraction</strong><small>Machine-readable JSON output</small><em>Use template →</em>
     </button>
     <button class="template-card" type="button" data-template="voice">
-      <span class="template-icon">◉</span><strong>Voice application</strong><small>ASR → N-ATLaS → speech output</small><em>Open Speech Studio →</em>
+      <span class="template-icon">◉</span><strong>Voice application</strong><small>Official ASR → N-ATLaS reasoning</small><em>Open Speech Studio →</em>
     </button>
   </div>
 </section>
@@ -154,13 +154,12 @@
 <section class="console-panel" id="panel-speech">
   <div class="workspace-head">
     <div>
-      <span class="eyebrow">Speech engineering</span>
-      <h2>Speech Studio</h2>
-      <p>Build Nigerian voice experiences with official NCAIR speech recognition and clearly separated device speech synthesis.</p>
+      <span class="eyebrow">N-ATLaS speech engineering</span>
+      <h2>N-ATLaS Speech Studio</h2>
+      <p>Build and evaluate Nigerian speech-input applications using only the official NCAIR speech-recognition models connected to N-ATLaS.</p>
     </div>
     <div class="speech-trust">
-      <span class="trust-badge good">Official NCAIR ASR</span>
-      <span class="trust-badge neutral">Device TTS · supplementary</span>
+      <span class="trust-badge good">Official NCAIR / N-ATLaS ASR only</span>
     </div>
   </div>
 
@@ -168,7 +167,7 @@
     <article class="panel speech-card">
       <div class="section-head">
         <div>
-          <span class="eyebrow">Speech → text</span>
+          <span class="eyebrow">Audio → official NCAIR ASR</span>
           <h3>Automatic Speech Recognition</h3>
         </div>
         <span id="asrStatus" class="status">Ready</span>
@@ -183,6 +182,11 @@
           <option value="igbo">Igbo</option>
         </select>
       </label>
+
+      <div class="official-model-strip">
+        <span>Selected official model</span>
+        <strong id="selectedAsrModel">NCAIR1/NigerianAccentedEnglish</strong>
+      </div>
 
       <button id="asrDropZone" class="audio-dropzone" type="button">
         <span class="audio-icon">◉</span>
@@ -199,7 +203,7 @@
       <audio id="asrPreview" class="audio-preview hidden" controls></audio>
 
       <div class="speech-actions">
-        <button id="transcribeBtn" class="primary" type="button">Transcribe audio</button>
+        <button id="transcribeBtn" class="primary" type="button">Transcribe with NCAIR ASR</button>
         <button id="clearAudioBtn" class="ghost" type="button">Clear</button>
       </div>
 
@@ -208,11 +212,10 @@
           <h3>Transcript</h3>
           <div class="inline-actions">
             <button id="copyTranscriptBtn" class="text-button" type="button" disabled>Copy</button>
-            <button id="useTranscriptTtsBtn" class="text-button" type="button" disabled>Use for TTS</button>
-            <button id="useTranscriptBtn" class="text-button" type="button" disabled>Use in Playground →</button>
+            <button id="useTranscriptBtn" class="text-button" type="button" disabled>Send to N-ATLaS →</button>
           </div>
         </div>
-        <textarea id="asrTranscript" readonly placeholder="Your transcription will appear here."></textarea>
+        <textarea id="asrTranscript" readonly placeholder="Your official NCAIR transcription will appear here."></textarea>
         <p id="asrMeta" class="hint">Select or record audio to begin.</p>
 
         <details class="speech-eval-box">
@@ -231,64 +234,56 @@
       </div>
     </article>
 
-    <article class="panel speech-card">
+    <article class="panel speech-card speech-developer-card">
       <div class="section-head">
         <div>
-          <span class="eyebrow">Text → speech</span>
-          <h3>Device Speech Synthesis</h3>
+          <span class="eyebrow">Developer integration</span>
+          <h3>Build voice input with N-ATLaS</h3>
         </div>
-        <span id="ttsStatus" class="status">Checking voices…</span>
+        <span class="status good">N-ATLaS only</span>
       </div>
 
-      <div class="tts-provenance-note">
-        <strong>Not an N-ATLaS model.</strong>
-        <span>NCAIR currently publishes no official TTS checkpoint. EDNAi uses a matching voice already available on this device and never presents it as N-ATLaS.</span>
+      <div class="submission-scope-note">
+        <strong>Challenge-safe speech scope</strong>
+        <span>EDNAi's submission build exposes only official NCAIR/N-ATLaS speech-recognition models. TTS and third-party speech models are intentionally excluded.</span>
       </div>
 
-      <div class="two">
-        <label class="speech-field">
-          Language
-          <select id="ttsLanguage">
-            <option value="english">English / Nigerian English</option>
-            <option value="yoruba">Yorùbá</option>
-            <option value="hausa">Hausa</option>
-            <option value="igbo">Igbo</option>
-          </select>
-        </label>
-        <label class="speech-field">
-          Available voice
-          <select id="ttsVoice"></select>
-        </label>
+      <div class="model-registry-list">
+        <div><span>English / Nigerian English</span><code>NCAIR1/NigerianAccentedEnglish</code></div>
+        <div><span>Yorùbá</span><code>NCAIR1/Yoruba-ASR</code></div>
+        <div><span>Hausa</span><code>NCAIR1/Hausa-ASR</code></div>
+        <div><span>Igbo</span><code>NCAIR1/Igbo-ASR</code></div>
       </div>
 
-      <label class="speech-field">
-        Text to speak
-        <textarea id="ttsText" rows="7" placeholder="Enter text, use a transcript, or bring in the last N-ATLaS response."></textarea>
-      </label>
+      <div class="section-head compact"><h3>Python</h3><button id="copyAsrPythonBtn" class="text-button" type="button">Copy</button></div>
+      <pre class="speech-code"><code id="asrPythonCode">from ednai import EDNAi
 
-      <div class="range-grid">
-        <label>Speed <span id="ttsRateValue">1.0×</span><input id="ttsRate" type="range" min="0.6" max="1.5" step="0.1" value="1"></label>
-        <label>Pitch <span id="ttsPitchValue">1.0</span><input id="ttsPitch" type="range" min="0.5" max="1.5" step="0.1" value="1"></label>
-      </div>
+ai = EDNAi(base_url="https://ednai-6znf.onrender.com")
+result = ai.transcribe("sample.wav", language="yoruba")
+
+print(result.text)
+print(result.model)</code></pre>
+
+      <div class="section-head compact"><h3>HTTP</h3><button id="copyAsrCurlBtn" class="text-button" type="button">Copy</button></div>
+      <pre class="speech-code"><code id="asrCurlCode">curl -X POST https://ednai-6znf.onrender.com/v1/audio/transcriptions \
+  -F 'language=yoruba' \
+  -F 'file=@sample.wav'</code></pre>
 
       <div class="speech-actions">
-        <button id="speakBtn" class="primary" type="button">Speak</button>
-        <button id="stopSpeakingBtn" class="ghost" type="button">Stop</button>
-        <button id="useLastReplyBtn" class="ghost" type="button">Use last N-ATLaS reply</button>
+        <a class="ghost action-link" href="/guide/en">Read speech docs</a>
+        <a class="ghost action-link" href="/docs">Open API reference</a>
       </div>
-
-      <p id="ttsVoiceHelp" class="hint">EDNAi will enable speech only when a matching device voice is available.</p>
     </article>
   </div>
 
   <article class="panel voice-pipeline-card">
     <div>
-      <span class="eyebrow">Voice application pattern</span>
-      <h3>Build a complete voice loop</h3>
-      <p>Record speech, transcribe it with an official NCAIR model, send the transcript to N-ATLaS, then read the answer aloud using the device TTS layer.</p>
+      <span class="eyebrow">Challenge submission path</span>
+      <h3>Official speech input → N-ATLaS reasoning</h3>
+      <p>Capture Nigerian speech, transcribe it with the official language-specific NCAIR model, then pass the transcript into NCAIR1/N-ATLaS for the application response.</p>
     </div>
     <div class="voice-pipeline">
-      <span>Microphone</span><b>→</b><span>NCAIR ASR</span><b>→</b><span>N-ATLaS</span><b>→</b><span>Device TTS</span>
+      <span>Microphone / Audio</span><b>→</b><span>Official NCAIR ASR</span><b>→</b><span>Transcript</span><b>→</b><span>NCAIR1/N-ATLaS</span><b>→</b><span>Text response</span>
     </div>
   </article>
 </section>
