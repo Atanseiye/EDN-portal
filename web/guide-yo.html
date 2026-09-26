@@ -26,4 +26,14 @@ console.log(result.text);</code></pre><h2>3. OpenAI-compatible HTTP</h2><pre><co
   --dataset prepared.jsonl \
   --output-dir outputs/my-natlas-adapter</code></pre><p>QLoRA/LoRA adapter náà bẹ̀rẹ̀ láti <code>NCAIR1/N-ATLaS</code> gan-an.</p><h2>8. Runtime modes</h2><ul><li><strong>ZeroGPU:</strong> hosted N-ATLaS runtime fún development àti demo; free quota lè queue tàbí tán fún ìgbà díẹ̀.</li><li><strong>Local Transformers:</strong> load official N-ATLaS weights lórí server tirẹ.</li><li><strong>OpenAI-compatible N-ATLaS:</strong> so EDNAi mọ́ endpoint tó ń ṣiṣẹ́ N-ATLaS gidi.</li></ul><h2>9. Speech Studio àti ASR</h2><p>EDNAi ń lo speech-recognition models osise NCAIR ní <code>POST /v1/audio/transcriptions</code>, Python/TypeScript SDK, CLI àti Speech Studio.</p><pre><code>result = ai.transcribe("audio.wav", language="yoruba")
 print(result.text)
-print(result.model)</code></pre><p>EDNAi máa ń ṣàyẹ̀wò model ID tí ó padà kí ó bá èdè tí developer yàn mu; kò gba ASR model substitution.</p><h2>10. Speech models osise</h2><ul><li>Nigerian English — <code>NCAIR1/NigerianAccentedEnglish</code></li><li>Yorùbá — <code>NCAIR1/Yoruba-ASR</code></li><li>Hausa — <code>NCAIR1/Hausa-ASR</code></li><li>Igbo — <code>NCAIR1/Igbo-ASR</code></li></ul><p>Repository guide: <code>docs/yo/ibere.md</code>.</p></main></body></html>
+print(result.model)</code></pre><p>EDNAi máa ń ṣàyẹ̀wò model ID tí ó padà kí ó bá èdè tí developer yàn mu; kò gba ASR model substitution.</p><h2>10. Speech models osise</h2><ul><li>Nigerian English — <code>NCAIR1/NigerianAccentedEnglish</code></li><li>Yorùbá — <code>NCAIR1/Yoruba-ASR</code></li><li>Hausa — <code>NCAIR1/Hausa-ASR</code></li><li>Igbo — <code>NCAIR1/Igbo-ASR</code></li></ul><p>Repository guide: <code>docs/yo/ibere.md</code>.</p><h2>Use Case Studio</h2><p>EDNAi ní workflow N-ATLaS mẹ́jọ: multilingual chatbot, translation, educational tools, cultural preservation, government services, digital inclusion, research applications àti original song-lyrics generation.</p><pre><code>result = ai.run_use_case(
+    "education",
+    {
+        "topic": "Photosynthesis",
+        "learner_level": "JSS 2",
+        "objective": "Ṣàlàyé bí ewéko ṣe ń ṣe oúnjẹ.",
+        "format": "lesson_quiz"
+    },
+    language="yoruba"
+)
+print(result.text)</code></pre><p>Developer tún lè lo <code>GET /v1/use-cases</code>, <code>POST /v1/use-cases/{use_case}</code>, TypeScript àti CLI. Song generation jẹ́ lyrics text nìkan; kò fi audio model míì kún submission.</p></main></body></html>
