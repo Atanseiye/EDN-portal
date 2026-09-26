@@ -1,26 +1,31 @@
 from __future__ import annotations
 
+import tempfile
 import time
+from pathlib import Path
 from pathlib import Path
 from typing import Literal
 
-from fastapi import FastAPI, Header, HTTPException
+from fastapi import FastAPI, File, Form, Header, HTTPException, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse, Response
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, Field
+from starlette.concurrency import run_in_threadpool
 
-from ednai.models import Generation, Message, ModelInfo
+from ednai.models import Generation, Message, ModelInfo, Transcription
 from ednai.providers import (
     GradioSpaceProvider,
     LocalTransformersProvider,
     NATLAS_MODEL_ID,
+    NATLAS_ASR_MODELS,
     OpenAICompatibleProvider,
     Provider,
     ProviderError,
     ProviderQuotaError,
     assert_natlas_model,
 )
+from ednai.speech import BROWSER_TTS_LOCALES, normalize_speech_language
 from server.config import get_settings
 from server.store import BetaStore
 from server.studio import EvalRunRequest, router as studio_router, run_studio_eval
@@ -148,21 +153,100 @@ def models():
     return {"object": "list", "data": [ModelInfo(id=NATLAS_MODEL_ID).model_dump()]}
 
 
+@app.get("/v1/audio/capabilities")
+def speech_capabilities():
+    return {
+        "asr": {
+            "provider": "NCAIR1",
+            "official_natlas_components": True,
+            "languages": NATLAS_ASR_MODELS,
+            "runtime_available": provider is not None and callable(getattr(provider, "transcribe", None)),
+            "input": ["microphone", "wav", "mp3", "m4a", "ogg", "webm"],
+        },
+        "tts": {
+            "provider": "browser_speech_synthesis",
+            "official_ncair_model": False,
+            "qualifying_natlas_component": False,
+            "hosted_server_model": None,
+            "locales": BROWSER_TTS_LOCALES,
+            "note": (
+                "NCAIR currently publishes no official N-ATLaS TTS checkpoint. "
+                "EDNAi therefore keeps hosted TTS separate from N-ATLaS provenance "
+                "and uses matching device voices only when available."
+            ),
+        },
+    }
+
+
+@app.post("/v1/audio/transcriptions", response_model=Transcription)
+async def audio_transcriptions(
+    file: UploadFile = File(...),
+    language: str = Form(...),
+):
+    try:
+        language = normalize_speech_language(language)
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+
+    transcribe = getattr(provider, "transcribe", None) if provider is not None else None
+    if not callable(transcribe):
+        raise HTTPException(
+            status_code=503,
+            detail="The configured EDNAi runtime does not expose official NCAIR ASR.",
+        )
+
+    suffix = Path(file.filename or "audio.webm").suffix[:12] or ".audio"
+    temp_path = None
+    total = 0
+    try:
+        with tempfile.NamedTemporaryFile(delete=False, suffix=suffix) as temp:
+            temp_path = Path(temp.name)
+            while True:
+                chunk = await file.read(1024 * 1024)
+                if not chunk:
+                    break
+                total += len(chunk)
+                if total > 25 * 1024 * 1024:
+                    raise HTTPException(
+                        status_code=413,
+                        detail="Audio uploads are limited to 25 MB.",
+                    )
+                temp.write(chunk)
+
+        if total == 0:
+            raise HTTPException(status_code=400, detail="Audio file is empty.")
+
+        try:
+            return await run_in_threadpool(transcribe, temp_path, language)
+        except ProviderQuotaError as exc:
+            headers = (
+                {"Retry-After": str(exc.retry_after_seconds)}
+                if exc.retry_after_seconds
+                else None
+            )
+            raise HTTPException(status_code=429, detail=str(exc), headers=headers) from exc
+        except ProviderError as exc:
+            raise HTTPException(status_code=502, detail=str(exc)) from exc
+    finally:
+        await file.close()
+        if temp_path is not None:
+            temp_path.unlink(missing_ok=True)
+
+
 @app.get("/v1/capabilities")
 def capabilities():
     return {
         "product": "EDNAi",
         "model": NATLAS_MODEL_ID,
-        "interfaces": ["python-sdk", "typescript-sdk", "openai-compatible-http", "playground"],
+        "interfaces": ["python-sdk", "typescript-sdk", "openai-compatible-http", "playground", "audio-transcriptions", "speech-studio"],
         "runtime_modes": ["local_transformers", "gradio_zerogpu", "openai_compatible_natlas"],
         "evaluation": ["jsonl-benchmarks", "json-validity", "keyword-regression", "language-smoke", "latency"],
         "adaptation": ["qlora", "lora", "nf4-4bit", "adapter-only-output"],
         "documentation_languages": ["english", "yoruba", "hausa", "igbo"],
-        "asr_models": {
-            "english": "NCAIR1/NigerianAccentedEnglish",
-            "yoruba": "NCAIR1/Yoruba-ASR",
-            "hausa": "NCAIR1/Hausa-ASR",
-            "igbo": "NCAIR1/Igbo-ASR",
+        "asr_models": NATLAS_ASR_MODELS,
+        "speech": {
+            "asr": "official-ncair-natlas-components",
+            "tts": "browser-device-only-non-qualifying",
         },
     }
 
