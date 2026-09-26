@@ -1,0 +1,14 @@
+<!doctype html><html lang="yo"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>EDNAi — Ìtọ́sọ́nà</title><link rel="stylesheet" href="/assets/styles.css"><style>.doc{max-width:900px;margin:40px auto}.doc h1{font-size:52px;letter-spacing:-.04em}.doc h2{margin-top:38px}.doc pre{overflow:auto;background:#0d1b1e;color:#e8fff3;padding:18px;border-radius:14px}.doc code{font-family:ui-monospace,monospace}.doc p,.doc li{color:#52625d;line-height:1.7}.lang{display:flex;gap:8px;margin:16px 0 30px}.lang a{padding:7px 10px;border:1px solid var(--line);border-radius:999px;text-decoration:none;color:var(--green);font-weight:800;font-size:12px}</style></head><body><header class="nav"><a class="brand" href="/"><span class="mark">E</span><span>EDN<span>Ai</span></span></a><nav><a href="/">Playground</a><a href="/challenge">Challenge readiness</a></nav></header><main class="doc"><span class="eyebrow">Ìtọ́sọ́nà fún developer</span><h1>Kọ́ ohun tuntun pẹ̀lú N-ATLaS.</h1><div class="lang"><a href="/guide/en">English</a><a href="/guide/yo">Yorùbá</a></div><p>EDNAi ń fún developer ní layer kan ṣoṣo láti pe, dán wò, ṣe adaptation àti deploy <code>NCAIR1/N-ATLaS</code>.</p><h2>Python</h2><pre><code>from ednai import EDNAi
+
+ai = EDNAi(base_url="https://your-gateway")
+result = ai.generate(
+    "Kí ni API?",
+    system="Dáhùn ní Yorùbá."
+)
+print(result.text)</code></pre><h2>TypeScript</h2><pre><code>import { EDNAi } from "@ednai/sdk";
+
+const ai = new EDNAi({ baseUrl: "https://your-gateway" });
+const result = await ai.generate("Kí ni API?");
+console.log(result.text);</code></pre><h2>Evaluation</h2><pre><code>ednai eval benchmarks/natlas_smoke.jsonl --base-url http://localhost:8000</code></pre><h2>Fine-tuning</h2><p>Starter kit náà bẹ̀rẹ̀ láti N-ATLaS gan-an, ó sì ń kọ́ LoRA adapter pẹ̀lú QLoRA.</p><pre><code>python fine_tuning/train_qlora.py \
+  --dataset prepared.jsonl \
+  --output-dir outputs/adapter</code></pre><p>Ìtọ́sọ́nà tó pé wà ní <code>docs/yo/ibere.md</code>.</p></main></body></html>
