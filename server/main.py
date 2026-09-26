@@ -3,8 +3,7 @@ from __future__ import annotations
 import tempfile
 import time
 from pathlib import Path
-from pathlib import Path
-from typing import Literal
+from typing import Any, Literal
 
 from fastapi import FastAPI, File, Form, Header, HTTPException, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
@@ -13,7 +12,7 @@ from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, Field
 from starlette.concurrency import run_in_threadpool
 
-from ednai.models import Generation, Message, ModelInfo, Transcription
+from ednai.models import Generation, Message, ModelInfo, Transcription, UseCaseGeneration
 from ednai.providers import (
     GradioSpaceProvider,
     LocalTransformersProvider,
@@ -26,6 +25,7 @@ from ednai.providers import (
     assert_natlas_model,
 )
 from ednai.speech import normalize_speech_language
+from ednai.use_cases import USE_CASES, build_use_case_prompt, public_use_case_registry
 from server.config import get_settings
 from server.store import BetaStore
 from server.studio import EvalRunRequest, router as studio_router, run_studio_eval
@@ -80,6 +80,14 @@ class ChatCompletionRequest(BaseModel):
     messages: list[Message]
     temperature: float = Field(default=0.2, ge=0, le=2)
     max_tokens: int = Field(default=512, ge=1, le=4096)
+
+
+class UseCaseRequest(BaseModel):
+    language: str = "english"
+    inputs: dict[str, Any] = Field(default_factory=dict)
+    temperature: float | None = Field(default=None, ge=0, le=2)
+    max_tokens: int | None = Field(default=None, ge=1, le=4096)
+    json_mode: bool = False
 
 
 class BetaFeedback(BaseModel):
@@ -223,12 +231,58 @@ async def audio_transcriptions(
             temp_path.unlink(missing_ok=True)
 
 
+@app.get("/v1/use-cases")
+def use_cases():
+    return public_use_case_registry()
+
+
+@app.post("/v1/use-cases/{use_case}", response_model=UseCaseGeneration)
+def run_use_case(use_case: str, request: UseCaseRequest):
+    if use_case not in USE_CASES:
+        raise HTTPException(status_code=404, detail=f"Unknown EDNAi use case: {use_case}")
+    try:
+        system, user, output_language = build_use_case_prompt(
+            use_case,
+            request.language,
+            request.inputs,
+        )
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+
+    definition = USE_CASES[use_case]
+    generation = _generate(
+        GenerateRequest(
+            model=NATLAS_MODEL_ID,
+            messages=[
+                Message(role="system", content=system),
+                Message(role="user", content=user),
+            ],
+            temperature=(
+                request.temperature
+                if request.temperature is not None
+                else float(definition["temperature"])
+            ),
+            max_tokens=(
+                request.max_tokens
+                if request.max_tokens is not None
+                else int(definition["max_tokens"])
+            ),
+            json_mode=request.json_mode,
+        )
+    )
+    return UseCaseGeneration(
+        **generation.model_dump(),
+        use_case=use_case,
+        language=output_language,
+    )
+
+
 @app.get("/v1/capabilities")
 def capabilities():
     return {
         "product": "EDNAi",
         "model": NATLAS_MODEL_ID,
-        "interfaces": ["python-sdk", "typescript-sdk", "openai-compatible-http", "playground", "audio-transcriptions", "speech-studio"],
+        "interfaces": ["python-sdk", "typescript-sdk", "openai-compatible-http", "playground", "audio-transcriptions", "speech-studio", "use-case-studio"],
         "runtime_modes": ["local_transformers", "gradio_zerogpu", "openai_compatible_natlas"],
         "evaluation": ["jsonl-benchmarks", "json-validity", "keyword-regression", "language-smoke", "latency"],
         "adaptation": ["qlora", "lora", "nf4-4bit", "adapter-only-output"],
@@ -238,6 +292,7 @@ def capabilities():
             "asr": "official-ncair-natlas-components",
             "submission_scope": "official-natlas-only",
         },
+        "use_cases": list(USE_CASES),
     }
 
 
@@ -399,6 +454,7 @@ def readiness():
         "evaluation_tooling": True,
         "speech_studio": True,
         "official_ncair_asr_tooling": True,
+        "natlas_use_case_studio": True,
         "bilingual_documentation": True,
         "multilingual_documentation_en_yo_ha_ig": True,
         "direct_natlas_runtime_configured": settings.qualifying_provider,
