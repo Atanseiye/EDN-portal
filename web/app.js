@@ -705,6 +705,9 @@ function clearAudio(){
   }
   if($("asrTranscript"))$("asrTranscript").value="";
   if($("asrMeta"))$("asrMeta").textContent="Select or record audio to begin.";
+  if($("asrWer"))$("asrWer").textContent="—";
+  if($("asrCer"))$("asrCer").textContent="—";
+  if($("asrRefWords"))$("asrRefWords").textContent="—";
   if($("copyTranscriptBtn"))$("copyTranscriptBtn").disabled=true;
   if($("useTranscriptBtn"))$("useTranscriptBtn").disabled=true;
   if($("asrDropZone")){
@@ -827,6 +830,32 @@ if($("copyTranscriptBtn"))$("copyTranscriptBtn").addEventListener("click",async(
   await copyText($("asrTranscript").value);
   showToast("Transcript copied.","success");
 });
+if($("scoreTranscriptBtn"))$("scoreTranscriptBtn").addEventListener("click",async()=>{
+  const reference=$("asrReference").value.trim();
+  const hypothesis=$("asrTranscript").value.trim();
+  if(!reference||!hypothesis){
+    showToast("Add both a reference transcript and an ASR transcript first.","error");
+    return;
+  }
+  setButtonLoading($("scoreTranscriptBtn"),true);
+  try{
+    const response=await fetch("/api/studio/speech/score",{
+      method:"POST",
+      headers:{"content-type":"application/json"},
+      body:JSON.stringify({reference,hypothesis})
+    });
+    const result=await readApiResponse(response);
+    $("asrWer").textContent=(Number(result.wer)*100).toFixed(1)+"%";
+    $("asrCer").textContent=(Number(result.cer)*100).toFixed(1)+"%";
+    $("asrRefWords").textContent=result.reference_words;
+    showToast("ASR quality metrics calculated.","success");
+  }catch(error){
+    showToast(error.message,"error");
+  }finally{
+    setButtonLoading($("scoreTranscriptBtn"),false);
+  }
+});
+
 if($("useTranscriptBtn"))$("useTranscriptBtn").addEventListener("click",()=>{
   const transcript=$("asrTranscript").value.trim();
   if(!transcript)return;
