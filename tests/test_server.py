@@ -26,7 +26,8 @@ def test_playground_and_guides_are_real_pages():
     assert "Runtime & SDK" in page
     assert "Speech Studio" in page
     assert "Automatic Speech Recognition" in page
-    assert "Device Speech Synthesis" in page
+    assert "Device Speech Synthesis" not in page
+    assert "Official NCAIR / N-ATLaS ASR only" in page
     assert "Developer launchpad" in page
     assert "Your first N-ATLaS request in minutes." in page
     assert "Try a template." in page
@@ -88,8 +89,8 @@ def test_speech_capabilities_are_explicit_about_provenance():
     body = client.get("/v1/audio/capabilities").json()
     assert body["asr"]["official_natlas_components"] is True
     assert body["asr"]["languages"]["yoruba"] == "NCAIR1/Yoruba-ASR"
-    assert body["tts"]["official_ncair_model"] is False
-    assert body["tts"]["qualifying_natlas_component"] is False
+    assert "tts" not in body
+    assert body["asr"]["official_natlas_components"] is True
 
 
 def test_disabled_runtime_asr_fails_closed():
