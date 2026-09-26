@@ -104,14 +104,6 @@ print(result.model)
 
 EDNAi yana tabbatar da model ID da runtime ya dawo da shi ya dace da harshen da aka zaɓa; baya yarda da ASR model substitution.
 
-## Iyakar TTS
-
-NCAIR bai fitar da official N-ATLaS TTS checkpoint ba. EDNAi yana ware speech synthesis daga qualifying N-ATLaS provenance. Speech Studio yana amfani da browser/device voice mai dacewa da Hausa ne kawai idan yana samuwa; baya yin fallback zuwa wani harshe a ɓoye.
-
-```ts
-await ai.speak("Barka da zuwa EDNAi.", "hausa");
-```
-
 ## Speech models
 
 - Nigerian English — `NCAIR1/NigerianAccentedEnglish`
