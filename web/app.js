@@ -503,19 +503,18 @@ if($("probeRuntimeBtn"))$("probeRuntimeBtn").addEventListener("click",async func
 });
 
 
-function renderQuickstart(stack){
-  const selected=quickstartSamples[stack]?"":null;
+function renderQuickstart(stack,markProgress=true){
   const next=quickstartSamples[stack]?stack:"python";
   if($("quickstartCode"))$("quickstartCode").textContent=quickstartSamples[next];
   document.querySelectorAll(".stack-tab").forEach(tab=>{
     tab.classList.toggle("active",tab.dataset.stack===next);
   });
   try{localStorage.setItem("ednai-quickstart-stack",next);}catch(_){}
-  completeOnboarding("stack");
+  if(markProgress)completeOnboarding("stack");
 }
 
 document.querySelectorAll(".stack-tab").forEach(tab=>{
-  tab.addEventListener("click",()=>renderQuickstart(tab.dataset.stack));
+  tab.addEventListener("click",()=>renderQuickstart(tab.dataset.stack,true));
 });
 
 if($("copyQuickstartBtn"))$("copyQuickstartBtn").addEventListener("click",async()=>{
@@ -629,7 +628,7 @@ document.addEventListener("keydown",event=>{
 renderOnboarding();
 let savedStack="python";
 try{savedStack=localStorage.getItem("ednai-quickstart-stack")||"python";}catch(_){}
-renderQuickstart(savedStack);
+renderQuickstart(savedStack,false);
 
 workspaceRestore();
 const requestedPanel=(location.hash||"#playground").slice(1);
