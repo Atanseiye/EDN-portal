@@ -21,6 +21,7 @@ It is being built for the **National AI Innovation Challenge 2026 — Developer 
 - TypeScript/JavaScript SDK.
 - OpenAI-compatible N-ATLaS gateway.
 - Browser playground for prompts, parameters and JSON-mode testing.
+- Structured Use Case Studio for chatbot, translation, education, cultural preservation, government services, digital inclusion, research and original song-lyrics generation.
 - Direct local Transformers integration with `NCAIR1/N-ATLaS`.
 - Hugging Face/Gradio Space integration for hosted N-ATLaS runtimes.
 - Nigerian-language ASR model registry.
@@ -89,6 +90,55 @@ EDNAi supports:
 - direct local Transformers inference.
 
 See `docs/en/getting-started.md`.
+
+## N-ATLaS Use Case Studio
+
+EDNAi productizes the model's published application patterns as structured developer workflows:
+
+```text
+chatbot
+translation
+education
+culture
+government
+digital_inclusion
+research
+song
+```
+
+Discover workflows:
+
+```bash
+curl https://ednai-6znf.onrender.com/v1/use-cases
+```
+
+Run one from Python:
+
+```python
+from ednai import EDNAi
+
+ai = EDNAi(base_url="https://ednai-6znf.onrender.com")
+result = ai.run_use_case(
+    "translation",
+    {
+        "source_language": "english",
+        "target_language": "yoruba",
+        "text": "Digital tools should be understandable and useful to everyone.",
+    },
+    language="yoruba",
+)
+print(result.text)
+```
+
+Or through HTTP:
+
+```text
+POST /v1/use-cases/{use_case}
+```
+
+Each workflow builds a task-specific prompt contract and executes through the same provenance-locked `NCAIR1/N-ATLaS` runtime. Song generation means original text lyrics only; it does not introduce an audio/TTS model.
+
+See `docs/USE_CASES.md` for the full workflow contract.
 
 ## Fine-tuning
 
