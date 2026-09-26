@@ -22,7 +22,9 @@ CREATE TABLE IF NOT EXISTS beta_feedback (
     blocker TEXT,
     notes TEXT,
     external_tester INTEGER NOT NULL,
-    consent INTEGER NOT NULL
+    consent INTEGER NOT NULL,
+    verified_external INTEGER NOT NULL DEFAULT 0,
+    verified_at TEXT
 )
 """
 
@@ -40,7 +42,9 @@ CREATE TABLE IF NOT EXISTS beta_feedback (
     blocker TEXT,
     notes TEXT,
     external_tester BOOLEAN NOT NULL,
-    consent BOOLEAN NOT NULL
+    consent BOOLEAN NOT NULL,
+    verified_external BOOLEAN NOT NULL DEFAULT FALSE,
+    verified_at TIMESTAMPTZ
 )
 """
 
@@ -67,9 +71,29 @@ class BetaStore:
             with self._postgres() as con:
                 with con.cursor() as cur:
                     cur.execute(POSTGRES_SCHEMA)
+                    cur.execute(
+                        "ALTER TABLE beta_feedback ADD COLUMN IF NOT EXISTS "
+                        "verified_external BOOLEAN NOT NULL DEFAULT FALSE"
+                    )
+                    cur.execute(
+                        "ALTER TABLE beta_feedback ADD COLUMN IF NOT EXISTS verified_at TIMESTAMPTZ"
+                    )
         else:
             with self._sqlite() as con:
                 con.execute(SQLITE_SCHEMA)
+                columns = {
+                    row["name"]
+                    for row in con.execute("PRAGMA table_info(beta_feedback)").fetchall()
+                }
+                if "verified_external" not in columns:
+                    con.execute(
+                        "ALTER TABLE beta_feedback ADD COLUMN "
+                        "verified_external INTEGER NOT NULL DEFAULT 0"
+                    )
+                if "verified_at" not in columns:
+                    con.execute(
+                        "ALTER TABLE beta_feedback ADD COLUMN verified_at TEXT"
+                    )
 
     def add(
         self,
@@ -97,35 +121,21 @@ class BetaStore:
         ).hexdigest()[:24]
         now = datetime.now(timezone.utc)
 
-        values = (
-            evidence_id,
-            now,
-            tester_hash,
-            display_name,
-            affiliation,
-            role,
-            features,
-            int(rating),
-            bool(useful),
-            blocker,
-            notes,
-            bool(external_tester),
-            bool(consent),
-        )
-
         if self.use_postgres:
             with self._postgres() as con:
                 with con.cursor() as cur:
                     cur.execute(
                         """
                         INSERT INTO beta_feedback
-                        (id,created_at,tester_hash,display_name,affiliation,role,features,rating,useful,blocker,notes,external_tester,consent)
-                        VALUES (%s,%s,%s,%s,%s,%s,%s::jsonb,%s,%s,%s,%s,%s,%s)
+                        (id,created_at,tester_hash,display_name,affiliation,role,features,
+                         rating,useful,blocker,notes,external_tester,consent,
+                         verified_external,verified_at)
+                        VALUES (%s,%s,%s,%s,%s,%s,%s::jsonb,%s,%s,%s,%s,%s,%s,FALSE,NULL)
                         """,
                         (
-                            *values[:6],
-                            json.dumps(features, ensure_ascii=False),
-                            *values[7:],
+                            evidence_id, now, tester_hash, display_name, affiliation, role,
+                            json.dumps(features, ensure_ascii=False), int(rating), bool(useful),
+                            blocker, notes, bool(external_tester), bool(consent),
                         ),
                     )
         else:
@@ -133,23 +143,15 @@ class BetaStore:
                 con.execute(
                     """
                     INSERT INTO beta_feedback
-                    (id,created_at,tester_hash,display_name,affiliation,role,features,rating,useful,blocker,notes,external_tester,consent)
-                    VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)
+                    (id,created_at,tester_hash,display_name,affiliation,role,features,
+                     rating,useful,blocker,notes,external_tester,consent,
+                     verified_external,verified_at)
+                    VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,0,NULL)
                     """,
                     (
-                        evidence_id,
-                        now.isoformat(),
-                        tester_hash,
-                        display_name,
-                        affiliation,
-                        role,
-                        json.dumps(features, ensure_ascii=False),
-                        int(rating),
-                        int(useful),
-                        blocker,
-                        notes,
-                        int(external_tester),
-                        int(consent),
+                        evidence_id, now.isoformat(), tester_hash, display_name, affiliation,
+                        role, json.dumps(features, ensure_ascii=False), int(rating),
+                        int(useful), blocker, notes, int(external_tester), int(consent),
                     ),
                 )
 
@@ -157,6 +159,7 @@ class BetaStore:
             "EDNAI_BETA_EVIDENCE "
             + json.dumps(
                 {
+                    "event": "submitted",
                     "id": evidence_id,
                     "created_at": now.isoformat(),
                     "tester_hash": tester_hash,
@@ -165,8 +168,9 @@ class BetaStore:
                     "features": features,
                     "rating": rating,
                     "useful": useful,
-                    "external_tester": external_tester,
+                    "external_tester_claimed": external_tester,
                     "consent": consent,
+                    "verified_external": False,
                 },
                 ensure_ascii=False,
                 sort_keys=True,
@@ -175,19 +179,108 @@ class BetaStore:
         )
         return evidence_id
 
+    def verify_external(self, evidence_id: str) -> dict:
+        now = datetime.now(timezone.utc)
+        if self.use_postgres:
+            with self._postgres() as con:
+                with con.cursor() as cur:
+                    cur.execute(
+                        """
+                        UPDATE beta_feedback
+                        SET verified_external=TRUE, verified_at=%s
+                        WHERE id=%s AND consent=TRUE AND external_tester=TRUE
+                        RETURNING tester_hash
+                        """,
+                        (now, evidence_id),
+                    )
+                    row = cur.fetchone()
+        else:
+            with self._sqlite() as con:
+                row = con.execute(
+                    "SELECT tester_hash FROM beta_feedback "
+                    "WHERE id=? AND consent=1 AND external_tester=1",
+                    (evidence_id,),
+                ).fetchone()
+                if row:
+                    con.execute(
+                        "UPDATE beta_feedback SET verified_external=1, verified_at=? WHERE id=?",
+                        (now.isoformat(), evidence_id),
+                    )
+        if not row:
+            raise KeyError(evidence_id)
+        tester_hash = row[0] if not isinstance(row, sqlite3.Row) else row["tester_hash"]
+        payload = {
+            "event": "verified_external",
+            "id": evidence_id,
+            "verified_at": now.isoformat(),
+            "tester_hash": tester_hash,
+        }
+        print(
+            "EDNAI_BETA_EVIDENCE "
+            + json.dumps(payload, ensure_ascii=False, sort_keys=True),
+            flush=True,
+        )
+        return payload
+
+    def pending(self, limit: int = 50) -> list[dict]:
+        if self.use_postgres:
+            with self._postgres() as con:
+                with con.cursor() as cur:
+                    cur.execute(
+                        """
+                        SELECT id,created_at,tester_hash,display_name,affiliation,role,
+                               features,rating,useful,blocker,notes
+                        FROM beta_feedback
+                        WHERE consent=TRUE AND external_tester=TRUE AND verified_external=FALSE
+                        ORDER BY created_at DESC LIMIT %s
+                        """,
+                        (limit,),
+                    )
+                    rows = cur.fetchall()
+            keys = [
+                "id","created_at","tester_hash","display_name","affiliation","role",
+                "features","rating","useful","blocker","notes"
+            ]
+            return [dict(zip(keys, row)) for row in rows]
+
+        with self._sqlite() as con:
+            rows = con.execute(
+                """
+                SELECT id,created_at,tester_hash,display_name,affiliation,role,
+                       features,rating,useful,blocker,notes
+                FROM beta_feedback
+                WHERE consent=1 AND external_tester=1 AND verified_external=0
+                ORDER BY created_at DESC LIMIT ?
+                """,
+                (limit,),
+            ).fetchall()
+        result = []
+        for row in rows:
+            item = dict(row)
+            item["features"] = json.loads(item["features"])
+            item["useful"] = bool(item["useful"])
+            result.append(item)
+        return result
+
     def stats(self) -> dict:
+        verified_filter = "consent=TRUE AND external_tester=TRUE AND verified_external=TRUE"
         if self.use_postgres:
             with self._postgres() as con:
                 with con.cursor() as cur:
                     cur.execute("SELECT count(*) FROM beta_feedback WHERE consent=TRUE")
                     total = cur.fetchone()[0]
                     cur.execute(
-                        "SELECT count(DISTINCT tester_hash) FROM beta_feedback WHERE consent=TRUE AND external_tester=TRUE"
+                        "SELECT count(*) FROM beta_feedback "
+                        "WHERE consent=TRUE AND external_tester=TRUE AND verified_external=FALSE"
+                    )
+                    pending = cur.fetchone()[0]
+                    cur.execute(
+                        f"SELECT count(DISTINCT tester_hash) FROM beta_feedback WHERE {verified_filter}"
                     )
                     external = cur.fetchone()[0]
                     cur.execute(
                         "SELECT avg(rating), avg(CASE WHEN useful THEN 1.0 ELSE 0.0 END) "
-                        "FROM beta_feedback WHERE consent=TRUE AND external_tester=TRUE"
+                        f"FROM beta_feedback WHERE {verified_filter}"
                     )
                     avg, useful = cur.fetchone()
         else:
@@ -195,17 +288,24 @@ class BetaStore:
                 total = con.execute(
                     "SELECT count(*) c FROM beta_feedback WHERE consent=1"
                 ).fetchone()["c"]
+                pending = con.execute(
+                    "SELECT count(*) c FROM beta_feedback "
+                    "WHERE consent=1 AND external_tester=1 AND verified_external=0"
+                ).fetchone()["c"]
                 external = con.execute(
-                    "SELECT count(DISTINCT tester_hash) c FROM beta_feedback WHERE consent=1 AND external_tester=1"
+                    "SELECT count(DISTINCT tester_hash) c FROM beta_feedback "
+                    "WHERE consent=1 AND external_tester=1 AND verified_external=1"
                 ).fetchone()["c"]
                 row = con.execute(
-                    "SELECT avg(rating) rating, avg(useful) useful "
-                    "FROM beta_feedback WHERE consent=1 AND external_tester=1"
+                    "SELECT avg(rating) rating, avg(useful) useful FROM beta_feedback "
+                    "WHERE consent=1 AND external_tester=1 AND verified_external=1"
                 ).fetchone()
                 avg, useful = row["rating"], row["useful"]
 
         return {
             "consented_feedback_records": int(total),
+            "pending_external_submissions": int(pending),
+            "unique_verified_external_beta_testers": int(external),
             "unique_external_beta_testers": int(external),
             "beta_target": 2,
             "beta_target_met": int(external) >= 2,
