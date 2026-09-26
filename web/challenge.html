@@ -1,0 +1,49 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>EDNAi — NAIC Readiness</title><link rel="stylesheet" href="/assets/styles.css">
+</head>
+<body>
+<header class="nav"><a class="brand" href="/"><span class="mark">E</span><span>EDN<span>Ai</span></span></a><nav><a href="/">Playground</a><a href="/guide/en">Docs</a></nav></header>
+<main>
+<section class="hero"><span class="eyebrow">NAIC 2026 · Developer Infrastructure</span><h1>Engineering<br><em>readiness.</em></h1><p>A live view of the build, direct N-ATLaS integration and external developer validation gates.</p></section>
+
+<section class="panel readiness">
+  <div class="readiness-top"><div><span class="eyebrow">Submission state</span><h2 id="readyLabel">Checking…</h2></div><div class="beta-score"><strong id="betaCount">0</strong><span>/ 2 external beta testers</span></div></div>
+  <div id="checks" class="check-grid"></div>
+</section>
+
+<section class="panel beta-form">
+  <div><span class="eyebrow">External developer feedback</span><h2>Test EDNAi and record evidence.</h2><p class="muted">Use this after actually trying the SDK, playground, evaluation tooling or fine-tuning starter. Repeated submissions from the same tester count once toward the challenge target.</p></div>
+  <form id="feedbackForm">
+    <div class="form-grid">
+      <label>Stable identifier (email works)<input id="testerIdentity" required placeholder="Used only to deduplicate; stored as a hash"></label>
+      <label>Name (optional)<input id="displayName"></label>
+      <label>Affiliation / company<input id="affiliation"></label>
+      <label>Developer role<input id="role" placeholder="ML engineer, backend developer…"></label>
+    </div>
+    <fieldset><legend>What did you test?</legend>
+      <label><input type="checkbox" name="feature" value="python_sdk"> Python SDK</label>
+      <label><input type="checkbox" name="feature" value="typescript_sdk"> TypeScript SDK</label>
+      <label><input type="checkbox" name="feature" value="playground"> Playground</label>
+      <label><input type="checkbox" name="feature" value="evaluation"> Evaluation tooling</label>
+      <label><input type="checkbox" name="feature" value="fine_tuning"> Fine-tuning starter</label>
+      <label><input type="checkbox" name="feature" value="api_gateway"> API gateway</label>
+    </fieldset>
+    <div class="form-grid">
+      <label>Rating (1–5)<input id="rating" type="number" min="1" max="5" value="4" required></label>
+      <label>Was EDNAi useful?<select id="useful"><option value="true">Yes</option><option value="false">Not yet</option></select></label>
+    </div>
+    <label>Main blocker or friction<textarea id="blocker" rows="3"></textarea></label>
+    <label>Other notes<textarea id="notes" rows="3"></textarea></label>
+    <label class="validation-consent"><input id="externalTester" type="checkbox" required> I am an external tester and not a member of the EDNAi build team.</label>
+    <label class="validation-consent"><input id="consent" type="checkbox" required> I consent to this feedback being used as anonymised NAIC validation evidence.</label>
+    <button class="primary" type="submit">Submit beta feedback</button>
+    <p id="formStatus" class="muted"></p>
+  </form>
+</section>
+</main>
+<footer><strong>EDNAi</strong> · Developer infrastructure for NCAIR1/N-ATLaS.</footer>
+<script src="/assets/challenge.js"></script>
+</body></html>
