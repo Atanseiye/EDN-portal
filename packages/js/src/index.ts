@@ -2,6 +2,15 @@ export const NATLAS_MODEL_ID = "NCAIR1/N-ATLaS" as const;
 
 export type Role = "system" | "user" | "assistant";
 export type SpeechLanguage = "english" | "yoruba" | "hausa" | "igbo";
+export type UseCaseSlug =
+  | "chatbot"
+  | "translation"
+  | "education"
+  | "culture"
+  | "government"
+  | "digital_inclusion"
+  | "research"
+  | "song";
 
 export interface Transcription {
   text: string;
@@ -35,6 +44,23 @@ export interface Generation {
   latency_ms?: number | null;
   usage: Record<string, unknown>;
   raw: Record<string, unknown>;
+}
+
+export interface UseCaseOptions {
+  language?: SpeechLanguage;
+  temperature?: number;
+  maxTokens?: number;
+  jsonMode?: boolean;
+}
+
+export interface UseCaseGeneration extends Generation {
+  use_case: UseCaseSlug;
+  language: SpeechLanguage;
+}
+
+export interface UseCaseRegistry {
+  languages: Record<SpeechLanguage, string>;
+  use_cases: Record<UseCaseSlug, Record<string, unknown>>;
 }
 
 export interface VoiceTurnOptions {
@@ -99,6 +125,41 @@ export class EDNAi {
       throw new Error("EDNAi request failed (" + response.status + "): " + detail);
     }
     return response.json() as Promise<Generation>;
+  }
+
+  async useCases(): Promise<UseCaseRegistry> {
+    const response = await this.fetchImpl(this.baseUrl + "/v1/use-cases");
+    if (!response.ok) {
+      throw new Error("EDNAi use-case discovery failed (" + response.status + ")");
+    }
+    return response.json() as Promise<UseCaseRegistry>;
+  }
+
+  async runUseCase(
+    useCase: UseCaseSlug,
+    inputs: Record<string, unknown>,
+    options: UseCaseOptions = {},
+  ): Promise<UseCaseGeneration> {
+    const headers: Record<string, string> = {"content-type": "application/json"};
+    if (this.apiKey) headers.authorization = "Bearer " + this.apiKey;
+
+    const response = await this.fetchImpl(this.baseUrl + "/v1/use-cases/" + useCase, {
+      method: "POST",
+      headers,
+      body: JSON.stringify({
+        language: options.language ?? "english",
+        inputs,
+        temperature: options.temperature ?? null,
+        max_tokens: options.maxTokens ?? null,
+        json_mode: options.jsonMode ?? false,
+      }),
+    });
+
+    if (!response.ok) {
+      const detail = await response.text();
+      throw new Error("EDNAi use-case request failed (" + response.status + "): " + detail);
+    }
+    return response.json() as Promise<UseCaseGeneration>;
   }
 
   async transcribe(audio: Blob, language: SpeechLanguage, filename = "audio.webm"): Promise<Transcription> {
