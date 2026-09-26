@@ -24,6 +24,9 @@ def test_playground_and_guides_are_real_pages():
     assert "Dataset Studio" in page
     assert "Fine-tune Planner" in page
     assert "Runtime & SDK" in page
+    assert "Speech Studio" in page
+    assert "Automatic Speech Recognition" in page
+    assert "Device Speech Synthesis" in page
     assert "Developer launchpad" in page
     assert "Your first N-ATLaS request in minutes." in page
     assert "Try a template." in page
@@ -79,3 +82,21 @@ def test_readiness_is_not_green_without_direct_runtime():
     assert body["problem_statement"] == "Developer Infrastructure"
     assert body["checks"]["direct_natlas_runtime_configured"] is False
     assert body["ready"] is False
+
+
+def test_speech_capabilities_are_explicit_about_provenance():
+    body = client.get("/v1/audio/capabilities").json()
+    assert body["asr"]["official_natlas_components"] is True
+    assert body["asr"]["languages"]["yoruba"] == "NCAIR1/Yoruba-ASR"
+    assert body["tts"]["official_ncair_model"] is False
+    assert body["tts"]["qualifying_natlas_component"] is False
+
+
+def test_disabled_runtime_asr_fails_closed():
+    response = client.post(
+        "/v1/audio/transcriptions",
+        data={"language": "yoruba"},
+        files={"file": ("sample.wav", b"RIFF-test", "audio/wav")},
+    )
+    assert response.status_code == 503
+    assert "official NCAIR ASR" in response.json()["detail"]
