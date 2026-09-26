@@ -132,3 +132,55 @@ Developer Infrastructure requires at least two external beta testers. EDNAi reco
 ## License
 
 Apache-2.0.
+
+
+## Speech development
+
+EDNAi includes a first-class Speech Studio and developer APIs for Nigerian voice applications.
+
+### Official NCAIR ASR
+
+The gateway exposes:
+
+```text
+POST /v1/audio/transcriptions
+GET  /v1/audio/capabilities
+POST /api/studio/speech/score
+```
+
+Supported official models:
+
+- English / Nigerian English — `NCAIR1/NigerianAccentedEnglish`
+- Yorùbá — `NCAIR1/Yoruba-ASR`
+- Hausa — `NCAIR1/Hausa-ASR`
+- Igbo — `NCAIR1/Igbo-ASR`
+
+Python:
+
+```python
+from ednai import EDNAi
+
+ai = EDNAi(base_url="https://ednai-6znf.onrender.com")
+result = ai.transcribe("sample.wav", language="yoruba")
+print(result.text)
+print(result.model)
+```
+
+CLI:
+
+```bash
+ednai transcribe sample.wav --language yoruba \
+  --base-url https://ednai-6znf.onrender.com
+```
+
+The ASR model ID is provenance-checked against the selected language. WER and CER scoring are available in Speech Studio and through `/api/studio/speech/score`.
+
+### TTS
+
+NCAIR currently publishes no official N-ATLaS TTS checkpoint. EDNAi therefore does **not** label speech synthesis as N-ATLaS. The hosted interface and TypeScript SDK use matching browser/device voices only when available:
+
+```ts
+await ai.speak("Ẹ káàbọ̀ sí EDNAi.", "yoruba");
+```
+
+No silent fallback to a different language is performed.
