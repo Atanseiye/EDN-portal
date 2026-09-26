@@ -18,7 +18,12 @@ def test_health_and_model_discovery():
 
 def test_playground_and_guides_are_real_pages():
     assert client.get("/").status_code == 200
-    assert "Build with" in client.get("/").text
+    page = client.get("/").text
+    assert "Build with" in page
+    assert "Evaluation Workbench" in page
+    assert "Dataset Studio" in page
+    assert "Fine-tune Planner" in page
+    assert "Runtime & SDK" in page
     assert client.head("/").status_code == 200
     assert client.get("/guide/en").status_code == 200
     assert client.get("/guide/yo").status_code == 200
