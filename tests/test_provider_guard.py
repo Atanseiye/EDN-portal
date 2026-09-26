@@ -11,3 +11,49 @@ def test_official_model_is_allowed():
 def test_general_purpose_substitution_is_rejected(model):
     with pytest.raises(ProviderError):
         assert_natlas_model(model)
+
+
+def test_gradio_public_space_client_does_not_forward_hf_token(monkeypatch):
+    import json
+    import sys
+    import types
+
+    from ednai.models import Message
+    from ednai.providers import GradioSpaceProvider
+
+    seen = {}
+
+    class FakeClient:
+        def __init__(self, *args, **kwargs):
+            seen["args"] = args
+            seen["kwargs"] = kwargs
+
+        def predict(self, *args, **kwargs):
+            seen["predict_args"] = args
+            seen["predict_kwargs"] = kwargs
+            return json.dumps({
+                "text": "EDNAI_OK",
+                "model": NATLAS_MODEL_ID,
+                "provider": "ednai_zerogpu",
+            })
+
+    monkeypatch.setitem(
+        sys.modules,
+        "gradio_client",
+        types.SimpleNamespace(Client=FakeClient),
+    )
+
+    provider = GradioSpaceProvider(
+        "KoladeOdunope/ednai-natlas-runtime",
+        hf_token="must-not-be-forwarded",
+    )
+    result = provider.generate(
+        [Message(role="user", content="Reply EDNAI_OK")],
+        temperature=0,
+        max_tokens=16,
+    )
+
+    assert seen["args"] == ("KoladeOdunope/ednai-natlas-runtime",)
+    assert seen["kwargs"] == {}
+    assert seen["predict_kwargs"]["api_name"] == "/generate"
+    assert result.model == NATLAS_MODEL_ID
