@@ -11,7 +11,7 @@ from pathlib import Path
 from huggingface_hub import HfApi, get_token, hf_hub_download
 
 ROOT = Path(__file__).resolve().parents[1]
-OWNER = os.getenv("HF_OWNER", "Kolade1")
+OWNER = os.getenv("HF_OWNER", "KoladeOdunope")
 SPACE_ID = os.getenv("EDNAI_HF_SPACE", f"{OWNER}/ednai-natlas-runtime")
 MODEL_ID = "NCAIR1/N-ATLaS"
 ZERO_GPU = "zero-a10g"
