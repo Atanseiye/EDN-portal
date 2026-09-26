@@ -212,6 +212,10 @@ def starter_zip() -> StreamingResponse:
 
 Install EDNAi, connect a qualifying N-ATLaS runtime, and run `python app.py`.
 
+Run a structured N-ATLaS application workflow:
+
+    python use_case.py
+
 For official NCAIR speech recognition, place an audio file beside `voice.py` and run:
 
     python voice.py sample.wav yoruba
@@ -228,6 +232,23 @@ result = ai.generate(
     temperature=0.2,
 )
 print(result.text)
+""",
+        "ednai-starter/use_case.py": """from ednai import EDNAi
+
+ai = EDNAi(base_url="http://localhost:8000")
+result = ai.run_use_case(
+    "education",
+    {
+        "topic": "Photosynthesis",
+        "learner_level": "JSS 2 / beginner",
+        "objective": "Explain how plants use sunlight, water and carbon dioxide to make food.",
+        "format": "lesson_quiz",
+    },
+    language="english",
+)
+
+print(result.text)
+print(f"{result.use_case} · {result.model} · {result.latency_ms} ms")
 """,
         "ednai-starter/voice.py": """import sys
 from ednai import EDNAi
