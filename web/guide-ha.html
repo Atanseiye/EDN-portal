@@ -26,4 +26,14 @@ console.log(result.text);</code></pre><h2>3. OpenAI-compatible HTTP</h2><pre><co
   --dataset prepared.jsonl \
   --output-dir outputs/my-natlas-adapter</code></pre><p>QLoRA/LoRA adapter yana farawa kai tsaye daga <code>NCAIR1/N-ATLaS</code>.</p><h2>8. Runtime modes</h2><ul><li><strong>ZeroGPU:</strong> hosted N-ATLaS runtime don development da demo; free quota na iya yin queue ko ƙarewa na ɗan lokaci.</li><li><strong>Local Transformers:</strong> loda official N-ATLaS weights a server naka.</li><li><strong>OpenAI-compatible N-ATLaS:</strong> haɗa EDNAi da endpoint da ke hidimar N-ATLaS na gaske.</li></ul><h2>9. Speech Studio da ASR</h2><p>EDNAi yana ba developer damar amfani da official NCAIR speech-recognition models ta <code>POST /v1/audio/transcriptions</code>, Python/TypeScript SDK, CLI da Speech Studio.</p><pre><code>result = ai.transcribe("audio.wav", language="hausa")
 print(result.text)
-print(result.model)</code></pre><p>EDNAi yana tabbatar da cewa model ID da aka dawo da shi ya dace da harshen da aka zaɓa; baya yarda da ASR model substitution.</p><h2>10. Official speech models</h2><ul><li>Nigerian English — <code>NCAIR1/NigerianAccentedEnglish</code></li><li>Yorùbá — <code>NCAIR1/Yoruba-ASR</code></li><li>Hausa — <code>NCAIR1/Hausa-ASR</code></li><li>Igbo — <code>NCAIR1/Igbo-ASR</code></li></ul><p>Cikakken repository guide: <code>docs/ha/getting-started.md</code>.</p></main></body></html>
+print(result.model)</code></pre><p>EDNAi yana tabbatar da cewa model ID da aka dawo da shi ya dace da harshen da aka zaɓa; baya yarda da ASR model substitution.</p><h2>10. Official speech models</h2><ul><li>Nigerian English — <code>NCAIR1/NigerianAccentedEnglish</code></li><li>Yorùbá — <code>NCAIR1/Yoruba-ASR</code></li><li>Hausa — <code>NCAIR1/Hausa-ASR</code></li><li>Igbo — <code>NCAIR1/Igbo-ASR</code></li></ul><p>Cikakken repository guide: <code>docs/ha/getting-started.md</code>.</p><h2>Use Case Studio</h2><p>EDNAi yana da workflow na N-ATLaS guda takwas: multilingual chatbot, translation, educational tools, cultural preservation, government services, digital inclusion, research applications da original song-lyrics generation.</p><pre><code>result = ai.run_use_case(
+    "education",
+    {
+        "topic": "Photosynthesis",
+        "learner_level": "JSS 2",
+        "objective": "Ka bayyana yadda tsiro ke yin abinci.",
+        "format": "lesson_quiz"
+    },
+    language="hausa"
+)
+print(result.text)</code></pre><p>Ana kuma samun workflows ɗin ta <code>GET /v1/use-cases</code>, <code>POST /v1/use-cases/{use_case}</code>, TypeScript da CLI. Song generation rubutattun lyrics ne kawai; baya ƙara wani audio model.</p></main></body></html>
