@@ -94,6 +94,35 @@ curl -X POST https://ednai-6znf.onrender.com/api/runtime/probe
 
 The probe verifies model provenance and fails if the upstream model identity is not exactly `NCAIR1/N-ATLaS`.
 
+
+## Speech Studio and official ASR
+
+EDNAi exposes the four official NCAIR speech-recognition models through the gateway, SDKs, CLI and Speech Studio.
+
+```python
+result = client.transcribe("audio.wav", language="yoruba")
+print(result.text)
+print(result.model)
+```
+
+```bash
+curl -X POST https://ednai-6znf.onrender.com/v1/audio/transcriptions \
+  -F 'language=yoruba' \
+  -F 'file=@audio.wav'
+```
+
+The returned model ID is checked against the selected language. EDNAi rejects ASR model substitution.
+
+## TTS boundary
+
+NCAIR currently publishes no official N-ATLaS TTS checkpoint. EDNAi therefore keeps speech synthesis separate from qualifying N-ATLaS provenance. The hosted Speech Studio uses a matching browser/device voice only when one is installed. It never silently falls back to another language.
+
+In browser TypeScript:
+
+```ts
+await ai.speak("Ẹ káàbọ̀ sí EDNAi.", "yoruba");
+```
+
 ## Speech model registry
 
 - Nigerian English — `NCAIR1/NigerianAccentedEnglish`
