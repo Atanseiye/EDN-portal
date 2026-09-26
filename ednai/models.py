@@ -39,3 +39,8 @@ class Transcription(BaseModel):
     provider: str | None = None
     latency_ms: float | None = None
     raw: dict[str, Any] = Field(default_factory=dict)
+
+
+class UseCaseGeneration(Generation):
+    use_case: str
+    language: str
