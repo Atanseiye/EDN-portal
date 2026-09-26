@@ -709,6 +709,7 @@ function clearAudio(){
   if($("asrCer"))$("asrCer").textContent="—";
   if($("asrRefWords"))$("asrRefWords").textContent="—";
   if($("copyTranscriptBtn"))$("copyTranscriptBtn").disabled=true;
+  if($("useTranscriptTtsBtn"))$("useTranscriptTtsBtn").disabled=true;
   if($("useTranscriptBtn"))$("useTranscriptBtn").disabled=true;
   if($("asrDropZone")){
     const strong=$("asrDropZone").querySelector("strong");
@@ -813,6 +814,7 @@ if($("transcribeBtn"))$("transcribeBtn").addEventListener("click",async()=>{
     $("asrTranscript").value=result.text||"";
     $("asrMeta").textContent=result.model+" · "+(result.provider||"EDNAi")+" · "+latency+" ms";
     $("copyTranscriptBtn").disabled=!result.text;
+    $("useTranscriptTtsBtn").disabled=!result.text;
     $("useTranscriptBtn").disabled=!result.text;
     if(result.text && !$("ttsText").value.trim())$("ttsText").value=result.text;
     setAsrStatus("Transcribed","good");
@@ -854,6 +856,17 @@ if($("scoreTranscriptBtn"))$("scoreTranscriptBtn").addEventListener("click",asyn
   }finally{
     setButtonLoading($("scoreTranscriptBtn"),false);
   }
+});
+
+if($("useTranscriptTtsBtn"))$("useTranscriptTtsBtn").addEventListener("click",()=>{
+  const transcript=$("asrTranscript").value.trim();
+  if(!transcript)return;
+  $("ttsText").value=transcript;
+  const language=$("asrLanguage").value;
+  $("ttsLanguage").value=language;
+  refreshTtsVoices();
+  $("ttsText").focus();
+  showToast("Transcript loaded into TTS.","success");
 });
 
 if($("useTranscriptBtn"))$("useTranscriptBtn").addEventListener("click",()=>{
