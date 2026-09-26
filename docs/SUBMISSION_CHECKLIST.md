@@ -20,8 +20,8 @@
 - [x] anti-substitution tests
 - [x] upstream model provenance enforcement
 - [x] live runtime-probe endpoint
-- [ ] live N-ATLaS runtime configured
-- [ ] capture integration evidence screenshots/logs
+- [x] live N-ATLaS runtime configured
+- [x] capture machine-verifiable integration evidence
 
 ## Validation
 - [x] external beta feedback workflow
