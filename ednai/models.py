@@ -30,3 +30,12 @@ class ModelInfo(BaseModel):
     supported_languages: list[str] = Field(
         default_factory=lambda: ["english", "yoruba", "hausa", "igbo"]
     )
+
+
+class Transcription(BaseModel):
+    text: str
+    model: str
+    language: str
+    provider: str | None = None
+    latency_ms: float | None = None
+    raw: dict[str, Any] = Field(default_factory=dict)
