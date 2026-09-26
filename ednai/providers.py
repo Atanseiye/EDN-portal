@@ -119,7 +119,7 @@ class GradioSpaceProvider(Provider):
         except ImportError as exc:
             raise ProviderError("Install ednai[server] to use a Gradio N-ATLaS runtime") from exc
         started = time.perf_counter()
-        client = Client(self.space_id, token=self.hf_token)
+        client = Client(self.space_id)
         result = client.predict(
             json.dumps([m.model_dump() for m in messages], ensure_ascii=False),
             float(temperature),
