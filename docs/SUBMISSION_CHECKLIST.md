@@ -9,7 +9,7 @@
 - [x] QLoRA starter
 - [x] bilingual documentation
 - [x] challenge dashboard
-- [ ] public deployment live
+- [x] public deployment live
 
 ## Direct N-ATLaS integration
 - [x] model ID guard
@@ -18,6 +18,8 @@
 - [x] OpenAI-compatible N-ATLaS provider
 - [x] QLoRA based on NCAIR1/N-ATLaS
 - [x] anti-substitution tests
+- [x] upstream model provenance enforcement
+- [x] live runtime-probe endpoint
 - [ ] live N-ATLaS runtime configured
 - [ ] capture integration evidence screenshots/logs
 
