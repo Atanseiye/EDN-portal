@@ -1,0 +1,34 @@
+name: Provision EDNAi N-ATLaS Runtime
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [ednai]
+    paths:
+      - ".github/workflows/provision-ednai-runtime.yml"
+
+jobs:
+  provision:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    env:
+      HF_TOKEN: ${{ secrets.HF_TOKEN }}
+      HF_OWNER: Kolade1
+      EDNAI_HF_SPACE: Kolade1/ednai-natlas-runtime
+      EDNAI_HF_HARDWARE: zero-a10g
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Require Hugging Face token
+        run: |
+          if [ -z "$HF_TOKEN" ]; then
+            echo "::error::Repository secret HF_TOKEN is not configured."
+            exit 1
+          fi
+      - name: Install provisioner dependencies
+        run: pip install "huggingface_hub>=0.34,<2"
+      - name: Create and configure ZeroGPU runtime
+        run: python scripts/provision_ednai_runtime.py
