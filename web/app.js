@@ -818,7 +818,8 @@ function updateUseCaseCode(){
     code=`import { EDNAi } from "@ednai/sdk";
 
 const ai = new EDNAi({
-  baseUrl: "https://ednai-6znf.onrender.com"
+  baseUrl: "https://ednai-6znf.onrender.com",
+  apiKey: process.env.EDNAI_API_KEY
 });
 
 const result = await ai.runUseCase(
@@ -834,13 +835,17 @@ const result = await ai.runUseCase(
 
 console.log(result.text);`;
   }else if(useCaseStack==="curl"){
-    code=`curl -X POST https://ednai-6znf.onrender.com/v1/use-cases/${activeUseCase} \\\n  -H "Content-Type: application/json" \\\n  --data-binary @- <<'JSON'
+    code=`curl -X POST https://ednai-6znf.onrender.com/v1/use-cases/${activeUseCase} \\\n  -H "Authorization: Bearer $EDNAI_API_KEY" \\\n  -H "Content-Type: application/json" \\\n  --data-binary @- <<'JSON'
 ${JSON.stringify(payload,null,2)}
 JSON`;
   }else{
-    code=`from ednai import EDNAi
+    code=`import os
+from ednai import EDNAi
 
-ai = EDNAi(base_url="https://ednai-6znf.onrender.com")
+ai = EDNAi(
+    base_url="https://ednai-6znf.onrender.com",
+    api_key=os.environ["EDNAI_API_KEY"],
+)
 
 result = ai.run_use_case(
     "${activeUseCase}",
