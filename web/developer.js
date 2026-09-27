@@ -40,7 +40,8 @@ function scopeLabel(scope){
     "usecases.run":"Use Case Studio",
     "speech.transcribe":"Speech transcription",
     "evaluation.run":"Evaluation",
-    "dataset.inspect":"Dataset inspection"
+    "dataset.inspect":"Dataset inspection",
+    "finetuning.plan":"Fine-tune planner"
   };
   return labels[scope]||scope;
 }
