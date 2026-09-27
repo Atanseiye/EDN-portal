@@ -6,7 +6,7 @@ import uuid
 from pathlib import Path
 from typing import Any, Literal
 
-from fastapi import Cookie, FastAPI, File, Form, Header, HTTPException, UploadFile
+from fastapi import Cookie, FastAPI, File, Form, Header, HTTPException, Request, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse, Response
 from fastapi.staticfiles import StaticFiles
@@ -65,6 +65,22 @@ app.add_middleware(
 )
 app.mount("/assets", StaticFiles(directory=WEB), name="assets")
 app.include_router(studio_router)
+
+
+@app.middleware("http")
+async def _studio_scope_guard(request: Request, call_next):
+    scope_map = {
+        ("POST", "/api/studio/dataset/inspect"): "dataset.inspect",
+        ("POST", "/api/studio/fine-tune/plan"): "finetuning.plan",
+    }
+    scope = scope_map.get((request.method.upper(), request.url.path))
+    if scope:
+        _developer_principal(
+            scope,
+            request.headers.get("authorization"),
+            request.cookies.get("ednai_session"),
+        )
+    return await call_next(request)
 
 
 def build_provider() -> Provider | None:
@@ -638,8 +654,36 @@ def capabilities():
 
 
 @app.post("/api/studio/evaluate")
-def studio_evaluate(data: EvalRunRequest):
-    return run_studio_eval(provider, data)
+def studio_evaluate(
+    data: EvalRunRequest,
+    authorization: str | None = Header(default=None),
+    ednai_session: str | None = Cookie(default=None),
+):
+    principal = _developer_principal("evaluation.run", authorization, ednai_session)
+
+    class MeteredEvalProvider:
+        def generate(
+            self,
+            messages,
+            *,
+            model=NATLAS_MODEL_ID,
+            temperature=0.2,
+            max_tokens=512,
+            json_mode=False,
+        ):
+            return _meter_generation(
+                GenerateRequest(
+                    model=model,
+                    messages=messages,
+                    temperature=temperature,
+                    max_tokens=max_tokens,
+                    json_mode=json_mode,
+                ),
+                principal,
+                feature="evaluation.run",
+            )
+
+    return run_studio_eval(MeteredEvalProvider(), data)
 
 
 @app.post("/api/runtime/probe")
