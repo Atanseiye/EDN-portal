@@ -6,6 +6,15 @@ from server.main import app
 client = TestClient(app)
 
 
+def login_demo():
+    response = client.post(
+        "/api/developer/login",
+        json={"email": "demo@edn.com", "password": "12345"},
+    )
+    assert response.status_code == 200
+    return response
+
+
 def test_health_and_model_discovery():
     health = client.get("/health")
     assert health.status_code == 200
@@ -42,9 +51,11 @@ def test_playground_and_guides_are_real_pages():
     assert client.get("/guide/ha").status_code == 200
     assert client.get("/guide/ig").status_code == 200
     assert client.get("/challenge").status_code == 200
+    assert client.get("/developer").status_code == 200
 
 
 def test_wrong_model_is_rejected_before_inference():
+    login_demo()
     r = client.post(
         "/v1/generate",
         json={
@@ -81,6 +92,7 @@ def test_disabled_runtime_probe_fails_closed():
 
 
 def test_disabled_runtime_fails_closed():
+    login_demo()
     r = client.post(
         "/v1/generate",
         json={
@@ -107,6 +119,7 @@ def test_speech_capabilities_are_explicit_about_provenance():
 
 
 def test_disabled_runtime_asr_fails_closed():
+    login_demo()
     response = client.post(
         "/v1/audio/transcriptions",
         data={"language": "yoruba"},
