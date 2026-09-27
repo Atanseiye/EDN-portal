@@ -1,0 +1,152 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#0d1b1e">
+<title>EDNAi Developer — Accounts, API Keys & Usage</title>
+<link rel="stylesheet" href="/assets/styles.css">
+</head>
+<body>
+<header class="nav">
+  <a class="brand" href="/"><span class="mark">E</span><span>EDN<span>Ai</span></span></a>
+  <nav><a href="/">Console</a><a href="/guide">Docs</a><a href="/challenge">Challenge</a></nav>
+</header>
+
+<main class="developer-main">
+<section class="hero developer-hero">
+  <span class="eyebrow">EDNAi Developer Platform</span>
+  <h1>Build on N-ATLaS<br><em>with your own keys.</em></h1>
+  <p>Create scoped credentials, monitor exact token usage and manage prepaid developer credit from one place.</p>
+</section>
+
+<section id="authView" class="developer-auth-grid">
+  <article class="panel developer-auth-card">
+    <span class="eyebrow">Developer sign in</span>
+    <h2>Welcome back.</h2>
+    <form id="loginForm">
+      <label>Email<input id="loginEmail" type="email" autocomplete="email" required placeholder="you@company.com"></label>
+      <label>Password<input id="loginPassword" type="password" autocomplete="current-password" required></label>
+      <button class="primary" type="submit">Sign in</button>
+      <p id="loginStatus" class="hint"></p>
+    </form>
+  </article>
+
+  <article class="panel developer-auth-card demo-account-card">
+    <span class="eyebrow">Challenge demo account</span>
+    <h2>Try the developer platform.</h2>
+    <p>This public demo identity carries demo credit and exists only for challenge/product evaluation.</p>
+    <div class="demo-credential"><span>Email</span><code>demo@edn.com</code></div>
+    <div class="demo-credential"><span>Password</span><code>12345</code></div>
+    <button id="fillDemoBtn" class="secondary" type="button">Use demo account</button>
+    <p class="hint">Do not reuse these credentials anywhere else.</p>
+  </article>
+
+  <article class="panel developer-auth-card">
+    <span class="eyebrow">New developer</span>
+    <h2>Create an account.</h2>
+    <form id="registerForm">
+      <label>Name<input id="registerName" autocomplete="name" placeholder="Your name"></label>
+      <label>Email<input id="registerEmail" type="email" autocomplete="email" required></label>
+      <label>Password<input id="registerPassword" type="password" autocomplete="new-password" minlength="10" required placeholder="10+ characters"></label>
+      <button class="ghost" type="submit">Create developer account</button>
+      <p class="hint">New production accounts begin with no paid credit until a payment/top-up is recorded.</p>
+      <p id="registerStatus" class="hint"></p>
+    </form>
+  </article>
+</section>
+
+<section id="dashboardView" class="developer-dashboard hidden">
+  <div class="workspace-head">
+    <div>
+      <span class="eyebrow">Developer workspace</span>
+      <h2 id="developerGreeting">Account</h2>
+      <p id="developerEmail"></p>
+    </div>
+    <div class="workspace-actions">
+      <button id="refreshDeveloperBtn" class="ghost" type="button">Refresh</button>
+      <button id="logoutDeveloperBtn" class="ghost" type="button">Sign out</button>
+    </div>
+  </div>
+
+  <div class="developer-metrics">
+    <article class="panel developer-metric"><span>Prepaid balance</span><strong id="developerBalance">$0.00</strong><small>USD developer credit</small></article>
+    <article class="panel developer-metric"><span>Tokens used</span><strong id="developerTokens">0</strong><small>Recent metered requests</small></article>
+    <article class="panel developer-metric"><span>Usage cost</span><strong id="developerCost">$0.00</strong><small>Recent ledger window</small></article>
+    <article class="panel developer-metric"><span>Active API keys</span><strong id="developerKeyCount">0</strong><small>Scoped credentials</small></article>
+  </div>
+
+  <div class="developer-grid-two">
+    <article class="panel">
+      <div class="section-head">
+        <div><span class="eyebrow">Pricing</span><h3>Token rates</h3></div>
+        <span class="status good">Prepaid</span>
+      </div>
+      <div class="pricing-grid">
+        <div><span>Input</span><strong id="inputRate">—</strong><small>per 1M tokens</small></div>
+        <div><span>Output</span><strong id="outputRate">—</strong><small>per 1M tokens</small></div>
+      </div>
+      <p class="hint">The current rates are configurable platform rates for the demo environment. Commercial pricing can be changed server-side without changing developer SDK code.</p>
+    </article>
+
+    <article class="panel">
+      <div class="section-head"><div><span class="eyebrow">Authentication</span><h3>Create API key</h3></div></div>
+      <label>Key name<input id="apiKeyName" value="My application" maxlength="80"></label>
+      <fieldset class="scope-fieldset">
+        <legend>Grant access</legend>
+        <div id="scopeOptions" class="scope-options"></div>
+      </fieldset>
+      <button id="createApiKeyBtn" class="primary" type="button">Create scoped API key</button>
+      <p class="hint">The secret is shown once. EDNAi stores only a SHA-256 hash.</p>
+    </article>
+  </div>
+
+  <article id="newKeyReveal" class="panel key-reveal hidden">
+    <div>
+      <span class="eyebrow">New API key · copy now</span>
+      <h3>This secret cannot be recovered later.</h3>
+    </div>
+    <div class="key-secret-row"><code id="newApiKeySecret"></code><button id="copyNewApiKeyBtn" class="copy-chip" type="button">Copy</button></div>
+  </article>
+
+  <div class="developer-grid-two">
+    <article class="panel">
+      <div class="section-head"><div><span class="eyebrow">Credentials</span><h3>API keys</h3></div></div>
+      <div id="apiKeyList" class="developer-list"><p class="hint">No API keys yet.</p></div>
+    </article>
+
+    <article class="panel">
+      <div class="section-head"><div><span class="eyebrow">Quick integration</span><h3>Call N-ATLaS</h3></div><button id="copyDeveloperCurlBtn" class="copy-chip" type="button">Copy</button></div>
+      <pre class="speech-code"><code id="developerCurl">curl -X POST https://YOUR-EDNAI-HOST/v1/generate \
+  -H "Authorization: Bearer $EDNAI_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{"model":"NCAIR1/N-ATLaS","messages":[{"role":"user","content":"Explain APIs simply."}]}'</code></pre>
+    </article>
+  </div>
+
+  <article class="panel usage-panel">
+    <div class="section-head">
+      <div><span class="eyebrow">Metering & ledger</span><h3>Recent usage</h3></div>
+      <span id="usageMeasurementBadge" class="status">Exact when provider-reported</span>
+    </div>
+    <div class="usage-table-wrap">
+      <table class="usage-table">
+        <thead><tr><th>Feature</th><th>Input</th><th>Output</th><th>Total</th><th>Measurement</th><th>Cost</th><th>Time</th></tr></thead>
+        <tbody id="usageRows"><tr><td colspan="7">No usage recorded yet.</td></tr></tbody>
+      </table>
+    </div>
+  </article>
+
+  <article class="panel billing-note">
+    <span class="eyebrow">Payments</span>
+    <h3>Wallet and charging are live; external checkout is intentionally not faked.</h3>
+    <p>EDNAi has the prepaid ledger, balance enforcement and per-request charges. A payment provider will credit this ledger after successful payment once the commercial PSP is selected and configured.</p>
+  </article>
+</section>
+</main>
+
+<footer><strong>EDNAi</strong> · Developer infrastructure for NCAIR1/N-ATLaS.</footer>
+<div id="toast" class="toast" role="status" aria-live="polite"></div>
+<script src="/assets/developer.js"></script>
+</body>
+</html>
