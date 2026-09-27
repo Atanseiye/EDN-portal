@@ -58,6 +58,11 @@ CREATE TABLE IF NOT EXISTS developer_accounts (
     is_demo INTEGER NOT NULL DEFAULT 0,
     created_at TEXT NOT NULL
 );
+CREATE TABLE IF NOT EXISTS developer_wallets (
+    developer_id TEXT PRIMARY KEY,
+    balance_microusd INTEGER NOT NULL DEFAULT 0,
+    FOREIGN KEY(developer_id) REFERENCES developer_accounts(id)
+);
 CREATE TABLE IF NOT EXISTS developer_sessions (
     id TEXT PRIMARY KEY,
     developer_id TEXT NOT NULL,
@@ -120,6 +125,10 @@ CREATE TABLE IF NOT EXISTS developer_accounts (
     status TEXT NOT NULL DEFAULT 'active',
     is_demo BOOLEAN NOT NULL DEFAULT FALSE,
     created_at TIMESTAMPTZ NOT NULL
+);
+CREATE TABLE IF NOT EXISTS developer_wallets (
+    developer_id TEXT PRIMARY KEY REFERENCES developer_accounts(id),
+    balance_microusd BIGINT NOT NULL DEFAULT 0
 );
 CREATE TABLE IF NOT EXISTS developer_sessions (
     id TEXT PRIMARY KEY,
@@ -192,9 +201,28 @@ class DeveloperStore:
             with self._postgres() as con:
                 with con.cursor() as cur:
                     cur.execute(POSTGRES_SCHEMA)
+                    cur.execute(
+                        """
+                        INSERT INTO developer_wallets (developer_id,balance_microusd)
+                        SELECT a.id, COALESCE(sum(l.amount_microusd),0)
+                        FROM developer_accounts a
+                        LEFT JOIN developer_ledger l ON l.developer_id=a.id
+                        GROUP BY a.id
+                        ON CONFLICT (developer_id) DO NOTHING
+                        """
+                    )
         else:
             with self._sqlite() as con:
                 con.executescript(SQLITE_SCHEMA)
+                con.execute(
+                    """
+                    INSERT OR IGNORE INTO developer_wallets (developer_id,balance_microusd)
+                    SELECT a.id, COALESCE(sum(l.amount_microusd),0)
+                    FROM developer_accounts a
+                    LEFT JOIN developer_ledger l ON l.developer_id=a.id
+                    GROUP BY a.id
+                    """
+                )
 
     def create_account(
         self,
@@ -229,6 +257,10 @@ class DeveloperStore:
                             """,
                             (account_id, email, display_name, salt, digest, is_demo, now),
                         )
+                        cur.execute(
+                            "INSERT INTO developer_wallets (developer_id,balance_microusd) VALUES (%s,0)",
+                            (account_id,),
+                        )
             else:
                 with self._sqlite() as con:
                     con.execute(
@@ -241,6 +273,10 @@ class DeveloperStore:
                             account_id, email, display_name, salt, digest,
                             int(is_demo), now.isoformat(),
                         ),
+                    )
+                    con.execute(
+                        "INSERT INTO developer_wallets (developer_id,balance_microusd) VALUES (?,0)",
+                        (account_id,),
                     )
         except Exception as exc:
             if "unique" in str(exc).lower() or "duplicate" in str(exc).lower():
@@ -645,19 +681,66 @@ class DeveloperStore:
     ) -> str:
         entry_id=str(uuid.uuid4())
         now=_now()
+        amount=int(amount_microusd)
         if self.use_postgres:
             with self._postgres() as con:
                 with con.cursor() as cur:
+                    if amount < 0:
+                        cur.execute(
+                            """
+                            UPDATE developer_wallets
+                            SET balance_microusd=balance_microusd+%s
+                            WHERE developer_id=%s AND balance_microusd >= %s
+                            RETURNING balance_microusd
+                            """,
+                            (amount,developer_id,-amount),
+                        )
+                        if not cur.fetchone():
+                            raise ValueError("Insufficient developer credit.")
+                    else:
+                        cur.execute(
+                            """
+                            UPDATE developer_wallets
+                            SET balance_microusd=balance_microusd+%s
+                            WHERE developer_id=%s
+                            """,
+                            (amount,developer_id),
+                        )
+                        if cur.rowcount != 1:
+                            raise KeyError(developer_id)
                     cur.execute(
                         """
                         INSERT INTO developer_ledger
                         (id,developer_id,kind,amount_microusd,reference,description,created_at)
                         VALUES (%s,%s,%s,%s,%s,%s,%s)
                         """,
-                        (entry_id,developer_id,kind,int(amount_microusd),reference,description,now),
+                        (entry_id,developer_id,kind,amount,reference,description,now),
                     )
         else:
             with self._sqlite() as con:
+                con.execute("BEGIN IMMEDIATE")
+                if amount < 0:
+                    cur=con.execute(
+                        """
+                        UPDATE developer_wallets
+                        SET balance_microusd=balance_microusd+?
+                        WHERE developer_id=? AND balance_microusd >= ?
+                        """,
+                        (amount,developer_id,-amount),
+                    )
+                    if cur.rowcount != 1:
+                        raise ValueError("Insufficient developer credit.")
+                else:
+                    cur=con.execute(
+                        """
+                        UPDATE developer_wallets
+                        SET balance_microusd=balance_microusd+?
+                        WHERE developer_id=?
+                        """,
+                        (amount,developer_id),
+                    )
+                    if cur.rowcount != 1:
+                        raise KeyError(developer_id)
                 con.execute(
                     """
                     INSERT INTO developer_ledger
@@ -665,7 +748,7 @@ class DeveloperStore:
                     VALUES (?,?,?,?,?,?,?)
                     """,
                     (
-                        entry_id,developer_id,kind,int(amount_microusd),reference,
+                        entry_id,developer_id,kind,amount,reference,
                         description,now.isoformat(),
                     ),
                 )
@@ -676,16 +759,17 @@ class DeveloperStore:
             with self._postgres() as con:
                 with con.cursor() as cur:
                     cur.execute(
-                        "SELECT COALESCE(sum(amount_microusd),0) FROM developer_ledger WHERE developer_id=%s",
+                        "SELECT balance_microusd FROM developer_wallets WHERE developer_id=%s",
                         (developer_id,),
                     )
-                    return int(cur.fetchone()[0] or 0)
+                    row=cur.fetchone()
+                    return int(row[0]) if row else 0
         with self._sqlite() as con:
             row=con.execute(
-                "SELECT COALESCE(sum(amount_microusd),0) balance FROM developer_ledger WHERE developer_id=?",
+                "SELECT balance_microusd FROM developer_wallets WHERE developer_id=?",
                 (developer_id,),
             ).fetchone()
-            return int(row["balance"] or 0)
+            return int(row["balance_microusd"]) if row else 0
 
     def record_usage(
         self,
@@ -703,13 +787,24 @@ class DeveloperStore:
         usage_id=str(uuid.uuid4())
         now=_now()
         total_tokens=int(prompt_tokens)+int(completion_tokens)
-
-        if self.balance_microusd(developer_id) < int(cost_microusd):
-            raise ValueError("Insufficient developer credit.")
+        cost=int(cost_microusd)
 
         if self.use_postgres:
             with self._postgres() as con:
                 with con.cursor() as cur:
+                    cur.execute(
+                        """
+                        UPDATE developer_wallets
+                        SET balance_microusd=balance_microusd-%s
+                        WHERE developer_id=%s AND balance_microusd >= %s
+                        RETURNING balance_microusd
+                        """,
+                        (cost,developer_id,cost),
+                    )
+                    wallet=cur.fetchone()
+                    if not wallet:
+                        raise ValueError("Insufficient developer credit.")
+                    balance=int(wallet[0])
                     cur.execute(
                         """
                         INSERT INTO developer_usage
@@ -719,8 +814,7 @@ class DeveloperStore:
                         """,
                         (
                             usage_id,developer_id,api_key_id,request_id,feature,model,
-                            prompt_tokens,completion_tokens,total_tokens,measurement,
-                            cost_microusd,now,
+                            prompt_tokens,completion_tokens,total_tokens,measurement,cost,now,
                         ),
                     )
                     cur.execute(
@@ -730,12 +824,27 @@ class DeveloperStore:
                         VALUES (%s,%s,'usage_charge',%s,%s,%s,%s)
                         """,
                         (
-                            str(uuid.uuid4()),developer_id,-int(cost_microusd),request_id,
+                            str(uuid.uuid4()),developer_id,-cost,request_id,
                             f"{feature}: {total_tokens} tokens ({measurement})",now,
                         ),
                     )
         else:
             with self._sqlite() as con:
+                con.execute("BEGIN IMMEDIATE")
+                cur=con.execute(
+                    """
+                    UPDATE developer_wallets
+                    SET balance_microusd=balance_microusd-?
+                    WHERE developer_id=? AND balance_microusd >= ?
+                    """,
+                    (cost,developer_id,cost),
+                )
+                if cur.rowcount != 1:
+                    raise ValueError("Insufficient developer credit.")
+                balance=int(con.execute(
+                    "SELECT balance_microusd FROM developer_wallets WHERE developer_id=?",
+                    (developer_id,),
+                ).fetchone()["balance_microusd"])
                 con.execute(
                     """
                     INSERT INTO developer_usage
@@ -745,8 +854,8 @@ class DeveloperStore:
                     """,
                     (
                         usage_id,developer_id,api_key_id,request_id,feature,model,
-                        prompt_tokens,completion_tokens,total_tokens,measurement,
-                        cost_microusd,now.isoformat(),
+                        prompt_tokens,completion_tokens,total_tokens,measurement,cost,
+                        now.isoformat(),
                     ),
                 )
                 con.execute(
@@ -756,7 +865,7 @@ class DeveloperStore:
                     VALUES (?,?,?,?,?,?,?)
                     """,
                     (
-                        str(uuid.uuid4()),developer_id,"usage_charge",-int(cost_microusd),
+                        str(uuid.uuid4()),developer_id,"usage_charge",-cost,
                         request_id,f"{feature}: {total_tokens} tokens ({measurement})",
                         now.isoformat(),
                     ),
@@ -769,8 +878,8 @@ class DeveloperStore:
             "completion_tokens":int(completion_tokens),
             "total_tokens":total_tokens,
             "measurement":measurement,
-            "cost_microusd":int(cost_microusd),
-            "balance_microusd":self.balance_microusd(developer_id),
+            "cost_microusd":cost,
+            "balance_microusd":balance,
         }
 
     def usage_summary(self, developer_id: str, *, limit: int = 50) -> dict[str, Any]:
