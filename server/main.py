@@ -8,7 +8,7 @@ from typing import Any, Literal
 
 from fastapi import Cookie, FastAPI, File, Form, Header, HTTPException, Request, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import FileResponse, Response
+from fastapi.responses import FileResponse, JSONResponse, Response
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, Field
 from starlette.concurrency import run_in_threadpool
@@ -75,11 +75,18 @@ async def _studio_scope_guard(request: Request, call_next):
     }
     scope = scope_map.get((request.method.upper(), request.url.path))
     if scope:
-        _developer_principal(
-            scope,
-            request.headers.get("authorization"),
-            request.cookies.get("ednai_session"),
-        )
+        try:
+            _developer_principal(
+                scope,
+                request.headers.get("authorization"),
+                request.cookies.get("ednai_session"),
+            )
+        except HTTPException as exc:
+            return JSONResponse(
+                status_code=exc.status_code,
+                content={"detail": exc.detail},
+                headers=exc.headers or {},
+            )
     return await call_next(request)
 
 
