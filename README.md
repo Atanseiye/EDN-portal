@@ -91,6 +91,76 @@ EDNAi supports:
 
 See `docs/en/getting-started.md`.
 
+## Developer accounts, API keys and billing
+
+EDNAi includes a developer control plane at `/developer`.
+
+Developers can:
+
+- register and sign in;
+- create multiple API keys;
+- grant each key only the features it needs;
+- revoke keys without changing account credentials;
+- see prepaid balance, token usage and request costs;
+- inspect whether token usage was provider-exact or estimated.
+
+The challenge/demo identity is:
+
+```text
+email: demo@edn.com
+password: 12345
+```
+
+This is an intentionally weak, public **demo-only** credential and must never be reused as a production password.
+
+API keys use the `ednai_live_` prefix. The full key is returned once at creation; only a SHA-256 hash and display prefix are stored afterward.
+
+Current enforced scopes:
+
+```text
+inference.generate
+inference.chat
+usecases.run
+speech.transcribe
+evaluation.run
+dataset.inspect
+finetuning.plan
+```
+
+Example:
+
+```bash
+export EDNAI_API_KEY="ednai_live_..."
+
+curl -X POST https://ednai-6znf.onrender.com/v1/generate \
+  -H "Authorization: Bearer $EDNAI_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "model":"NCAIR1/N-ATLaS",
+    "messages":[{"role":"user","content":"Explain APIs simply."}]
+  }'
+```
+
+### Token metering
+
+The hosted N-ATLaS runtime reports tokenizer-derived `prompt_tokens` and `completion_tokens`. EDNAi records those counts in the usage ledger and charges the account according to the configured input/output rates.
+
+When an upstream provider does not return token counts, EDNAi explicitly marks the measurement as an estimate instead of presenting it as exact.
+
+The default demo rates are configurable deployment values, not final commercial pricing:
+
+```text
+EDNAI_INPUT_USD_PER_1M_TOKENS
+EDNAI_OUTPUT_USD_PER_1M_TOKENS
+EDNAI_DEMO_CREDIT_USD
+```
+
+Wallet deductions are atomic, so concurrent requests cannot spend the same prepaid balance twice.
+
+### Payment collection
+
+The prepaid wallet, ledger, balance enforcement and per-request charging are implemented. External card/bank checkout is intentionally not fabricated in the repository: the selected payment provider should credit the ledger only after a verified successful payment/webhook.
+
 ## N-ATLaS Use Case Studio
 
 EDNAi productizes the model's published application patterns as structured developer workflows:
