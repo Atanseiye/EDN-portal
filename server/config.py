@@ -15,6 +15,14 @@ class Settings(BaseSettings):
     ednai_admin_token: str = "change-me"
     ednai_database_path: str = "/tmp/ednai.sqlite3"
     ednai_database_url: str = ""
+    ednai_auth_enabled: bool = True
+    ednai_demo_account_enabled: bool = True
+    ednai_demo_email: str = "demo@edn.com"
+    ednai_demo_password: str = "12345"
+    ednai_demo_credit_usd: float = 10.0
+    ednai_input_usd_per_1m_tokens: float = 0.50
+    ednai_output_usd_per_1m_tokens: float = 1.50
+    ednai_session_hours: int = 24
     cors_origins: str = "http://localhost:8000"
 
     model_config = SettingsConfigDict(env_file=".env", extra="ignore")
