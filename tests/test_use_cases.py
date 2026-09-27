@@ -74,6 +74,7 @@ def test_song_workflow_is_text_only_and_original():
 
 
 def test_missing_required_input_fails_before_inference():
+    client.post("/api/developer/login", json={"email": "demo@edn.com", "password": "12345"})
     response = client.post(
         "/v1/use-cases/education",
         json={"language": "english", "inputs": {"topic": "Energy"}},
@@ -83,6 +84,7 @@ def test_missing_required_input_fails_before_inference():
 
 
 def test_unknown_use_case_is_404():
+    client.post("/api/developer/login", json={"email": "demo@edn.com", "password": "12345"})
     response = client.post(
         "/v1/use-cases/not-real",
         json={"language": "english", "inputs": {}},
@@ -104,6 +106,11 @@ def test_use_case_endpoint_executes_through_natlas_provider(monkeypatch):
             )
 
     monkeypatch.setattr(main, "provider", FakeProvider())
+    login = client.post(
+        "/api/developer/login",
+        json={"email": "demo@edn.com", "password": "12345"},
+    )
+    assert login.status_code == 200
     response = client.post(
         "/v1/use-cases/chatbot",
         json={
