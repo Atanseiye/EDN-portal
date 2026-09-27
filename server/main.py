@@ -2,10 +2,11 @@ from __future__ import annotations
 
 import tempfile
 import time
+import uuid
 from pathlib import Path
 from typing import Any, Literal
 
-from fastapi import FastAPI, File, Form, Header, HTTPException, UploadFile
+from fastapi import Cookie, FastAPI, File, Form, Header, HTTPException, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse, Response
 from fastapi.staticfiles import StaticFiles
@@ -26,7 +27,9 @@ from ednai.providers import (
 )
 from ednai.speech import normalize_speech_language
 from ednai.use_cases import USE_CASES, build_use_case_prompt, public_use_case_registry
+from server.billing import Pricing, estimate_prompt_tokens, usage_tokens
 from server.config import get_settings
+from server.developer_store import ALL_SCOPES, DEFAULT_SCOPES, DeveloperStore
 from server.store import BetaStore
 from server.studio import EvalRunRequest, router as studio_router, run_studio_eval
 
@@ -34,6 +37,20 @@ settings = get_settings()
 ROOT = Path(__file__).resolve().parents[1]
 WEB = ROOT / "web"
 store = BetaStore(settings.ednai_database_path, settings.ednai_database_url or None)
+developer_store = DeveloperStore(
+    settings.ednai_database_path,
+    settings.ednai_database_url or None,
+)
+pricing = Pricing.from_values(
+    settings.ednai_input_usd_per_1m_tokens,
+    settings.ednai_output_usd_per_1m_tokens,
+)
+if settings.ednai_demo_account_enabled:
+    developer_store.ensure_demo_account(
+        settings.ednai_demo_email,
+        settings.ednai_demo_password,
+        initial_credit_microusd=int(settings.ednai_demo_credit_usd * 1_000_000),
+    )
 
 app = FastAPI(
     title="EDNAi",
@@ -90,6 +107,28 @@ class UseCaseRequest(BaseModel):
     json_mode: bool = False
 
 
+class DeveloperRegister(BaseModel):
+    email: str
+    password: str = Field(min_length=10)
+    display_name: str | None = None
+
+
+class DeveloperLogin(BaseModel):
+    email: str
+    password: str
+
+
+class DeveloperApiKeyCreate(BaseModel):
+    name: str = Field(default="Default key", min_length=1, max_length=80)
+    scopes: list[str] = Field(default_factory=lambda: list(DEFAULT_SCOPES))
+
+
+class DeveloperCreditAdjustment(BaseModel):
+    amount_usd: float = Field(gt=0, le=100000)
+    reference: str | None = None
+    description: str | None = None
+
+
 class BetaFeedback(BaseModel):
     tester_identity: str = Field(min_length=3, description="Email or other stable identifier; stored only as a hash.")
     display_name: str | None = None
@@ -119,6 +158,11 @@ def challenge_page():
     return FileResponse(WEB / "challenge.html")
 
 
+@app.get("/developer", include_in_schema=False)
+def developer_portal():
+    return FileResponse(WEB / "developer.html")
+
+
 @app.get("/guide", include_in_schema=False)
 def guide_index():
     return FileResponse(WEB / "guide.html")
@@ -144,6 +188,129 @@ def igbo_guide():
     return FileResponse(WEB / "guide-ig.html")
 
 
+def _money(microusd: int) -> float:
+    return round(int(microusd) / 1_000_000, 6)
+
+
+def _session_account(ednai_session: str | None) -> dict[str, Any]:
+    if not settings.ednai_auth_enabled:
+        raise HTTPException(status_code=503, detail="Developer authentication is disabled.")
+    if not ednai_session:
+        raise HTTPException(status_code=401, detail="Developer login required.")
+    account = developer_store.resolve_session(ednai_session)
+    if not account:
+        raise HTTPException(status_code=401, detail="Developer session is invalid or expired.")
+    return account
+
+
+def _developer_principal(
+    scope: str,
+    authorization: str | None,
+    ednai_session: str | None,
+) -> dict[str, Any]:
+    if not settings.ednai_auth_enabled:
+        return {
+            "developer_id": "auth-disabled",
+            "api_key_id": None,
+            "email": "auth-disabled",
+            "is_demo": True,
+            "scopes": list(ALL_SCOPES),
+            "billing_exempt": True,
+        }
+
+    if authorization and authorization.lower().startswith("bearer "):
+        token = authorization.split(" ", 1)[1].strip()
+        if token.startswith("ednai_live_"):
+            principal = developer_store.resolve_api_key(token)
+            if not principal:
+                raise HTTPException(status_code=401, detail="Invalid or revoked EDNAi API key.")
+            if scope not in principal["scopes"]:
+                raise HTTPException(
+                    status_code=403,
+                    detail=f"API key does not grant the required scope: {scope}",
+                )
+            principal["billing_exempt"] = False
+            return principal
+
+    account = _session_account(ednai_session)
+    return {
+        "developer_id": account["id"],
+        "api_key_id": None,
+        "email": account["email"],
+        "is_demo": account["is_demo"],
+        "scopes": list(ALL_SCOPES),
+        "billing_exempt": False,
+    }
+
+
+def _ensure_credit(principal: dict[str, Any], req: GenerateRequest) -> None:
+    if principal.get("billing_exempt"):
+        return
+    estimate = pricing.max_authorization_microusd(
+        estimate_prompt_tokens(req.messages),
+        req.max_tokens,
+    )
+    balance = developer_store.balance_microusd(principal["developer_id"])
+    if balance < estimate:
+        raise HTTPException(
+            status_code=402,
+            detail={
+                "error": "insufficient_credit",
+                "balance_usd": _money(balance),
+                "estimated_max_request_usd": _money(estimate),
+            },
+        )
+
+
+def _meter_generation(
+    req: GenerateRequest,
+    principal: dict[str, Any],
+    *,
+    feature: str,
+) -> Generation:
+    _ensure_credit(principal, req)
+    generation = _generate(req)
+    if principal.get("billing_exempt"):
+        return generation
+
+    prompt_tokens, completion_tokens, measurement = usage_tokens(
+        generation.usage,
+        messages=req.messages,
+        output_text=generation.text,
+    )
+    cost = pricing.charge_microusd(prompt_tokens, completion_tokens)
+    request_id = "req_" + uuid.uuid4().hex
+    try:
+        metered = developer_store.record_usage(
+            developer_id=principal["developer_id"],
+            api_key_id=principal.get("api_key_id"),
+            request_id=request_id,
+            feature=feature,
+            model=generation.model,
+            prompt_tokens=prompt_tokens,
+            completion_tokens=completion_tokens,
+            measurement=measurement,
+            cost_microusd=cost,
+        )
+    except ValueError as exc:
+        raise HTTPException(status_code=402, detail=str(exc)) from exc
+
+    generation.usage = {
+        **generation.usage,
+        "prompt_tokens": prompt_tokens,
+        "completion_tokens": completion_tokens,
+        "total_tokens": prompt_tokens + completion_tokens,
+        "measurement": measurement,
+        "request_id": request_id,
+        "billing": {
+            "currency": "USD",
+            "cost_usd": _money(cost),
+            "balance_usd": _money(metered["balance_microusd"]),
+        },
+    }
+    return generation
+
+
 @app.get("/health")
 def health():
     return {
@@ -154,6 +321,161 @@ def health():
         "provider_configured": provider is not None,
         "direct_natlas_integration": settings.qualifying_provider,
         "asr_provider_configured": provider is not None and callable(getattr(provider, "transcribe", None)),
+    }
+
+
+@app.post("/api/developer/register")
+def developer_register(data: DeveloperRegister, response: Response):
+    if not settings.ednai_auth_enabled:
+        raise HTTPException(status_code=503, detail="Developer authentication is disabled.")
+    try:
+        account = developer_store.create_account(
+            data.email,
+            data.password,
+            display_name=data.display_name,
+        )
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+    token = developer_store.create_session(
+        account["id"],
+        hours=settings.ednai_session_hours,
+    )
+    response.set_cookie(
+        "ednai_session",
+        token,
+        max_age=settings.ednai_session_hours * 3600,
+        httponly=True,
+        secure=settings.app_env.lower() == "production",
+        samesite="lax",
+        path="/",
+    )
+    return {"account": account, "pricing": pricing.public()}
+
+
+@app.post("/api/developer/login")
+def developer_login(data: DeveloperLogin, response: Response):
+    account = developer_store.verify_password(data.email, data.password)
+    if not account:
+        raise HTTPException(status_code=401, detail="Invalid email or password.")
+    token = developer_store.create_session(
+        account["id"],
+        hours=settings.ednai_session_hours,
+    )
+    response.set_cookie(
+        "ednai_session",
+        token,
+        max_age=settings.ednai_session_hours * 3600,
+        httponly=True,
+        secure=settings.app_env.lower() == "production",
+        samesite="lax",
+        path="/",
+    )
+    return {"account": account, "pricing": pricing.public()}
+
+
+@app.post("/api/developer/logout")
+def developer_logout(
+    response: Response,
+    ednai_session: str | None = Cookie(default=None),
+):
+    if ednai_session:
+        developer_store.revoke_session(ednai_session)
+    response.delete_cookie("ednai_session", path="/")
+    return {"ok": True}
+
+
+@app.get("/api/developer/me")
+def developer_me(ednai_session: str | None = Cookie(default=None)):
+    account = _session_account(ednai_session)
+    usage = developer_store.usage_summary(account["id"], limit=20)
+    return {
+        "account": account,
+        "pricing": pricing.public(),
+        "api_keys": developer_store.list_api_keys(account["id"]),
+        "usage": {
+            **usage,
+            "balance_usd": _money(usage["balance_microusd"]),
+            "total_cost_usd": _money(usage["total_cost_microusd"]),
+        },
+        "available_scopes": ALL_SCOPES,
+    }
+
+
+@app.get("/api/developer/pricing")
+def developer_pricing():
+    return {
+        **pricing.public(),
+        "mode": "demo_configurable",
+        "note": "Rates are platform configuration and can be changed without changing SDK code.",
+    }
+
+
+@app.post("/api/developer/keys")
+def developer_create_key(
+    data: DeveloperApiKeyCreate,
+    ednai_session: str | None = Cookie(default=None),
+):
+    account = _session_account(ednai_session)
+    try:
+        created = developer_store.create_api_key(
+            account["id"],
+            name=data.name,
+            scopes=data.scopes,
+        )
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+    return {
+        **created,
+        "warning": "Copy this API key now. EDNAi stores only its hash and cannot show it again.",
+    }
+
+
+@app.delete("/api/developer/keys/{key_id}")
+def developer_revoke_key(
+    key_id: str,
+    ednai_session: str | None = Cookie(default=None),
+):
+    account = _session_account(ednai_session)
+    if not developer_store.revoke_api_key(account["id"], key_id):
+        raise HTTPException(status_code=404, detail="API key not found or already revoked.")
+    return {"ok": True}
+
+
+@app.get("/api/developer/usage")
+def developer_usage(ednai_session: str | None = Cookie(default=None)):
+    account = _session_account(ednai_session)
+    usage = developer_store.usage_summary(account["id"], limit=100)
+    return {
+        **usage,
+        "balance_usd": _money(usage["balance_microusd"]),
+        "total_cost_usd": _money(usage["total_cost_microusd"]),
+        "pricing": pricing.public(),
+    }
+
+
+@app.post("/api/admin/developers/{developer_id}/credit")
+def developer_admin_credit(
+    developer_id: str,
+    data: DeveloperCreditAdjustment,
+    authorization: str | None = Header(default=None),
+):
+    _require_admin(authorization)
+    try:
+        developer_store.account(developer_id)
+    except KeyError as exc:
+        raise HTTPException(status_code=404, detail="Developer account not found.") from exc
+    amount = int(round(data.amount_usd * 1_000_000))
+    entry_id = developer_store.add_ledger_entry(
+        developer_id,
+        kind="credit",
+        amount_microusd=amount,
+        reference=data.reference or "admin-credit",
+        description=data.description or "Developer credit adjustment",
+    )
+    return {
+        "ok": True,
+        "ledger_entry_id": entry_id,
+        "balance_usd": _money(developer_store.balance_microusd(developer_id)),
     }
 
 
@@ -180,7 +502,10 @@ def speech_capabilities():
 async def audio_transcriptions(
     file: UploadFile = File(...),
     language: str = Form(...),
+    authorization: str | None = Header(default=None),
+    ednai_session: str | None = Cookie(default=None),
 ):
+    _developer_principal("speech.transcribe", authorization, ednai_session)
     try:
         language = normalize_speech_language(language)
     except ValueError as exc:
@@ -237,7 +562,12 @@ def use_cases():
 
 
 @app.post("/v1/use-cases/{use_case}", response_model=UseCaseGeneration)
-def run_use_case(use_case: str, request: UseCaseRequest):
+def run_use_case(
+    use_case: str,
+    request: UseCaseRequest,
+    authorization: str | None = Header(default=None),
+    ednai_session: str | None = Cookie(default=None),
+):
     if use_case not in USE_CASES:
         raise HTTPException(status_code=404, detail=f"Unknown EDNAi use case: {use_case}")
     try:
@@ -249,8 +579,9 @@ def run_use_case(use_case: str, request: UseCaseRequest):
     except ValueError as exc:
         raise HTTPException(status_code=400, detail=str(exc)) from exc
 
+    principal = _developer_principal("usecases.run", authorization, ednai_session)
     definition = USE_CASES[use_case]
-    generation = _generate(
+    generation = _meter_generation(
         GenerateRequest(
             model=NATLAS_MODEL_ID,
             messages=[
@@ -268,7 +599,9 @@ def run_use_case(use_case: str, request: UseCaseRequest):
                 else int(definition["max_tokens"])
             ),
             json_mode=request.json_mode,
-        )
+        ),
+        principal,
+        feature=f"usecase.{use_case}",
     )
     return UseCaseGeneration(
         **generation.model_dump(),
@@ -293,6 +626,14 @@ def capabilities():
             "submission_scope": "official-natlas-only",
         },
         "use_cases": list(USE_CASES),
+        "developer_platform": {
+            "accounts": True,
+            "scoped_api_keys": True,
+            "prepaid_wallet": True,
+            "token_metering": True,
+            "usage_ledger": True,
+            "available_scopes": ALL_SCOPES,
+        },
     }
 
 
@@ -368,18 +709,32 @@ def _generate(req: GenerateRequest) -> Generation:
 
 
 @app.post("/v1/generate", response_model=Generation)
-def generate(req: GenerateRequest):
-    return _generate(req)
+def generate(
+    req: GenerateRequest,
+    authorization: str | None = Header(default=None),
+    ednai_session: str | None = Cookie(default=None),
+):
+    principal = _developer_principal("inference.generate", authorization, ednai_session)
+    return _meter_generation(req, principal, feature="inference.generate")
 
 
 @app.post("/v1/chat/completions")
-def chat_completions(req: ChatCompletionRequest):
-    generation = _generate(GenerateRequest(
-        model=req.model,
-        messages=req.messages,
-        temperature=req.temperature,
-        max_tokens=req.max_tokens,
-    ))
+def chat_completions(
+    req: ChatCompletionRequest,
+    authorization: str | None = Header(default=None),
+    ednai_session: str | None = Cookie(default=None),
+):
+    principal = _developer_principal("inference.chat", authorization, ednai_session)
+    generation = _meter_generation(
+        GenerateRequest(
+            model=req.model,
+            messages=req.messages,
+            temperature=req.temperature,
+            max_tokens=req.max_tokens,
+        ),
+        principal,
+        feature="inference.chat",
+    )
     return {
         "id": f"ednai-{int(time.time() * 1000)}",
         "object": "chat.completion",
@@ -455,6 +810,7 @@ def readiness():
         "speech_studio": True,
         "official_ncair_asr_tooling": True,
         "natlas_use_case_studio": True,
+        "developer_accounts_api_keys_billing": True,
         "bilingual_documentation": True,
         "multilingual_documentation_en_yo_ha_ig": True,
         "direct_natlas_runtime_configured": settings.qualifying_provider,
