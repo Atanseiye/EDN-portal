@@ -9,7 +9,16 @@ from server.main import app
 client = TestClient(app)
 
 
+def login_demo():
+    response = client.post(
+        "/api/developer/login",
+        json={"email": "demo@edn.com", "password": "12345"},
+    )
+    assert response.status_code == 200
+
+
 def test_dataset_studio_normalizes_instruction_and_chat_rows():
+    login_demo()
     source = "\n".join([
         json.dumps({
             "instruction": "What is an API?",
@@ -34,6 +43,7 @@ def test_dataset_studio_normalizes_instruction_and_chat_rows():
 
 
 def test_dataset_studio_reports_bad_rows_without_hiding_valid_rows():
+    login_demo()
     source = (
         '{"instruction":"Good","output":"Answer"}\n'
         '{"messages":[{"role":"user","content":"No assistant target"}]}\n'
@@ -46,6 +56,7 @@ def test_dataset_studio_reports_bad_rows_without_hiding_valid_rows():
 
 
 def test_fine_tune_planner_is_locked_to_natlas():
+    login_demo()
     response = client.post("/api/studio/fine-tune/plan", json={
         "examples": 1000,
         "epochs": 2,
@@ -75,6 +86,7 @@ def test_project_starter_is_a_real_zip():
 
 
 def test_live_evaluation_fails_closed_without_natlas_runtime():
+    login_demo()
     response = client.post("/api/studio/evaluate", json={
         "cases": [{
             "id": "capital",
