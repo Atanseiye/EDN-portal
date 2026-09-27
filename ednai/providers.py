@@ -198,6 +198,7 @@ class GradioSpaceProvider(Provider):
             model=upstream_model,
             provider=self.name,
             latency_ms=round((time.perf_counter() - started) * 1000, 2),
+            usage=payload.get("usage") or {},
             raw=payload if isinstance(payload, dict) else {"result": payload},
         )
 
@@ -321,13 +322,21 @@ class LocalTransformersProvider(Provider):
             temperature=max(temperature, 1e-5) if do_sample else None,
             pad_token_id=tokenizer.eos_token_id,
         )
-        new_tokens = outputs[0][inputs["input_ids"].shape[-1]:]
+        prompt_tokens = int(inputs["input_ids"].shape[-1])
+        new_tokens = outputs[0][prompt_tokens:]
+        completion_tokens = int(new_tokens.shape[-1])
         text = tokenizer.decode(new_tokens, skip_special_tokens=True).strip()
         return Generation(
             text=text,
             model=NATLAS_MODEL_ID,
             provider=self.name,
             latency_ms=round((time.perf_counter() - started) * 1000, 2),
+            usage={
+                "prompt_tokens": prompt_tokens,
+                "completion_tokens": completion_tokens,
+                "total_tokens": prompt_tokens + completion_tokens,
+                "measurement": "tokenizer_exact",
+            },
         )
 
 
