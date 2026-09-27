@@ -45,22 +45,32 @@ def main() -> None:
             f"Refusing {requested}. EDNAi provisioner only permits {ZERO_GPU}."
         )
 
-    print("Verifying gated N-ATLaS and official ASR access...", flush=True)
-    missing_access = []
-    for repo_id in [MODEL_ID, *ASR_MODEL_IDS]:
+    print("Verifying gated N-ATLaS access...", flush=True)
+    try:
+        hf_hub_download(MODEL_ID, "config.json", token=token)
+        print(f"  access verified: {MODEL_ID}", flush=True)
+    except Exception as exc:
+        raise SystemExit(
+            f"Missing required Hugging Face gated access for {MODEL_ID}. "
+            "Accept/request access using the same account that owns HF_TOKEN."
+        ) from exc
+
+    print("Checking optional official ASR access...", flush=True)
+    missing_asr_access = []
+    for repo_id in ASR_MODEL_IDS:
         try:
             hf_hub_download(repo_id, "config.json", token=token)
             print(f"  access verified: {repo_id}", flush=True)
         except Exception:
-            missing_access.append(repo_id)
+            missing_asr_access.append(repo_id)
             print(f"  access missing:  {repo_id}", flush=True)
 
-    if missing_access:
-        raise SystemExit(
-            "Missing Hugging Face gated access for: "
-            + ", ".join(missing_access)
-            + ". Accept/request access for these repositories using the same "
-              "account that owns HF_TOKEN, then rerun this workflow."
+    if missing_asr_access:
+        print(
+            "WARNING: text N-ATLaS runtime will still deploy, but ASR will remain "
+            "fail-closed until gated access is granted for: "
+            + ", ".join(missing_asr_access),
+            flush=True,
         )
 
     api.create_repo(
