@@ -25,6 +25,7 @@ ALL_SCOPES = [
     "speech.transcribe",
     "evaluation.run",
     "dataset.inspect",
+    "finetuning.plan",
 ]
 
 
