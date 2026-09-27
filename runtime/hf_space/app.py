@@ -154,11 +154,23 @@ def generate(
     with torch.inference_mode():
         output = model.generate(**inputs, **kwargs)
 
-    new_tokens = output[0][inputs["input_ids"].shape[-1]:]
+    prompt_tokens = int(inputs["input_ids"].shape[-1])
+    new_tokens = output[0][prompt_tokens:]
+    completion_tokens = int(new_tokens.shape[-1])
     text = tokenizer.decode(new_tokens, skip_special_tokens=True).strip()
 
     return json.dumps(
-        {"text": text, "model": MODEL_ID, "provider": "ednai_zerogpu"},
+        {
+            "text": text,
+            "model": MODEL_ID,
+            "provider": "ednai_zerogpu",
+            "usage": {
+                "prompt_tokens": prompt_tokens,
+                "completion_tokens": completion_tokens,
+                "total_tokens": prompt_tokens + completion_tokens,
+                "measurement": "tokenizer_exact",
+            },
+        },
         ensure_ascii=False,
     )
 
