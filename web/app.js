@@ -3,10 +3,11 @@ let history=[];
 let lastAssistantText="";
 
 const quickstartSamples={
-  python:`from ednai import EDNAi
+  python:`import os\nfrom ednai import EDNAi
 
 ai = EDNAi(
-    base_url="https://ednai-6znf.onrender.com"
+    base_url="https://ednai-6znf.onrender.com",
+    api_key=os.environ["EDNAI_API_KEY"]
 )
 
 result = ai.generate(
@@ -18,7 +19,8 @@ print(result.text)`,
   typescript:`import { EDNAi } from "@ednai/sdk";
 
 const ai = new EDNAi({
-  baseUrl: "https://ednai-6znf.onrender.com"
+  baseUrl: "https://ednai-6znf.onrender.com",
+  apiKey: process.env.EDNAI_API_KEY
 });
 
 const result = await ai.generate(
@@ -29,6 +31,7 @@ const result = await ai.generate(
 console.log(result.text);`,
   curl:`curl -X POST \
   https://ednai-6znf.onrender.com/v1/chat/completions \
+  -H "Authorization: Bearer $EDNAI_API_KEY" \
   -H "Content-Type: application/json" \
   -d '{
     "model": "NCAIR1/N-ATLaS",
