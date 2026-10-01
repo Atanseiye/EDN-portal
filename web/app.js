@@ -293,19 +293,41 @@ const datasetExample=[
 let normalizedDataset="";
 
 function consolePanel(name){
+  const isOverview=name==="overview";
+  const home=$("homeOverview");
+  if(home)home.classList.toggle("hidden",!isOverview);
+  const tabs=document.querySelector(".console-tabs");
+  if(tabs)tabs.classList.toggle("workspace-nav-visible",!isOverview);
   document.querySelectorAll(".console-panel").forEach(function(panel){
-    panel.classList.toggle("active",panel.id==="panel-"+name);
+    panel.classList.toggle("active",!isOverview && panel.id==="panel-"+name);
   });
   document.querySelectorAll(".console-tab").forEach(function(tab){
     tab.classList.toggle("active",tab.dataset.panel===name);
   });
+  document.querySelectorAll("[data-console-target]").forEach(function(control){
+    control.classList.toggle("active",control.dataset.consoleTarget===name);
+  });
   window.history.replaceState(null,"","#"+name);
   if(name==="runtime")refreshRuntimeWorkspace();
   if(name==="profile")refreshProfileWorkspace();
+  if(isOverview)window.scrollTo({top:0,behavior:"smooth"});
 }
 
 document.querySelectorAll(".console-tab").forEach(function(tab){
   tab.addEventListener("click",function(){consolePanel(tab.dataset.panel);});
+});
+
+document.querySelectorAll("[data-console-target]").forEach(function(control){
+  control.addEventListener("click",function(event){
+    if(control.tagName==="A")return;
+    event.preventDefault();
+    const target=control.dataset.consoleTarget;
+    consolePanel(target);
+    if(target!=="overview"){
+      const panel=$("panel-"+target);
+      if(panel)panel.scrollIntoView({behavior:"smooth",block:"start"});
+    }
+  });
 });
 
 function downloadText(filename,content,type){
@@ -553,9 +575,12 @@ function profileInitials(account){
 
 function renderHeaderProfile(account){
   if(!$("profileAvatar"))return;
-  $("profileAvatar").textContent=profileInitials(account);
+  const initials=profileInitials(account);
+  $("profileAvatar").textContent=initials;
+  if($("profileHeroAvatar"))$("profileHeroAvatar").textContent=initials;
   $("profileMenuName").textContent=account?(account.display_name||"Developer account"):"Developer account";
   $("profileMenuEmail").textContent=account?account.email:"Sign in to manage your account";
+  if($("profileButtonName"))$("profileButtonName").textContent=account?(account.display_name||"Profile"):"Profile";
   $("profileSignInLink").classList.toggle("hidden",Boolean(account));
   $("profileMenuLogoutBtn").classList.toggle("hidden",!account);
 }
@@ -880,11 +905,16 @@ if($("tryQuickstartBtn"))$("tryQuickstartBtn").addEventListener("click",()=>{
 });
 
 function scrollToLaunchpad(){
-  const target=$("launchpad");
-  if(target)target.scrollIntoView({behavior:"smooth",block:"center"});
+  focusPlayground();
 }
-if($("heroStartBtn"))$("heroStartBtn").addEventListener("click",scrollToLaunchpad);
-if($("quickstartNavBtn"))$("quickstartNavBtn").addEventListener("click",scrollToLaunchpad);
+if($("heroStartBtn"))$("heroStartBtn").addEventListener("click",focusPlayground);
+if($("quickstartNavBtn"))$("quickstartNavBtn").addEventListener("click",focusPlayground);
+if($("heroCopyCodeBtn"))$("heroCopyCodeBtn").addEventListener("click",async function(){
+  await copyText($("heroCodeSample").textContent);
+  $("heroCopyCodeBtn").textContent="Copied";
+  showToast("N-ATLaS request copied.","success");
+  setTimeout(function(){$("heroCopyCodeBtn").textContent="▣ Copy";},1200);
+});
 
 document.querySelectorAll(".template-card").forEach(card=>{
   card.addEventListener("click",()=>{
@@ -907,8 +937,7 @@ document.querySelectorAll(".template-card").forEach(card=>{
 });
 
 if($("composerExamplesBtn"))$("composerExamplesBtn").addEventListener("click",()=>{
-  const target=document.querySelector(".template-section");
-  if(target)target.scrollIntoView({behavior:"smooth",block:"center"});
+  consolePanel("overview");
 });
 
 if($("hideTemplatesBtn"))$("hideTemplatesBtn").addEventListener("click",()=>{
@@ -1514,7 +1543,7 @@ renderQuickstart(savedStack,false);
 
 workspaceRestore();
 refreshHeaderProfile();
-const requestedPanel=(location.hash||"#playground").slice(1);
+const requestedPanel=(location.hash||"#overview").slice(1);
 if(["playground","usecases","speech","evaluate","dataset","finetune","runtime","profile","overview"].includes(requestedPanel))consolePanel(requestedPanel);
 
 window.addEventListener("hashchange",function(){
