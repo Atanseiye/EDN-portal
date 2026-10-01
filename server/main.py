@@ -1,9 +1,12 @@
 from __future__ import annotations
 
 import hmac
+import smtplib
+import ssl
 import tempfile
 import time
 import uuid
+from email.message import EmailMessage
 from pathlib import Path
 from typing import Any, Literal
 
@@ -155,6 +158,10 @@ class DeveloperLogin(BaseModel):
     password: str = Field(min_length=1, max_length=256)
 
 
+class DeveloperDemoRequest(BaseModel):
+    email: str = Field(min_length=3, max_length=320)
+
+
 class DeveloperApiKeyCreate(BaseModel):
     name: str = Field(default="Default key", min_length=1, max_length=80)
     scopes: list[str] = Field(default_factory=lambda: list(DEFAULT_SCOPES))
@@ -227,6 +234,53 @@ def igbo_guide():
 
 def _money(microusd: int) -> float:
     return round(int(microusd) / 1_000_000, 6)
+
+
+def _normalize_demo_email(value: str) -> str:
+    email = value.strip().lower()
+    local, sep, domain = email.rpartition("@")
+    if not sep or not local or "." not in domain or domain.startswith(".") or domain.endswith("."):
+        raise HTTPException(status_code=400, detail="Enter a valid email address.")
+    return email
+
+
+def _send_demo_access_email(recipient: str, request: Request) -> None:
+    host = settings.ednai_smtp_host.strip()
+    sender = (settings.ednai_smtp_from or settings.ednai_smtp_username).strip()
+    if not host or not sender:
+        raise RuntimeError("SMTP delivery is not configured.")
+
+    access_url = str(request.base_url).rstrip("/") + "/developer"
+    message = EmailMessage()
+    message["Subject"] = "Your EDNAi demo access"
+    message["From"] = sender
+    message["To"] = recipient
+    message.set_content(
+        "Your EDNAi demo access is ready.\n\n"
+        f"Demo link: {access_url}\n"
+        f"Email: {settings.ednai_demo_email}\n"
+        f"Password: {settings.ednai_demo_password}\n\n"
+        "This shared credential is for challenge/product evaluation only. "
+        "Do not reuse it on any other service.\n\n"
+        "EDNAi — Developer infrastructure for NCAIR1/N-ATLaS."
+    )
+
+    context = ssl.create_default_context()
+    port = int(settings.ednai_smtp_port)
+    if port == 465:
+        with smtplib.SMTP_SSL(host, port, timeout=15, context=context) as smtp:
+            if settings.ednai_smtp_username:
+                smtp.login(settings.ednai_smtp_username, settings.ednai_smtp_password)
+            smtp.send_message(message)
+        return
+
+    with smtplib.SMTP(host, port, timeout=15) as smtp:
+        smtp.ehlo()
+        smtp.starttls(context=context)
+        smtp.ehlo()
+        if settings.ednai_smtp_username:
+            smtp.login(settings.ednai_smtp_username, settings.ednai_smtp_password)
+        smtp.send_message(message)
 
 
 def _session_account(ednai_session: str | None) -> dict[str, Any]:
@@ -404,6 +458,51 @@ def health():
         "direct_natlas_integration": settings.qualifying_provider,
         "database_ready": developer_store.ping(),
         "asr_provider_configured": provider is not None and callable(getattr(provider, "transcribe", None)),
+    }
+
+
+@app.post("/api/developer/demo-request")
+def developer_demo_request(data: DeveloperDemoRequest, request: Request):
+    if not settings.ednai_demo_account_enabled:
+        raise HTTPException(status_code=503, detail="Demo access is not enabled on this deployment.")
+
+    email = _normalize_demo_email(data.email)
+    client_ip = request.client.host if request.client else "unknown"
+    email_key = hmac.new(
+        settings.ednai_admin_token.encode("utf-8"),
+        email.encode("utf-8"),
+        "sha256",
+    ).hexdigest()[:24]
+
+    for key in (f"demo-request-ip:{client_ip}", f"demo-request-email:{email_key}"):
+        ok, retry = rate_limiter.check(
+            key,
+            settings.ednai_demo_request_rate_limit_per_hour,
+            3600,
+        )
+        if not ok:
+            raise HTTPException(
+                status_code=429,
+                detail="Too many demo requests. Please try again later.",
+                headers={"Retry-After": str(retry)},
+            )
+
+    try:
+        _send_demo_access_email(email, request)
+    except RuntimeError as exc:
+        raise HTTPException(
+            status_code=503,
+            detail="Demo email delivery is temporarily unavailable. Please try again later.",
+        ) from exc
+    except (smtplib.SMTPException, OSError) as exc:
+        raise HTTPException(
+            status_code=502,
+            detail="We could not send the demo email right now. Please try again shortly.",
+        ) from exc
+
+    return {
+        "ok": True,
+        "message": "Demo link and login details have been sent to your email.",
     }
 
 
