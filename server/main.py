@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import hmac
 import tempfile
 import time
 import uuid
@@ -12,6 +13,7 @@ from fastapi.responses import FileResponse, JSONResponse, Response
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, Field
 from starlette.concurrency import run_in_threadpool
+from starlette.middleware.trustedhost import TrustedHostMiddleware
 
 from ednai.models import Generation, Message, ModelInfo, Transcription, UseCaseGeneration
 from ednai.providers import (
@@ -30,10 +32,12 @@ from ednai.use_cases import USE_CASES, build_use_case_prompt, public_use_case_re
 from server.billing import Pricing, estimate_prompt_tokens, usage_tokens
 from server.config import get_settings
 from server.developer_store import ALL_SCOPES, DEFAULT_SCOPES, DeveloperStore
+from server.security import production_security_middleware, rate_limiter, validate_production_settings
 from server.store import BetaStore
 from server.studio import EvalRunRequest, router as studio_router, run_studio_eval
 
 settings = get_settings()
+validate_production_settings(settings)
 ROOT = Path(__file__).resolve().parents[1]
 WEB = ROOT / "web"
 store = BetaStore(settings.ednai_database_path, settings.ednai_database_url or None)
@@ -58,13 +62,23 @@ app = FastAPI(
     description="Developer infrastructure for NCAIR1/N-ATLaS.",
 )
 app.add_middleware(
+    TrustedHostMiddleware,
+    allowed_hosts=settings.trusted_host_list,
+)
+app.add_middleware(
     CORSMiddleware,
     allow_origins=settings.cors_origin_list,
-    allow_methods=["*"],
-    allow_headers=["*"],
+    allow_credentials=True,
+    allow_methods=["GET", "POST", "DELETE", "HEAD", "OPTIONS"],
+    allow_headers=["Authorization", "Content-Type", "X-Request-ID", "Idempotency-Key"],
 )
 app.mount("/assets", StaticFiles(directory=WEB), name="assets")
 app.include_router(studio_router)
+
+
+@app.middleware("http")
+async def _production_security(request: Request, call_next):
+    return await production_security_middleware(request, call_next, settings)
 
 
 @app.middleware("http")
@@ -226,6 +240,21 @@ def _session_account(ednai_session: str | None) -> dict[str, Any]:
     return account
 
 
+def _rate_limit_principal(principal: dict[str, Any]) -> None:
+    identity = principal.get("api_key_id") or principal.get("developer_id") or "unknown"
+    ok, retry = rate_limiter.check(
+        f"api:{identity}",
+        settings.ednai_api_rate_limit_per_minute,
+        60,
+    )
+    if not ok:
+        raise HTTPException(
+            status_code=429,
+            detail="Developer request rate limit exceeded.",
+            headers={"Retry-After": str(retry)},
+        )
+
+
 def _developer_principal(
     scope: str,
     authorization: str | None,
@@ -253,10 +282,11 @@ def _developer_principal(
                     detail=f"API key does not grant the required scope: {scope}",
                 )
             principal["billing_exempt"] = False
+            _rate_limit_principal(principal)
             return principal
 
     account = _session_account(ednai_session)
-    return {
+    principal = {
         "developer_id": account["id"],
         "api_key_id": None,
         "email": account["email"],
@@ -264,6 +294,8 @@ def _developer_principal(
         "scopes": list(ALL_SCOPES),
         "billing_exempt": False,
     }
+    _rate_limit_principal(principal)
+    return principal
 
 
 def _ensure_credit(principal: dict[str, Any], req: GenerateRequest) -> None:
@@ -301,6 +333,14 @@ def _meter_generation(
         messages=req.messages,
         output_text=generation.text,
     )
+    if settings.ednai_require_exact_usage and measurement != "provider_exact":
+        raise HTTPException(
+            status_code=502,
+            detail=(
+                "The configured N-ATLaS runtime did not return exact token usage. "
+                "EDNAi refused to estimate a billable request."
+            ),
+        )
     cost = pricing.charge_microusd(prompt_tokens, completion_tokens)
     request_id = "req_" + uuid.uuid4().hex
     try:
@@ -334,6 +374,23 @@ def _meter_generation(
     return generation
 
 
+@app.get("/health/live")
+def health_live():
+    return {"status": "ok", "product": "EDNAi"}
+
+
+@app.get("/health/ready")
+def health_ready():
+    checks = {
+        "database": developer_store.ping(),
+        "provider_configured": provider is not None,
+        "direct_natlas_integration": settings.qualifying_provider,
+    }
+    if not all(checks.values()):
+        raise HTTPException(status_code=503, detail={"status": "not_ready", "checks": checks})
+    return {"status": "ready", "checks": checks}
+
+
 @app.get("/health")
 def health():
     return {
@@ -343,6 +400,7 @@ def health():
         "provider": settings.ednai_provider,
         "provider_configured": provider is not None,
         "direct_natlas_integration": settings.qualifying_provider,
+        "database_ready": developer_store.ping(),
         "asr_provider_configured": provider is not None and callable(getattr(provider, "transcribe", None)),
     }
 
@@ -369,7 +427,7 @@ def developer_register(data: DeveloperRegister, response: Response):
         max_age=settings.ednai_session_hours * 3600,
         httponly=True,
         secure=settings.app_env.lower() == "production",
-        samesite="lax",
+        samesite="strict",
         path="/",
     )
     return {"account": account, "pricing": pricing.public()}
@@ -390,7 +448,7 @@ def developer_login(data: DeveloperLogin, response: Response):
         max_age=settings.ednai_session_hours * 3600,
         httponly=True,
         secure=settings.app_env.lower() == "production",
-        samesite="lax",
+        samesite="strict",
         path="/",
     )
     return {"account": account, "pricing": pricing.public()}
@@ -826,7 +884,9 @@ def _require_admin(authorization: str | None) -> None:
             status_code=503,
             detail="Beta evidence review is disabled until EDNAI_ADMIN_TOKEN is configured.",
         )
-    if authorization != f"Bearer {token}":
+    supplied = authorization or ""
+    expected = f"Bearer {token}"
+    if not hmac.compare_digest(supplied, expected):
         raise HTTPException(status_code=401, detail="Unauthorized")
 
 
