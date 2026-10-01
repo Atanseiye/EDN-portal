@@ -11,7 +11,7 @@
 <header class="nav">
   <a class="brand" href="/"><span class="mark">E</span><span>EDN<span>Ai</span></span></a>
   <nav>
-    <a href="/developer">Developer</a>
+    <a id="profileNavLink" href="/#profile">Profile / Settings</a>
     <a href="/guide">Docs</a>
     <a href="/challenge">Challenge readiness</a>
     <a href="/docs">API</a>
@@ -83,7 +83,7 @@
       <button id="tryQuickstartBtn" class="primary" type="button">Try in Playground</button>
       <a id="downloadStarterLink" class="ghost action-link" href="/api/studio/starter.zip">Download starter</a>
     </div>
-    <p class="quickstart-note">Production API calls use scoped EDNAi keys. Sign in at <a href="/developer">Developer</a> to create one; the browser console uses your secure login session.</p>
+    <p class="quickstart-note">Production API calls use scoped EDNAi keys. Open <a href="/#profile">Profile / Settings</a> to create and manage them; the browser console uses your secure login session.</p>
   </div>
 </section>
 
@@ -119,6 +119,7 @@
   <button class="console-tab" data-panel="dataset">Dataset Studio</button>
   <button class="console-tab" data-panel="finetune">Fine-tune Planner</button>
   <button class="console-tab" data-panel="runtime">Runtime & SDK</button>
+  <button class="console-tab" data-panel="profile">Profile / Settings</button>
   <button class="console-tab" data-panel="overview">Overview</button>
 </nav>
 
@@ -486,6 +487,103 @@ print(result.model)</code></pre>
   </div>
 </section>
 
+<section class="console-panel profile-settings-panel" id="panel-profile">
+  <div id="profileSignedOut" class="profile-auth-gate panel">
+    <span class="eyebrow">Profile / Settings</span>
+    <h2>Sign in to manage your developer account.</h2>
+    <p>Access your prepaid balance, scoped API keys, token usage, pricing and account settings from one place.</p>
+    <a class="primary linkbtn" href="/developer">Sign in to EDNAi</a>
+  </div>
+
+  <div id="profileWorkspace" class="hidden">
+    <div class="workspace-head profile-workspace-head">
+      <div>
+        <span class="eyebrow">Profile / Settings</span>
+        <h2 id="profileGreeting">Developer account</h2>
+        <p id="profileEmail"></p>
+      </div>
+      <div class="workspace-actions">
+        <button id="profileRefreshBtn" class="ghost" type="button">Refresh</button>
+        <button id="profileLogoutBtn" class="ghost" type="button">Sign out</button>
+      </div>
+    </div>
+
+    <div class="developer-metrics">
+      <article class="panel developer-metric"><span>Prepaid balance</span><strong id="profileBalance">$0.00</strong><small>USD developer credit</small></article>
+      <article class="panel developer-metric"><span>Tokens used</span><strong id="profileTokens">0</strong><small>Recent metered requests</small></article>
+      <article class="panel developer-metric"><span>Usage cost</span><strong id="profileCost">$0.00</strong><small>Recent ledger window</small></article>
+      <article class="panel developer-metric"><span>Active API keys</span><strong id="profileKeyCount">0</strong><small>Scoped credentials</small></article>
+    </div>
+
+    <div class="developer-grid-two">
+      <article class="panel">
+        <div class="section-head">
+          <div><span class="eyebrow">Pricing</span><h3>Token rates</h3></div>
+          <span class="status good">Prepaid</span>
+        </div>
+        <div class="pricing-grid">
+          <div><span>Input</span><strong id="profileInputRate">—</strong><small>per 1M tokens</small></div>
+          <div><span>Output</span><strong id="profileOutputRate">—</strong><small>per 1M tokens</small></div>
+        </div>
+        <p class="hint">Current rates are configurable platform rates. Commercial pricing can change server-side without changing SDK code.</p>
+      </article>
+
+      <article class="panel">
+        <div class="section-head"><div><span class="eyebrow">Authentication</span><h3>Create API key</h3></div></div>
+        <label>Key name<input id="profileApiKeyName" value="My application" maxlength="80"></label>
+        <fieldset class="scope-fieldset">
+          <legend>Grant access</legend>
+          <div id="profileScopeOptions" class="scope-options"></div>
+        </fieldset>
+        <button id="profileCreateApiKeyBtn" class="primary" type="button">Create scoped API key</button>
+        <p class="hint">The secret is shown once. EDNAi stores only a SHA-256 hash.</p>
+      </article>
+    </div>
+
+    <article id="profileNewKeyReveal" class="panel key-reveal hidden">
+      <div>
+        <span class="eyebrow">New API key · copy now</span>
+        <h3>This secret cannot be recovered later.</h3>
+      </div>
+      <div class="key-secret-row"><code id="profileNewApiKeySecret"></code><button id="profileCopyNewApiKeyBtn" class="copy-chip" type="button">Copy</button></div>
+    </article>
+
+    <div class="developer-grid-two">
+      <article class="panel">
+        <div class="section-head"><div><span class="eyebrow">Credentials</span><h3>API keys</h3></div></div>
+        <div id="profileApiKeyList" class="developer-list"><p class="hint">No API keys yet.</p></div>
+      </article>
+
+      <article class="panel">
+        <div class="section-head"><div><span class="eyebrow">Quick integration</span><h3>Call N-ATLaS</h3></div><button id="profileCopyCurlBtn" class="copy-chip" type="button">Copy</button></div>
+        <pre class="speech-code"><code id="profileCurl">curl -X POST https://ednai-6znf.onrender.com/v1/generate \
+  -H "Authorization: Bearer $EDNAI_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{"model":"NCAIR1/N-ATLaS","messages":[{"role":"user","content":"Explain APIs simply."}]}'</code></pre>
+      </article>
+    </div>
+
+    <article class="panel usage-panel">
+      <div class="section-head">
+        <div><span class="eyebrow">Metering & ledger</span><h3>Recent usage</h3></div>
+        <span class="status">Exact when provider-reported</span>
+      </div>
+      <div class="usage-table-wrap">
+        <table class="usage-table">
+          <thead><tr><th>Feature</th><th>Input</th><th>Output</th><th>Total</th><th>Measurement</th><th>Cost</th><th>Time</th></tr></thead>
+          <tbody id="profileUsageRows"><tr><td colspan="7">No usage recorded yet.</td></tr></tbody>
+        </table>
+      </div>
+    </article>
+
+    <article class="panel billing-note">
+      <span class="eyebrow">Payments</span>
+      <h3>Wallet and charging are live; external checkout is intentionally not faked.</h3>
+      <p>EDNAi has the prepaid ledger, balance enforcement and per-request charges. A payment provider will credit this ledger after successful payment once the commercial PSP is selected and configured.</p>
+    </article>
+  </div>
+</section>
+
 <section class="developer-grid console-panel" id="panel-overview">
 <article><span class="index">01</span><h3>Integrate</h3><p>Python and TypeScript clients plus an OpenAI-compatible gateway.</p><pre><code>from ednai import EDNAi
 ai = EDNAi(base_url=...)
@@ -516,6 +614,7 @@ ai.generate("Báwo ni?")</code></pre></article>
     <button type="button" data-command="dataset"><span>▦</span><strong>Dataset Studio</strong><small>Validate training JSONL</small></button>
     <button type="button" data-command="finetune"><span>↗</span><strong>Fine-tune Planner</strong><small>Generate a QLoRA plan</small></button>
     <button type="button" data-command="runtime"><span>◉</span><strong>Runtime & SDK</strong><small>Inspect provenance and capabilities</small></button>
+    <button type="button" data-command="profile"><span>◎</span><strong>Profile / Settings</strong><small>Account, API keys, usage and billing</small></button>
     <button type="button" data-command="docs"><span>?</span><strong>Documentation</strong><small>English, Yorùbá, Hausa and Igbo</small></button>
   </div>
   <p class="command-foot">Tip: press <kbd>Esc</kbd> to close.</p>
