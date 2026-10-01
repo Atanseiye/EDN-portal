@@ -19,6 +19,8 @@ jobs:
         run: pip install -e ".[server,dev]"
       - name: Compile Python
         run: python -m compileall -q ednai server fine_tuning runtime/hf_space scripts
+      - name: Dependency consistency
+        run: python -m pip check
       - name: Test
         run: pytest -q
 
@@ -42,3 +44,14 @@ jobs:
         run: npm run build
       - name: Check browser console JavaScript
         run: node --check ../../web/app.js
+
+  container:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build production image
+        run: docker build --pull -t ednai-ci:${{ github.sha }} .
+      - name: Verify non-root runtime
+        run: |
+          uid=$(docker run --rm --entrypoint id ednai-ci:${{ github.sha }} -u)
+          test "$uid" != "0"
