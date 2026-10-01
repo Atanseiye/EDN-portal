@@ -428,7 +428,7 @@ def developer_register(data: DeveloperRegister, response: Response):
         token,
         max_age=settings.ednai_session_hours * 3600,
         httponly=True,
-        secure=settings.app_env.lower() == "production",
+        secure=settings.app_env.lower() in {"production", "demo"},
         samesite="strict",
         path="/",
     )
@@ -449,7 +449,7 @@ def developer_login(data: DeveloperLogin, response: Response):
         token,
         max_age=settings.ednai_session_hours * 3600,
         httponly=True,
-        secure=settings.app_env.lower() == "production",
+        secure=settings.app_env.lower() in {"production", "demo"},
         samesite="strict",
         path="/",
     )
