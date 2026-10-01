@@ -301,10 +301,18 @@ function consolePanel(name){
   });
   window.history.replaceState(null,"","#"+name);
   if(name==="runtime")refreshRuntimeWorkspace();
+  if(name==="profile")refreshProfileWorkspace();
 }
 
 document.querySelectorAll(".console-tab").forEach(function(tab){
   tab.addEventListener("click",function(){consolePanel(tab.dataset.panel);});
+});
+
+if($("profileNavLink"))$("profileNavLink").addEventListener("click",function(event){
+  event.preventDefault();
+  consolePanel("profile");
+  const target=$("panel-profile");
+  if(target)target.scrollIntoView({behavior:"smooth",block:"start"});
 });
 
 function downloadText(filename,content,type){
@@ -522,6 +530,232 @@ if($("probeRuntimeBtn"))$("probeRuntimeBtn").addEventListener("click",async func
     $("runtimeProbe").textContent="Unavailable";
     showToast(error.message,"error");
   }
+});
+
+
+/* ---------- Profile / Settings ---------- */
+let profileState=null;
+let profileNewestKey="";
+
+async function profileApi(path,options={}){
+  const response=await fetch(path,{
+    credentials:"same-origin",
+    ...options,
+    headers:{
+      ...(options.body?{"content-type":"application/json"}:{}),
+      ...(options.headers||{})
+    }
+  });
+  return readApiResponse(response);
+}
+
+function profileMoney(value){
+  const amount=Number(value||0);
+  return "$"+amount.toFixed(6).replace(/0+$/,"").replace(/\.$/,".00");
+}
+
+function profileScopeLabel(scope){
+  const labels={
+    "inference.generate":"Generate",
+    "inference.chat":"Chat completions",
+    "usecases.run":"Use Case Studio",
+    "speech.transcribe":"Speech transcription",
+    "evaluation.run":"Evaluation",
+    "dataset.inspect":"Dataset inspection",
+    "finetuning.plan":"Fine-tune planner"
+  };
+  return labels[scope]||scope;
+}
+
+function renderProfileScopes(scopes){
+  const root=$("profileScopeOptions");
+  if(!root)return;
+  root.innerHTML="";
+  scopes.forEach(function(scope){
+    const label=document.createElement("label");
+    label.className="scope-option";
+    const input=document.createElement("input");
+    input.type="checkbox";
+    input.value=scope;
+    input.checked=["inference.generate","inference.chat","usecases.run","speech.transcribe"].includes(scope);
+    const text=document.createElement("span");
+    const strong=document.createElement("strong");
+    strong.textContent=profileScopeLabel(scope);
+    const small=document.createElement("small");
+    small.textContent=scope;
+    text.append(strong,small);
+    label.append(input,text);
+    root.appendChild(label);
+  });
+}
+
+function renderProfileKeys(keys){
+  const root=$("profileApiKeyList");
+  if(!root)return;
+  root.innerHTML="";
+  if(!keys.length){
+    root.innerHTML='<p class="hint">No API keys yet.</p>';
+    return;
+  }
+  keys.forEach(function(key){
+    const row=document.createElement("div");
+    row.className="developer-list-row"+(key.revoked_at?" revoked":"");
+
+    const info=document.createElement("div");
+    const title=document.createElement("strong");
+    title.textContent=key.name;
+    const meta=document.createElement("small");
+    meta.textContent=key.prefix+"… · "+(key.scopes||[]).map(profileScopeLabel).join(", ");
+    info.append(title,meta);
+
+    const side=document.createElement("div");
+    side.className="developer-list-side";
+    const status=document.createElement("span");
+    status.className="status "+(key.revoked_at?"":"good");
+    status.textContent=key.revoked_at?"Revoked":"Active";
+    side.appendChild(status);
+
+    if(!key.revoked_at){
+      const revoke=document.createElement("button");
+      revoke.className="text-button";
+      revoke.type="button";
+      revoke.textContent="Revoke";
+      revoke.addEventListener("click",function(){revokeProfileKey(key.id);});
+      side.appendChild(revoke);
+    }
+    row.append(info,side);
+    root.appendChild(row);
+  });
+}
+
+function renderProfileUsage(events){
+  const body=$("profileUsageRows");
+  if(!body)return;
+  body.innerHTML="";
+  if(!events.length){
+    body.innerHTML='<tr><td colspan="7">No metered requests yet.</td></tr>';
+    return;
+  }
+  events.forEach(function(event){
+    const tr=document.createElement("tr");
+    const values=[
+      event.feature,
+      Number(event.prompt_tokens).toLocaleString(),
+      Number(event.completion_tokens).toLocaleString(),
+      Number(event.total_tokens).toLocaleString(),
+      event.measurement,
+      profileMoney(Number(event.cost_microusd)/1_000_000),
+      new Date(event.created_at).toLocaleString()
+    ];
+    values.forEach(function(value){
+      const td=document.createElement("td");
+      td.textContent=value;
+      tr.appendChild(td);
+    });
+    body.appendChild(tr);
+  });
+}
+
+function renderProfileWorkspace(data){
+  profileState=data;
+  $("profileSignedOut").classList.add("hidden");
+  $("profileWorkspace").classList.remove("hidden");
+
+  const account=data.account;
+  $("profileGreeting").textContent=account.display_name||"Developer account";
+  $("profileEmail").textContent=account.email+(account.is_demo?" · demo account":"");
+  $("profileBalance").textContent=profileMoney(data.usage.balance_usd);
+  $("profileTokens").textContent=Number(data.usage.total_tokens||0).toLocaleString();
+  $("profileCost").textContent=profileMoney(data.usage.total_cost_usd);
+
+  const active=(data.api_keys||[]).filter(function(key){return !key.revoked_at;});
+  $("profileKeyCount").textContent=active.length;
+  $("profileInputRate").textContent="$"+Number(data.pricing.input_usd_per_1m_tokens).toFixed(4);
+  $("profileOutputRate").textContent="$"+Number(data.pricing.output_usd_per_1m_tokens).toFixed(4);
+
+  renderProfileScopes(data.available_scopes||[]);
+  renderProfileKeys(data.api_keys||[]);
+  renderProfileUsage(data.usage.events||[]);
+
+  $("profileCurl").textContent='curl -X POST '+location.origin+'/v1/generate \\\n'
+    +'  -H "Authorization: Bearer $EDNAI_API_KEY" \\\n'
+    +'  -H "Content-Type: application/json" \\\n'
+    +'  -d \'{"model":"NCAIR1/N-ATLaS","messages":[{"role":"user","content":"Explain APIs simply."}]}\'';
+}
+
+async function refreshProfileWorkspace(){
+  if(!$("profileWorkspace")||!$("profileSignedOut"))return;
+  try{
+    const data=await profileApi("/api/developer/me");
+    renderProfileWorkspace(data);
+  }catch(error){
+    if(error.status===401){
+      profileState=null;
+      profileNewestKey="";
+      $("profileWorkspace").classList.add("hidden");
+      $("profileSignedOut").classList.remove("hidden");
+      return;
+    }
+    showToast(error.message,"error");
+  }
+}
+
+async function revokeProfileKey(id){
+  if(!confirm("Revoke this API key? Applications using it will stop working."))return;
+  try{
+    await profileApi("/api/developer/keys/"+encodeURIComponent(id),{method:"DELETE"});
+    showToast("API key revoked.","success");
+    await refreshProfileWorkspace();
+  }catch(error){
+    showToast(error.message,"error");
+  }
+}
+
+if($("profileRefreshBtn"))$("profileRefreshBtn").addEventListener("click",refreshProfileWorkspace);
+
+if($("profileLogoutBtn"))$("profileLogoutBtn").addEventListener("click",async function(){
+  try{await profileApi("/api/developer/logout",{method:"POST"});}catch(_){}
+  profileState=null;
+  profileNewestKey="";
+  if($("profileNewKeyReveal"))$("profileNewKeyReveal").classList.add("hidden");
+  $("profileWorkspace").classList.add("hidden");
+  $("profileSignedOut").classList.remove("hidden");
+  showToast("Signed out.","success");
+});
+
+if($("profileCreateApiKeyBtn"))$("profileCreateApiKeyBtn").addEventListener("click",async function(){
+  const scopes=[...document.querySelectorAll("#profileScopeOptions input:checked")].map(function(x){return x.value;});
+  if(!scopes.length){
+    showToast("Select at least one permission.","error");
+    return;
+  }
+  try{
+    const created=await profileApi("/api/developer/keys",{
+      method:"POST",
+      body:JSON.stringify({
+        name:$("profileApiKeyName").value||"API key",
+        scopes:scopes
+      })
+    });
+    profileNewestKey=created.key;
+    $("profileNewApiKeySecret").textContent=created.key;
+    $("profileNewKeyReveal").classList.remove("hidden");
+    showToast("API key created. Copy it now.","success");
+    await refreshProfileWorkspace();
+  }catch(error){
+    showToast(error.message,"error");
+  }
+});
+
+if($("profileCopyNewApiKeyBtn"))$("profileCopyNewApiKeyBtn").addEventListener("click",async function(){
+  if(!profileNewestKey)return;
+  await copyText(profileNewestKey);
+  showToast("API key copied.","success");
+});
+
+if($("profileCopyCurlBtn"))$("profileCopyCurlBtn").addEventListener("click",async function(){
+  await copyText($("profileCurl").textContent);
+  showToast("cURL example copied.","success");
 });
 
 
@@ -1201,4 +1435,11 @@ renderQuickstart(savedStack,false);
 
 workspaceRestore();
 const requestedPanel=(location.hash||"#playground").slice(1);
-if(["playground","usecases","speech","evaluate","dataset","finetune","runtime","overview"].includes(requestedPanel))consolePanel(requestedPanel);
+if(["playground","usecases","speech","evaluate","dataset","finetune","runtime","profile","overview"].includes(requestedPanel))consolePanel(requestedPanel);
+
+window.addEventListener("hashchange",function(){
+  const next=(location.hash||"#playground").slice(1);
+  if(["playground","usecases","speech","evaluate","dataset","finetune","runtime","profile","overview"].includes(next)){
+    consolePanel(next);
+  }
+});
