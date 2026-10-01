@@ -87,6 +87,7 @@ def test_capabilities_expose_direct_natlas_tooling():
 
 
 def test_runtime_probe_requires_auth_and_fails_closed_without_runtime():
+    client.cookies.clear()
     anonymous = client.post("/api/runtime/probe")
     assert anonymous.status_code == 401
 
