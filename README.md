@@ -32,6 +32,8 @@ It is being built for the **National AI Innovation Challenge 2026 — Developer 
 
 EDNAi deliberately refuses to identify a different general-purpose model as N-ATLaS.
 
+For real-user deployment, follow the fail-closed production baseline in `docs/PRODUCTION_DEPLOYMENT.md`. The shared challenge demo account must not share a database/environment with real customer accounts.
+
 ## Start a new N-ATLaS project
 
 ```bash
