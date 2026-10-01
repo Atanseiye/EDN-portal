@@ -1,6 +1,62 @@
-<!doctype html><html lang="ig"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>EDNAi — Nduzi Igbo</title><link rel="stylesheet" href="/assets/styles.css"><style>
-.doc{max-width:920px;margin:40px auto}.doc h1{font-size:clamp(42px,7vw,64px);letter-spacing:-.045em;line-height:1}.doc h2{margin-top:38px;font-size:25px}.doc h3{margin-top:24px}.doc pre{overflow:auto;background:#0d1b1e;color:#e8fff3;padding:18px;border-radius:14px}.doc code{font-family:ui-monospace,SFMono-Regular,Menlo,monospace}.doc p,.doc li{color:#52625d;line-height:1.72}.lang{display:flex;gap:8px;flex-wrap:wrap;margin:16px 0 30px}.lang a{padding:7px 10px;border:1px solid var(--line);border-radius:999px;text-decoration:none;color:var(--green);font-weight:800;font-size:12px}.lang a.active{background:var(--ink);color:#fff;border-color:var(--ink)}.callout{border:1px solid var(--line);background:#f8faf8;border-radius:14px;padding:16px 18px;margin:22px 0}.doc-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:12px;margin:22px 0}.doc-grid a{border:1px solid var(--line);background:#fff;border-radius:14px;padding:18px;text-decoration:none;color:var(--ink)}.doc-grid strong{display:block;font-size:18px}.doc-grid span{display:block;color:var(--muted);font-size:12px;margin-top:5px}@media(max-width:650px){.doc-grid{grid-template-columns:1fr}}
-</style></head><body><header class="nav"><a class="brand" href="/"><span class="mark">E</span><span>EDN<span>Ai</span></span></a><nav><a href="/">Playground</a><a href="/guide">Nduzi niile</a><a href="/challenge">Challenge readiness</a></nav></header><main class="doc"><span class="eyebrow">Nduzi developer · Igbo</span><h1>Jiri N-ATLaS wuo ngwa.</h1><div class="lang"><a href="/guide/en">English</a><a href="/guide/yo">Yorùbá</a><a href="/guide/ha">Hausa</a><a href="/guide/ig" class="active">Igbo</a></div><p>EDNAi na-enye developer otu ụzọ kwụsiri ike iji jikọta, nwalee, nyochaa, gbanwee ma deploy model gọọmentị <code>NCAIR1/N-ATLaS</code>.</p><div class="callout"><strong>N-ATLaS naanị.</strong><p>EDNAi anaghị ekwe ka model ọzọ dochie N-ATLaS. Qualifying runtime ga-egosi model ID dịka <code>NCAIR1/N-ATLaS</code>.</p></div><h2>1. Python SDK</h2><pre><code>from ednai import EDNAi
+<!doctype html>
+<html lang="ig">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#0d1b1e">
+<title>EDNAi — Nduzi Igbo</title>
+<link rel="stylesheet" href="/assets/styles.css">
+</head>
+<body class="docs-page">
+<header class="nav docs-nav">
+  <a class="brand" href="/"><span class="mark">E</span><span>EDN<span>Ai</span></span></a>
+  <nav class="top-nav">
+    <a href="/">Playground</a>
+    <a class="docs-active" href="/guide">Docs</a>
+    <a href="/challenge">Challenge readiness</a>
+    <a href="/docs">API</a>
+    <button class="nav-cta" type="button" onclick="location.href='/#playground'">Get started</button>
+    <div class="profile-menu-wrap">
+      <button id="docsProfileMenuBtn" class="profile-menu-button" type="button" aria-haspopup="menu" aria-expanded="false">
+        <span id="docsProfileAvatar" class="profile-avatar" aria-hidden="true">P</span>
+        <span class="profile-menu-label">Profile</span>
+        <span class="profile-chevron" aria-hidden="true">⌄</span>
+      </button>
+      <div id="docsProfileMenu" class="profile-dropdown hidden" role="menu">
+        <div class="profile-dropdown-head"><strong id="docsProfileName">Developer account</strong><small id="docsProfileEmail">Sign in to manage your account</small></div>
+        <div class="profile-dropdown-divider"></div>
+        <button class="profile-dropdown-item" type="button" data-docs-profile-target="account" role="menuitem"><span>◎</span><span><strong>Profile & Settings</strong><small>Account overview and preferences</small></span></button>
+        <button class="profile-dropdown-item" type="button" data-docs-profile-target="keys" role="menuitem"><span>⌘</span><span><strong>API Keys</strong><small>Create and manage credentials</small></span></button>
+        <button class="profile-dropdown-item" type="button" data-docs-profile-target="usage" role="menuitem"><span>▦</span><span><strong>Usage & Billing</strong><small>Token usage, balance and pricing</small></span></button>
+        <div class="profile-dropdown-divider"></div>
+        <a id="docsProfileSignIn" class="profile-dropdown-item profile-signin-item" href="/developer" role="menuitem"><span>→</span><span><strong>Sign in</strong><small>Access your developer account</small></span></a>
+        <button id="docsProfileLogout" class="profile-dropdown-item profile-logout-item hidden" type="button" role="menuitem"><span>↪</span><span><strong>Log out</strong><small>End this developer session</small></span></button>
+      </div>
+    </div>
+  </nav>
+</header>
+<main class="docs-shell docs-layout">
+<aside class="docs-sidebar" aria-label="Documentation sections">
+    <span class="docs-sidebar-label">On this page</span>
+    <a href="#python-sdk" class="active">Python SDK</a>
+    <a href="#typescript-sdk">TypeScript SDK</a>
+    <a href="#http-api">OpenAI-compatible HTTP</a>
+    <a href="#prompting">Prompt na JSON mode</a>
+    <a href="#evaluation">Evaluation</a>
+    <a href="#dataset-studio">Dataset Studio</a>
+    <a href="#fine-tuning">Fine-tuning</a>
+    <a href="#runtime-modes">Runtime modes</a>
+    <a href="#speech-studio">Speech Studio na ASR</a>
+    <a href="#speech-models">Official speech models</a>
+    <a href="#use-cases">Use Case Studio</a>
+    <div class="docs-sidebar-divider"></div>
+    <a href="/docs">API reference</a>
+    <a href="/#runtime">Runtime & SDK</a>
+    <div class="docs-sidebar-meta">NCAIR1/N-ATLaS<br>Developer infrastructure</div>
+  </aside>
+<article class="docs-article">
+  <header class="docs-article-hero"><span class="eyebrow">Nduzi developer · Igbo</span><h1>Jiri N-ATLaS wuo ngwa.</h1><div class="docs-language-switcher"><a href="/guide/en">English</a><a href="/guide/yo">Yorùbá</a><a href="/guide/ha">Hausa</a><a href="/guide/ig" class="active">Igbo</a></div><p>EDNAi na-enye developer otu ụzọ kwụsiri ike iji jikọta, nwalee, nyochaa, gbanwee ma deploy model gọọmentị <code>NCAIR1/N-ATLaS</code>.</p><div class="docs-callout"><strong>N-ATLaS naanị.</strong><p>EDNAi anaghị ekwe ka model ọzọ dochie N-ATLaS. Qualifying runtime ga-egosi model ID dịka <code>NCAIR1/N-ATLaS</code>.</p></div></header>
+  <section class="docs-section" id="python-sdk"><h2>1. Python SDK</h2><div class="docs-code"><pre><code>from ednai import EDNAi
 
 ai = EDNAi(base_url="https://ednai-6znf.onrender.com")
 result = ai.generate(
@@ -9,24 +65,34 @@ result = ai.generate(
     temperature=0.2,
     max_tokens=300,
 )
-print(result.text)</code></pre><h2>2. TypeScript SDK</h2><pre><code>import { EDNAi } from "@ednai/sdk";
+print(result.text)</code></pre></div></section>
+  <section class="docs-section" id="typescript-sdk"><h2>2. TypeScript SDK</h2><div class="docs-code"><pre><code>import { EDNAi } from "@ednai/sdk";
 
 const ai = new EDNAi({
   baseUrl: "https://ednai-6znf.onrender.com"
 });
 const result = await ai.generate("Kọwaa API n'Igbo.");
-console.log(result.text);</code></pre><h2>3. OpenAI-compatible HTTP</h2><pre><code>POST /v1/chat/completions
+console.log(result.text);</code></pre></div></section>
+  <section class="docs-section" id="http-api"><h2>3. OpenAI-compatible HTTP</h2><div class="docs-code"><pre><code>POST /v1/chat/completions
 {
   "model": "NCAIR1/N-ATLaS",
   "messages": [
     {"role":"user","content":"Kọwaa transformer attention."}
   ]
-}</code></pre><h2>4. Prompt na JSON mode</h2><p>Jiri system prompt họrọ asụsụ, ụda olu ma ọ bụ iwu ọrụ. Hapụ JSON mode gbanyụrụ maka azịza nkịtị; gbanye ya naanị mgbe application chọrọ JSON ahaziri nke ọma.</p><h2>5. Evaluation</h2><pre><code>ednai eval benchmarks/natlas_smoke.jsonl \
-  --base-url https://ednai-6znf.onrender.com</code></pre><p>Evaluation Workbench na-agba multilingual regression checks, JSON validity, okwu ndị a chọrọ/achọghị na latency.</p><h2>6. Dataset Studio</h2><p>Dataset Studio na-anabata <code>messages[]</code> ma ọ bụ instruction/input/output JSONL, na-enyocha row ọ bụla, na-normalize data ma wepụta training-ready JSONL.</p><h2>7. Fine-tuning</h2><pre><code>python fine_tuning/train_qlora.py \
+}</code></pre></div></section>
+  <section class="docs-section" id="prompting"><h2>4. Prompt na JSON mode</h2><p>Jiri system prompt họrọ asụsụ, ụda olu ma ọ bụ iwu ọrụ. Hapụ JSON mode gbanyụrụ maka azịza nkịtị; gbanye ya naanị mgbe application chọrọ JSON ahaziri nke ọma.</p></section>
+  <section class="docs-section" id="evaluation"><h2>5. Evaluation</h2><div class="docs-code"><pre><code>ednai eval benchmarks/natlas_smoke.jsonl \
+  --base-url https://ednai-6znf.onrender.com</code></pre></div><p>Evaluation Workbench na-agba multilingual regression checks, JSON validity, okwu ndị a chọrọ/achọghị na latency.</p></section>
+  <section class="docs-section" id="dataset-studio"><h2>6. Dataset Studio</h2><p>Dataset Studio na-anabata <code>messages[]</code> ma ọ bụ instruction/input/output JSONL, na-enyocha row ọ bụla, na-normalize data ma wepụta training-ready JSONL.</p></section>
+  <section class="docs-section" id="fine-tuning"><h2>7. Fine-tuning</h2><div class="docs-code"><pre><code>python fine_tuning/train_qlora.py \
   --dataset prepared.jsonl \
-  --output-dir outputs/my-natlas-adapter</code></pre><p>QLoRA/LoRA adapter na-amalite kpọmkwem site na <code>NCAIR1/N-ATLaS</code>.</p><h2>8. Runtime modes</h2><ul><li><strong>ZeroGPU:</strong> hosted N-ATLaS runtime maka development na demo; free quota nwere ike ịbanye queue ma ọ bụ gwụ nwa oge.</li><li><strong>Local Transformers:</strong> budata ma load official N-ATLaS weights na server gị.</li><li><strong>OpenAI-compatible N-ATLaS:</strong> jikọọ EDNAi na endpoint nke na-arụ N-ATLaS n'ezie.</li></ul><h2>9. Speech Studio na ASR</h2><p>EDNAi na-enye official NCAIR speech-recognition models site na <code>POST /v1/audio/transcriptions</code>, Python/TypeScript SDK, CLI na Speech Studio.</p><pre><code>result = ai.transcribe("audio.wav", language="igbo")
+  --output-dir outputs/my-natlas-adapter</code></pre></div><p>QLoRA/LoRA adapter na-amalite kpọmkwem site na <code>NCAIR1/N-ATLaS</code>.</p></section>
+  <section class="docs-section" id="runtime-modes"><h2>8. Runtime modes</h2><ul><li><strong>ZeroGPU:</strong> hosted N-ATLaS runtime maka development na demo; free quota nwere ike ịbanye queue ma ọ bụ gwụ nwa oge.</li><li><strong>Local Transformers:</strong> budata ma load official N-ATLaS weights na server gị.</li><li><strong>OpenAI-compatible N-ATLaS:</strong> jikọọ EDNAi na endpoint nke na-arụ N-ATLaS n'ezie.</li></ul></section>
+  <section class="docs-section" id="speech-studio"><h2>9. Speech Studio na ASR</h2><p>EDNAi na-enye official NCAIR speech-recognition models site na <code>POST /v1/audio/transcriptions</code>, Python/TypeScript SDK, CLI na Speech Studio.</p><div class="docs-code"><pre><code>result = ai.transcribe("audio.wav", language="igbo")
 print(result.text)
-print(result.model)</code></pre><p>EDNAi na-enyocha model ID ka ọ kwekọọ na asụsụ ahọpụtara; ọ naghị ekwe ASR model substitution.</p><h2>10. Official speech models</h2><ul><li>Nigerian English — <code>NCAIR1/NigerianAccentedEnglish</code></li><li>Yorùbá — <code>NCAIR1/Yoruba-ASR</code></li><li>Hausa — <code>NCAIR1/Hausa-ASR</code></li><li>Igbo — <code>NCAIR1/Igbo-ASR</code></li></ul><p>Nduzi repository zuru ezu: <code>docs/ig/getting-started.md</code>.</p><h2>Use Case Studio</h2><p>EDNAi nwere workflow N-ATLaS asatọ: multilingual chatbot, translation, educational tools, cultural preservation, government services, digital inclusion, research applications na original song-lyrics generation.</p><pre><code>result = ai.run_use_case(
+print(result.model)</code></pre></div><p>EDNAi na-enyocha model ID ka ọ kwekọọ na asụsụ ahọpụtara; ọ naghị ekwe ASR model substitution.</p></section>
+  <section class="docs-section" id="speech-models"><h2>10. Official speech models</h2><ul><li>Nigerian English — <code>NCAIR1/NigerianAccentedEnglish</code></li><li>Yorùbá — <code>NCAIR1/Yoruba-ASR</code></li><li>Hausa — <code>NCAIR1/Hausa-ASR</code></li><li>Igbo — <code>NCAIR1/Igbo-ASR</code></li></ul><p>Nduzi repository zuru ezu: <code>docs/ig/getting-started.md</code>.</p></section>
+  <section class="docs-section" id="use-cases"><h2>Use Case Studio</h2><p>EDNAi nwere workflow N-ATLaS asatọ: multilingual chatbot, translation, educational tools, cultural preservation, government services, digital inclusion, research applications na original song-lyrics generation.</p><div class="docs-code"><pre><code>result = ai.run_use_case(
     "education",
     {
         "topic": "Photosynthesis",
@@ -36,4 +102,10 @@ print(result.model)</code></pre><p>EDNAi na-enyocha model ID ka ọ kwekọọ n
     },
     language="igbo"
 )
-print(result.text)</code></pre><p>Workflows ndị a dịkwa na <code>GET /v1/use-cases</code>, <code>POST /v1/use-cases/{use_case}</code>, TypeScript na CLI. Song generation bụ naanị lyrics n'ụdị text; ọ naghị etinye audio model ọzọ.</p></main></body></html>
+print(result.text)</code></pre></div><p>Workflows ndị a dịkwa na <code>GET /v1/use-cases</code>, <code>POST /v1/use-cases/{use_case}</code>, TypeScript na CLI. Song generation bụ naanị lyrics n'ụdị text; ọ naghị etinye audio model ọzọ.</p></section>
+</article>
+</main>
+<footer class="docs-footer"><strong>EDNAi</strong> · Developer infrastructure for NCAIR1/N-ATLaS. &nbsp; <a href="/guide">All documentation</a></footer>
+<script src="/assets/docs.js"></script>
+</body>
+</html>
