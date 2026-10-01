@@ -1,0 +1,26 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 760 220" role="img" aria-labelledby="title desc">
+<title id="title">EDNAi</title><desc id="desc">EDNAi developer platform logo</desc>
+<defs>
+  <linearGradient id="g1" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#003b34"/><stop offset=".58" stop-color="#00a96f"/><stop offset="1" stop-color="#c8ff39"/></linearGradient>
+  <linearGradient id="g2" x1=".15" y1=".1" x2=".85" y2=".9"><stop offset="0" stop-color="#00cc83"/><stop offset=".6" stop-color="#00785f"/><stop offset="1" stop-color="#002d2b"/></linearGradient>
+  <linearGradient id="g3" x1="0" y1="1" x2="1" y2="0"><stop offset="0" stop-color="#002a2a"/><stop offset=".55" stop-color="#00775a"/><stop offset="1" stop-color="#2bea7d"/></linearGradient>
+  <linearGradient id="ga" x1="0" y1="1" x2=".8" y2="0"><stop offset="0" stop-color="#008f61"/><stop offset=".58" stop-color="#10d979"/><stop offset="1" stop-color="#d5ff42"/></linearGradient>
+  <filter id="glow" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="7"/></filter>
+</defs>
+<g transform="translate(18 14)">
+  <path d="M93 8 182 60a25 25 0 0 1 12 22v24l-84-49a27 27 0 0 0-27 0L23 92V68a25 25 0 0 1 12-22L70 25A46 46 0 0 1 93 8Z" fill="url(#g1)"/>
+  <path d="M23 92 83 57a27 27 0 0 1 27 0l84 49v42l-84-49a27 27 0 0 0-27 0l-60 35Z" fill="url(#g2)"/>
+  <path d="m23 134 60-35a27 27 0 0 1 27 0l84 49v24a25 25 0 0 1-12 22l-89 52a46 46 0 0 1-23-17l-35-21a25 25 0 0 1-12-22Z" transform="translate(0 -42)" fill="url(#g3)" opacity=".98"/>
+  <path d="M23 134 83 99a27 27 0 0 1 27 0l84 49v24a25 25 0 0 1-12 22l-89 52a46 46 0 0 1-23-17l-35-21a25 25 0 0 1-12-22Z" transform="translate(0 -42)" fill="url(#g3)" opacity=".92"/>
+  <path d="M23 134 83 99a27 27 0 0 1 27 0l84 49v24a25 25 0 0 1-12 22l-89 52a46 46 0 0 1-23-17l-35-21a25 25 0 0 1-12-22Z" transform="translate(0 -84)" fill="url(#g2)" opacity=".85"/>
+  <path d="M64 112c31 0 36 14 59 14h23" fill="none" stroke="#ebfff2" stroke-width="7" stroke-linecap="round"/>
+  <circle cx="151" cy="126" r="16" fill="#d8ff4d" filter="url(#glow)" opacity=".45"/>
+  <circle cx="151" cy="126" r="9" fill="#f3ffdd"/>
+</g>
+<g transform="translate(236 51)">
+  <text x="0" y="108" font-family="Inter,Segoe UI,Arial,sans-serif" font-size="118" font-weight="800" letter-spacing="-7" fill="#071b1e">EDN</text>
+  <path d="M354 105 406 0h27l55 105h-37l-11-23h-43l-10 23Zm57-50h18l-9-21Z" fill="url(#ga)"/>
+  <rect x="504" y="27" width="31" height="78" rx="7" fill="#071b1e"/>
+  <circle cx="519.5" cy="9" r="14" fill="url(#ga)"/>
+</g>
+</svg>
