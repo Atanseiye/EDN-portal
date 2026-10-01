@@ -26,6 +26,7 @@ class Settings(BaseSettings):
     ednai_pricing_mode: str = "demo"
     ednai_require_exact_usage: bool = True
     ednai_session_hours: int = 24
+    ednai_max_api_keys_per_account: int = 10
     ednai_login_rate_limit_per_minute: int = 10
     ednai_api_rate_limit_per_minute: int = 60
     trusted_hosts: str = "*"
