@@ -241,6 +241,8 @@ def _session_account(ednai_session: str | None) -> dict[str, Any]:
 
 
 def _rate_limit_principal(principal: dict[str, Any]) -> None:
+    if settings.app_env.lower() not in {"production", "demo"}:
+        return
     identity = principal.get("api_key_id") or principal.get("developer_id") or "unknown"
     ok, retry = rate_limiter.check(
         f"api:{identity}",
