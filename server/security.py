@@ -131,6 +131,15 @@ async def production_security_middleware(request: Request, call_next, settings: 
     started = time.perf_counter()
     response = await call_next(request)
     response.headers["X-Request-ID"] = request_id
+    if (
+        request.url.path.startswith("/api/developer/")
+        or request.url.path.startswith("/v1/")
+        or request.url.path.startswith("/api/studio/")
+    ):
+        response.headers["Cache-Control"] = "no-store"
+        response.headers["Pragma"] = "no-cache"
+    if "server" in response.headers:
+        del response.headers["server"]
     response.headers["X-Content-Type-Options"] = "nosniff"
     response.headers["X-Frame-Options"] = "DENY"
     response.headers["Referrer-Policy"] = "strict-origin-when-cross-origin"
