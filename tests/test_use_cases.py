@@ -103,6 +103,12 @@ def test_use_case_endpoint_executes_through_natlas_provider(monkeypatch):
                 model=NATLAS_MODEL_ID,
                 provider="test-natlas",
                 latency_ms=12.5,
+                usage={
+                    "prompt_tokens": 12,
+                    "completion_tokens": 6,
+                    "total_tokens": 18,
+                    "measurement": "tokenizer_exact",
+                },
             )
 
     monkeypatch.setattr(main, "provider", FakeProvider())
