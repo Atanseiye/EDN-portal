@@ -754,7 +754,11 @@ def studio_evaluate(
 
 
 @app.post("/api/runtime/probe")
-def runtime_probe():
+def runtime_probe(
+    authorization: str | None = Header(default=None),
+    ednai_session: str | None = Cookie(default=None),
+):
+    _developer_principal("inference.generate", authorization, ednai_session)
     if provider is None:
         raise HTTPException(status_code=503, detail="No direct N-ATLaS runtime is configured.")
     started = time.perf_counter()
