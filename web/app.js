@@ -308,13 +308,6 @@ document.querySelectorAll(".console-tab").forEach(function(tab){
   tab.addEventListener("click",function(){consolePanel(tab.dataset.panel);});
 });
 
-if($("profileNavLink"))$("profileNavLink").addEventListener("click",function(event){
-  event.preventDefault();
-  consolePanel("profile");
-  const target=$("panel-profile");
-  if(target)target.scrollIntoView({behavior:"smooth",block:"start"});
-});
-
 function downloadText(filename,content,type){
   const blob=new Blob([content],{type:type||"text/plain"});
   const url=URL.createObjectURL(blob);
@@ -549,6 +542,98 @@ async function profileApi(path,options={}){
   return readApiResponse(response);
 }
 
+function profileInitials(account){
+  if(!account)return "P";
+  const source=(account.display_name||account.email||"Profile").trim();
+  if(source.includes(" ")){
+    return source.split(/\s+/).slice(0,2).map(function(part){return part[0]||"";}).join("").toUpperCase();
+  }
+  return source.slice(0,2).toUpperCase();
+}
+
+function renderHeaderProfile(account){
+  if(!$("profileAvatar"))return;
+  $("profileAvatar").textContent=profileInitials(account);
+  $("profileMenuName").textContent=account?(account.display_name||"Developer account"):"Developer account";
+  $("profileMenuEmail").textContent=account?account.email:"Sign in to manage your account";
+  $("profileSignInLink").classList.toggle("hidden",Boolean(account));
+  $("profileMenuLogoutBtn").classList.toggle("hidden",!account);
+}
+
+function closeProfileMenu(){
+  if(!$("profileMenu")||!$("profileMenuBtn"))return;
+  $("profileMenu").classList.add("hidden");
+  $("profileMenuBtn").setAttribute("aria-expanded","false");
+}
+
+function toggleProfileMenu(){
+  if(!$("profileMenu")||!$("profileMenuBtn"))return;
+  const opening=$("profileMenu").classList.contains("hidden");
+  $("profileMenu").classList.toggle("hidden",!opening);
+  $("profileMenuBtn").setAttribute("aria-expanded",String(opening));
+}
+
+function openProfileDestination(destination){
+  closeProfileMenu();
+  consolePanel("profile");
+  const ids={
+    account:"profileAccountSection",
+    keys:"profileApiKeysSection",
+    usage:"profileRecentUsageSection"
+  };
+  setTimeout(function(){
+    const target=$(ids[destination]||"panel-profile");
+    if(target)target.scrollIntoView({behavior:"smooth",block:"start"});
+  },80);
+}
+
+async function refreshHeaderProfile(){
+  try{
+    const data=await profileApi("/api/developer/me");
+    renderHeaderProfile(data.account);
+  }catch(error){
+    if(error.status===401){
+      renderHeaderProfile(null);
+      return;
+    }
+  }
+}
+
+async function logoutProfileSession(){
+  try{await profileApi("/api/developer/logout",{method:"POST"});}catch(_){}
+  profileState=null;
+  profileNewestKey="";
+  if($("profileNewKeyReveal"))$("profileNewKeyReveal").classList.add("hidden");
+  if($("profileWorkspace"))$("profileWorkspace").classList.add("hidden");
+  if($("profileSignedOut"))$("profileSignedOut").classList.remove("hidden");
+  renderHeaderProfile(null);
+  closeProfileMenu();
+  showToast("Logged out.","success");
+}
+
+if($("profileMenuBtn"))$("profileMenuBtn").addEventListener("click",function(event){
+  event.stopPropagation();
+  toggleProfileMenu();
+});
+
+if($("profileMenu"))$("profileMenu").addEventListener("click",function(event){
+  event.stopPropagation();
+});
+
+document.querySelectorAll("[data-profile-destination]").forEach(function(button){
+  button.addEventListener("click",function(){
+    openProfileDestination(button.dataset.profileDestination);
+  });
+});
+
+if($("profileMenuLogoutBtn"))$("profileMenuLogoutBtn").addEventListener("click",logoutProfileSession);
+if($("profileSignInLink"))$("profileSignInLink").addEventListener("click",closeProfileMenu);
+
+document.addEventListener("click",closeProfileMenu);
+document.addEventListener("keydown",function(event){
+  if(event.key==="Escape")closeProfileMenu();
+});
+
 function profileMoney(value){
   const amount=Number(value||0);
   return "$"+amount.toFixed(6).replace(/0+$/,"").replace(/\.$/,".00");
@@ -662,6 +747,7 @@ function renderProfileWorkspace(data){
   $("profileWorkspace").classList.remove("hidden");
 
   const account=data.account;
+  renderHeaderProfile(account);
   $("profileGreeting").textContent=account.display_name||"Developer account";
   $("profileEmail").textContent=account.email+(account.is_demo?" · demo account":"");
   $("profileBalance").textContent=profileMoney(data.usage.balance_usd);
@@ -694,6 +780,7 @@ async function refreshProfileWorkspace(){
       profileNewestKey="";
       $("profileWorkspace").classList.add("hidden");
       $("profileSignedOut").classList.remove("hidden");
+      renderHeaderProfile(null);
       return;
     }
     showToast(error.message,"error");
@@ -713,15 +800,7 @@ async function revokeProfileKey(id){
 
 if($("profileRefreshBtn"))$("profileRefreshBtn").addEventListener("click",refreshProfileWorkspace);
 
-if($("profileLogoutBtn"))$("profileLogoutBtn").addEventListener("click",async function(){
-  try{await profileApi("/api/developer/logout",{method:"POST"});}catch(_){}
-  profileState=null;
-  profileNewestKey="";
-  if($("profileNewKeyReveal"))$("profileNewKeyReveal").classList.add("hidden");
-  $("profileWorkspace").classList.add("hidden");
-  $("profileSignedOut").classList.remove("hidden");
-  showToast("Signed out.","success");
-});
+if($("profileLogoutBtn"))$("profileLogoutBtn").addEventListener("click",logoutProfileSession);
 
 if($("profileCreateApiKeyBtn"))$("profileCreateApiKeyBtn").addEventListener("click",async function(){
   const scopes=[...document.querySelectorAll("#profileScopeOptions input:checked")].map(function(x){return x.value;});
@@ -1434,6 +1513,7 @@ try{savedStack=localStorage.getItem("ednai-quickstart-stack")||"python";}catch(_
 renderQuickstart(savedStack,false);
 
 workspaceRestore();
+refreshHeaderProfile();
 const requestedPanel=(location.hash||"#playground").slice(1);
 if(["playground","usecases","speech","evaluate","dataset","finetune","runtime","profile","overview"].includes(requestedPanel))consolePanel(requestedPanel);
 
