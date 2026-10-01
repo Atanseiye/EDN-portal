@@ -101,7 +101,10 @@ async def production_security_middleware(request: Request, call_next, settings: 
             pass
 
     # Protect credential endpoints from trivial brute force.
-    if request.url.path in {"/api/developer/login", "/api/developer/register"}:
+    if (
+        settings.app_env.lower() in {"production", "demo"}
+        and request.url.path in {"/api/developer/login", "/api/developer/register"}
+    ):
         limit = settings.ednai_login_rate_limit_per_minute
         ok, retry = rate_limiter.check(
             f"auth:{client_ip(request)}:{request.url.path}",
