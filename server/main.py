@@ -145,14 +145,14 @@ class UseCaseRequest(BaseModel):
 
 
 class DeveloperRegister(BaseModel):
-    email: str
-    password: str = Field(min_length=10)
-    display_name: str | None = None
+    email: str = Field(min_length=3, max_length=320)
+    password: str = Field(min_length=10, max_length=256)
+    display_name: str | None = Field(default=None, max_length=120)
 
 
 class DeveloperLogin(BaseModel):
-    email: str
-    password: str
+    email: str = Field(min_length=3, max_length=320)
+    password: str = Field(min_length=1, max_length=256)
 
 
 class DeveloperApiKeyCreate(BaseModel):
@@ -499,6 +499,18 @@ def developer_create_key(
     ednai_session: str | None = Cookie(default=None),
 ):
     account = _session_account(ednai_session)
+    active_keys = [
+        key for key in developer_store.list_api_keys(account["id"])
+        if not key.get("revoked_at")
+    ]
+    if len(active_keys) >= settings.ednai_max_api_keys_per_account:
+        raise HTTPException(
+            status_code=409,
+            detail=(
+                f"API key limit reached ({settings.ednai_max_api_keys_per_account}). "
+                "Revoke an unused key before creating another."
+            ),
+        )
     try:
         created = developer_store.create_api_key(
             account["id"],
