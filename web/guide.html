@@ -1,3 +1,86 @@
-<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>EDNAi Documentation</title><link rel="stylesheet" href="/assets/styles.css"><style>
-.doc{max-width:920px;margin:40px auto}.doc h1{font-size:clamp(42px,7vw,64px);letter-spacing:-.045em;line-height:1}.doc h2{margin-top:38px;font-size:25px}.doc h3{margin-top:24px}.doc pre{overflow:auto;background:#0d1b1e;color:#e8fff3;padding:18px;border-radius:14px}.doc code{font-family:ui-monospace,SFMono-Regular,Menlo,monospace}.doc p,.doc li{color:#52625d;line-height:1.72}.lang{display:flex;gap:8px;flex-wrap:wrap;margin:16px 0 30px}.lang a{padding:7px 10px;border:1px solid var(--line);border-radius:999px;text-decoration:none;color:var(--green);font-weight:800;font-size:12px}.lang a.active{background:var(--ink);color:#fff;border-color:var(--ink)}.callout{border:1px solid var(--line);background:#f8faf8;border-radius:14px;padding:16px 18px;margin:22px 0}.doc-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:12px;margin:22px 0}.doc-grid a{border:1px solid var(--line);background:#fff;border-radius:14px;padding:18px;text-decoration:none;color:var(--ink)}.doc-grid strong{display:block;font-size:18px}.doc-grid span{display:block;color:var(--muted);font-size:12px;margin-top:5px}@media(max-width:650px){.doc-grid{grid-template-columns:1fr}}
-</style></head><body><header class="nav"><a class="brand" href="/"><span class="mark">E</span><span>EDN<span>Ai</span></span></a><nav><a href="/">Playground</a><a href="/challenge">Challenge readiness</a></nav></header><main class="doc"><span class="eyebrow">Multilingual developer documentation</span><h1>Choose your documentation language.</h1><p>EDNAi documents the same N-ATLaS developer workflow in the four languages supported by the developer experience: English / Nigerian English, Yorùbá, Hausa and Igbo.</p><div class="doc-grid"><a href="/guide/en"><strong>English / Nigerian English</strong><span>Integration, evaluation, adaptation and deployment.</span></a><a href="/guide/yo"><strong>Yorùbá</strong><span>Ìtọ́sọ́nà developer fún integration, evaluation, adaptation àti deployment.</span></a><a href="/guide/ha"><strong>Hausa</strong><span>Takardun developer don haɗawa, gwaji, daidaitawa da turawa.</span></a><a href="/guide/ig"><strong>Igbo</strong><span>Nduzi developer maka njikọ, nnwale, mmegharị na deployment.</span></a></div><div class="callout"><strong>One technical contract.</strong><p>Code, endpoint names, model identifiers and runtime guarantees are identical across languages. Only the explanatory documentation changes language.</p></div></main></body></html>
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#0d1b1e">
+<title>EDNAi Documentation — Build with N-ATLaS</title>
+<link rel="stylesheet" href="/assets/styles.css">
+</head>
+<body class="docs-page">
+<header class="nav docs-nav">
+  <a class="brand" href="/"><span class="mark">E</span><span>EDN<span>Ai</span></span></a>
+  <nav class="top-nav">
+    <a href="/">Playground</a>
+    <a class="docs-active" href="/guide">Docs</a>
+    <a href="/challenge">Challenge readiness</a>
+    <a href="/docs">API</a>
+    <button class="nav-cta" type="button" onclick="location.href='/#playground'">Get started</button>
+    <div class="profile-menu-wrap">
+      <button id="docsProfileMenuBtn" class="profile-menu-button" type="button" aria-haspopup="menu" aria-expanded="false">
+        <span id="docsProfileAvatar" class="profile-avatar" aria-hidden="true">P</span>
+        <span class="profile-menu-label">Profile</span>
+        <span class="profile-chevron" aria-hidden="true">⌄</span>
+      </button>
+      <div id="docsProfileMenu" class="profile-dropdown hidden" role="menu">
+        <div class="profile-dropdown-head">
+          <strong id="docsProfileName">Developer account</strong>
+          <small id="docsProfileEmail">Sign in to manage your account</small>
+        </div>
+        <div class="profile-dropdown-divider"></div>
+        <button class="profile-dropdown-item" type="button" data-docs-profile-target="account" role="menuitem">
+          <span>◎</span><span><strong>Profile & Settings</strong><small>Account overview and preferences</small></span>
+        </button>
+        <button class="profile-dropdown-item" type="button" data-docs-profile-target="keys" role="menuitem">
+          <span>⌘</span><span><strong>API Keys</strong><small>Create and manage credentials</small></span>
+        </button>
+        <button class="profile-dropdown-item" type="button" data-docs-profile-target="usage" role="menuitem">
+          <span>▦</span><span><strong>Usage & Billing</strong><small>Token usage, balance and pricing</small></span>
+        </button>
+        <div class="profile-dropdown-divider"></div>
+        <a id="docsProfileSignIn" class="profile-dropdown-item profile-signin-item" href="/developer" role="menuitem">
+          <span>→</span><span><strong>Sign in</strong><small>Access your developer account</small></span>
+        </a>
+        <button id="docsProfileLogout" class="profile-dropdown-item profile-logout-item hidden" type="button" role="menuitem">
+          <span>↪</span><span><strong>Log out</strong><small>End this developer session</small></span>
+        </button>
+      </div>
+    </div>
+  </nav>
+</header>
+<main class="docs-shell">
+  <section class="docs-landing-hero">
+    <span class="eyebrow">EDNAi developer documentation</span>
+    <h1>Build with <em>N-ATLaS.</em></h1>
+    <p>SDKs, APIs, speech, evaluation, dataset preparation and fine-tuning guidance for developers building on Nigeria’s N-ATLaS ecosystem.</p>
+  </section>
+
+  <section aria-labelledby="languageTitle">
+    <span class="eyebrow">Documentation languages</span>
+    <h2 id="languageTitle" style="margin:7px 0 5px;font-size:28px;letter-spacing:-.035em">Choose your language.</h2>
+    <p style="margin:0 0 18px;color:var(--muted);font-size:13px">The technical contract is identical in every version. Only the explanatory language changes.</p>
+    <div class="docs-language-grid">
+      <a class="docs-language-card" href="/guide/en">
+        <div><strong>English / Nigerian English</strong><span>Integration, evaluation, adaptation, speech and deployment.</span></div><b>EN</b>
+      </a>
+      <a class="docs-language-card" href="/guide/yo">
+        <div><strong>Yorùbá</strong><span>Ìtọ́sọ́nà developer fún integration, evaluation, adaptation àti deployment.</span></div><b>YO</b>
+      </a>
+      <a class="docs-language-card" href="/guide/ha">
+        <div><strong>Hausa</strong><span>Takardun developer don haɗawa, gwaji, daidaitawa da turawa.</span></div><b>HA</b>
+      </a>
+      <a class="docs-language-card" href="/guide/ig">
+        <div><strong>Igbo</strong><span>Nduzi developer maka njikọ, nnwale, mmegharị na deployment.</span></div><b>IG</b>
+      </a>
+    </div>
+  </section>
+
+  <aside class="docs-contract">
+    <span class="docs-contract-icon">✓</span>
+    <div><strong>One technical contract across every language.</strong><p>Code, endpoint names, model identifiers and runtime guarantees remain identical. EDNAi documentation only changes the explanatory language.</p></div>
+  </aside>
+</main>
+<footer class="docs-footer"><strong>EDNAi</strong> · Developer infrastructure for NCAIR1/N-ATLaS. &nbsp; <a href="/challenge">Challenge readiness</a></footer>
+<script src="/assets/docs.js"></script>
+</body>
+</html>
