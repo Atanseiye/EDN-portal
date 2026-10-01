@@ -770,3 +770,38 @@ kbd{background:#edf1ee;border:1px solid #d5ddd9;border-bottom-width:2px;border-r
   .demo-request-form{grid-template-columns:1fr}
   .demo-request-button{width:100%}
 }
+
+
+/* ---------- Profile / Settings workspace ---------- */
+.profile-settings-panel{padding-top:4px}
+.profile-auth-gate{
+  max-width:680px;
+  margin:30px auto 0;
+  padding:34px;
+  text-align:center;
+}
+.profile-auth-gate h2{
+  margin:8px auto 10px;
+  max-width:520px;
+  font-size:30px;
+  letter-spacing:-.04em;
+}
+.profile-auth-gate p{
+  max-width:560px;
+  margin:0 auto 20px;
+  color:var(--muted);
+  line-height:1.6;
+}
+.profile-auth-gate .linkbtn{display:inline-flex}
+.profile-workspace-head{margin-bottom:14px}
+.profile-workspace-head p{margin:4px 0 0;color:var(--muted)}
+#profileWorkspace.hidden,#profileSignedOut.hidden{display:none!important}
+#panel-profile .developer-grid-two>.panel,
+#panel-profile .usage-panel,
+#panel-profile .billing-note{background:var(--panel)}
+#panel-profile .developer-metric{min-height:102px}
+#panel-profile .billing-note{margin-top:14px}
+@media(max-width:780px){
+  .profile-auth-gate{padding:26px 20px}
+  .profile-auth-gate h2{font-size:25px}
+}
