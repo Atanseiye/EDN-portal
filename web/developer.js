@@ -182,12 +182,6 @@ async function revokeKey(id){
   }
 }
 
-$("fillDemoBtn").addEventListener("click",()=>{
-  $("loginEmail").value="demo@edn.com";
-  $("loginPassword").value="12345";
-  $("loginEmail").focus();
-});
-
 $("loginForm").addEventListener("submit",async event=>{
   event.preventDefault();
   $("loginStatus").textContent="Signing in…";
@@ -204,6 +198,46 @@ $("loginForm").addEventListener("submit",async event=>{
     await loadAccount();
   }catch(error){
     $("loginStatus").textContent=error.message;
+  }
+});
+
+
+function showLoginFlow(){
+  $("registerPanel").classList.add("hidden");
+  $("loginFlow").classList.remove("hidden");
+  $("loginEmail").focus();
+}
+
+function showRegisterFlow(){
+  $("loginFlow").classList.add("hidden");
+  $("registerPanel").classList.remove("hidden");
+  const email=$("loginEmail").value.trim();
+  if(email && !$("registerEmail").value)$("registerEmail").value=email;
+  $("registerEmail").focus();
+}
+
+$("openRegisterBtn").addEventListener("click",showRegisterFlow);
+$("backToLoginBtn").addEventListener("click",showLoginFlow);
+
+$("demoRequestForm").addEventListener("submit",async event=>{
+  event.preventDefault();
+  const button=event.currentTarget.querySelector("button[type=submit]");
+  const status=$("demoRequestStatus");
+  const email=$("demoRequestEmail").value.trim();
+  button.disabled=true;
+  status.textContent="Requesting demo access…";
+  try{
+    const result=await api("/api/developer/demo-request",{
+      method:"POST",
+      body:JSON.stringify({email})
+    });
+    status.textContent=result.message||"Demo access has been sent to your email.";
+    event.currentTarget.reset();
+    showToast("Demo request received.","success");
+  }catch(error){
+    status.textContent=error.message;
+  }finally{
+    button.disabled=false;
   }
 });
 
