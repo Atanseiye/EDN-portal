@@ -197,6 +197,18 @@ class DeveloperStore:
         import psycopg
         return psycopg.connect(self.database_url)
 
+    def ping(self) -> bool:
+        try:
+            if self.use_postgres:
+                with self._postgres() as con:
+                    with con.cursor() as cur:
+                        cur.execute("SELECT 1")
+                        return cur.fetchone()[0] == 1
+            with self._sqlite() as con:
+                return con.execute("SELECT 1").fetchone()[0] == 1
+        except Exception:
+            return False
+
     def _init(self):
         if self.use_postgres:
             with self._postgres() as con:
@@ -425,6 +437,20 @@ class DeveloperStore:
     def create_session(self, developer_id: str, *, hours: int = 24) -> str:
         token = "ednai_session_" + secrets.token_urlsafe(32)
         now = _now()
+        # Opportunistic cleanup keeps stale session rows bounded.
+        if self.use_postgres:
+            with self._postgres() as cleanup_con:
+                with cleanup_con.cursor() as cleanup_cur:
+                    cleanup_cur.execute(
+                        "DELETE FROM developer_sessions WHERE expires_at <= %s OR revoked_at IS NOT NULL",
+                        (now,),
+                    )
+        else:
+            with self._sqlite() as cleanup_con:
+                cleanup_con.execute(
+                    "DELETE FROM developer_sessions WHERE expires_at <= ? OR revoked_at IS NOT NULL",
+                    (now.isoformat(),),
+                )
         expires = now + timedelta(hours=hours)
         session_id = str(uuid.uuid4())
         token_hash = _hash_secret(token)
