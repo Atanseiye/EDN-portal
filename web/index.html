@@ -5,24 +5,28 @@
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="theme-color" content="#0d1b1e">
 <title>EDNAi — Build with N-ATLaS</title>
-<link rel="stylesheet" href="/assets/styles.css">
+<link rel="icon" href="/assets/ednai-mark.svg" type="image/svg+xml">\n<link rel="stylesheet" href="/assets/styles.css">
 </head>
 <body>
-<header class="nav">
-  <a class="brand" href="/"><span class="mark">E</span><span>EDN<span>Ai</span></span></a>
-  <nav class="top-nav">
-    <a href="/guide">Docs</a>
-    <a href="/challenge">Challenge readiness</a>
-    <a href="/docs">API</a>
-    <button id="quickstartNavBtn" class="nav-cta" type="button">Get started</button>
-
+<header class="nav product-nav">
+  <a class="brand brand-logo" href="/#overview" aria-label="EDNAi home"><img src="/assets/ednai-logo.svg" alt="EDNAi"></a>
+  <nav class="top-nav product-nav-links" aria-label="Primary navigation">
+    <button class="nav-link active" type="button" data-console-target="overview">Overview</button>
+    <button class="nav-link" type="button" data-console-target="playground">Playground</button>
+    <button class="nav-link" type="button" data-console-target="runtime">Models</button>
+    <a class="nav-link" href="/guide">Docs</a>
+    <a class="nav-link" href="/docs">API</a>
+    <button class="nav-link" type="button" data-console-target="usecases">Use Cases</button>
+  </nav>
+  <div class="nav-utilities">
+    <span id="heroRuntimeStatus" class="runtime-inline nav-runtime"><i></i><span>Checking N-ATLaS…</span></span>
+    <button id="quickstartNavBtn" class="nav-icon-button" type="button" aria-label="Open Playground" title="Open Playground">⌘</button>
     <div class="profile-menu-wrap">
-      <button id="profileMenuBtn" class="profile-menu-button" type="button" aria-haspopup="menu" aria-expanded="false">
+      <button id="profileMenuBtn" class="profile-menu-button product-profile-button" type="button" aria-haspopup="menu" aria-expanded="false">
         <span id="profileAvatar" class="profile-avatar" aria-hidden="true">P</span>
-        <span class="profile-menu-label">Profile</span>
+        <span class="profile-menu-text"><strong id="profileButtonName">Profile</strong><small>Developer</small></span>
         <span class="profile-chevron" aria-hidden="true">⌄</span>
       </button>
-
       <div id="profileMenu" class="profile-dropdown hidden" role="menu">
         <div class="profile-dropdown-head">
           <strong id="profileMenuName">Developer account</strong>
@@ -38,6 +42,9 @@
         <button class="profile-dropdown-item" type="button" data-profile-destination="usage" role="menuitem">
           <span>▦</span><span><strong>Usage & Billing</strong><small>Token usage, balance and pricing</small></span>
         </button>
+        <a class="profile-dropdown-item" href="/guide" role="menuitem">
+          <span>?</span><span><strong>Help & Docs</strong><small>Guides and API reference</small></span>
+        </a>
         <div class="profile-dropdown-divider"></div>
         <a id="profileSignInLink" class="profile-dropdown-item profile-signin-item" href="/developer" role="menuitem">
           <span>→</span><span><strong>Sign in</strong><small>Access your developer account</small></span>
@@ -47,25 +54,82 @@
         </button>
       </div>
     </div>
-  </nav>
+  </div>
 </header>
 <main>
-<section class="hero console-hero">
-  <div class="hero-status-row">
-    <span class="eyebrow">Nigerian AI developer infrastructure</span>
-    <span id="heroRuntimeStatus" class="runtime-inline"><i></i><span>Checking N-ATLaS…</span></span>
+<section id="homeOverview" class="home-overview">
+  <div class="overview-hero">
+    <div class="overview-copy">
+      <span class="eyebrow">EDNAi Developer Platform</span>
+      <h1>Build on <em>N-ATLaS</em></h1>
+      <p class="overview-lead">A developer platform for NCAIR1/N-ATLaS.</p>
+      <p class="overview-description">Create scoped credentials, experiment in the playground, integrate via API, use Nigerian languages, and build powerful AI applications — all in one place.</p>
+      <div class="overview-actions">
+        <button id="heroStartBtn" class="primary overview-primary" type="button"><span>⌁</span> Get started <b>→</b></button>
+        <a class="overview-secondary" href="/guide"><span>▣</span> Read the docs</a>
+      </div>
+      <div class="language-support">
+        <span class="language-label">Nigerian language support</span>
+        <div class="language-pills">
+          <span><i class="flag ng"></i>English</span>
+          <span><i class="flag yo"></i>Yorùbá</span>
+          <span><i class="flag ha"></i>Hausa</span>
+          <span><i class="flag ig"></i>Igbo</span>
+        </div>
+      </div>
+    </div>
+    <div class="overview-visual" aria-label="N-ATLaS API example">
+      <img class="overview-mark" src="/assets/ednai-mark.svg" alt="">
+      <div class="hero-code-card">
+        <div class="hero-code-tabs"><span class="active">cURL</span><span>Python</span><span>JavaScript</span><span>More⌄</span><button id="heroCopyCodeBtn" type="button">▣ Copy</button></div>
+        <pre><code id="heroCodeSample">curl -X POST https://ednai-6znf.onrender.com/v1/generate \
+  -H "Authorization: Bearer $EDNAI_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "model":"NCAIR1/N-ATLaS",
+    "messages":[{"role":"user","content":"Explain APIs simply."}]
+  }'</code></pre>
+        <div class="hero-code-response"><span>{</span><p><b>"role"</b>: "assistant",<br><b>"content"</b>: "APIs let software systems communicate..."</p><span>}</span></div>
+      </div>
+      <span class="visual-note">N-ATLaS<br>for real-world<br>AI innovation</span>
+    </div>
   </div>
-  <h1>Build, test and ship with <em>N-ATLaS.</em></h1>
-  <p>Go from first prompt to evaluated, adapted and deployable Nigerian AI applications through one developer layer.</p>
-  <div class="hero-actions">
-    <button id="heroStartBtn" class="primary hero-primary" type="button">Start building <span>→</span></button>
-    <a class="hero-secondary" href="/guide">Read the docs</a>
-    <span class="shortcut-hint">⌘/Ctrl + K <small>command menu</small></span>
+
+  <div class="overview-tools" aria-label="Developer tools">
+    <button class="overview-tool" type="button" data-console-target="playground"><span class="tool-icon green">⌁</span><span><strong>Playground</strong><small>Test models and experiment in real time.</small></span><b>→</b></button>
+    <button class="overview-tool" type="button" data-console-target="usecases"><span class="tool-icon yellow">◇</span><span><strong>Use Cases</strong><small>Explore ready-to-use application workflows.</small></span><b>→</b></button>
+    <button class="overview-tool" type="button" data-console-target="speech"><span class="tool-icon blue">◫</span><span><strong>Speech Studio</strong><small>Official NCAIR speech-to-text workflows.</small></span><b>→</b></button>
+    <button class="overview-tool" type="button" data-console-target="evaluate"><span class="tool-icon green">▥</span><span><strong>Evaluation</strong><small>Assess and benchmark model performance.</small></span><b>→</b></button>
+    <button class="overview-tool" type="button" data-console-target="dataset"><span class="tool-icon blue">◎</span><span><strong>Dataset Studio</strong><small>Inspect, explore and prepare datasets.</small></span><b>→</b></button>
+    <button class="overview-tool" type="button" data-console-target="finetune"><span class="tool-icon green">☷</span><span><strong>Fine-tune</strong><small>Plan N-ATLaS adaptation for your use case.</small></span><b>→</b></button>
+    <a class="overview-tool" href="/guide"><span class="tool-icon purple">▤</span><span><strong>Docs</strong><small>Guides, SDKs and implementation references.</small></span><b>→</b></a>
+    <a class="overview-tool" href="/docs"><span class="tool-icon blue">&lt;/&gt;</span><span><strong>API</strong><small>Integrate N-ATLaS into your applications.</small></span><b>→</b></a>
   </div>
-  <div class="hero-tags"><span>Python SDK</span><span>TypeScript SDK</span><span>OpenAI-compatible API</span><span>Use Case Studio</span><span>Speech Studio</span><span>Evaluation</span><span>Dataset Studio</span><span>QLoRA</span></div>
+
+  <div class="overview-bottom-grid">
+    <article class="overview-info-card api-integration-card">
+      <span class="eyebrow">API Integration</span>
+      <h2>Get started in minutes</h2>
+      <p>Integrate N-ATLaS with a few lines of code. Secure, scalable, and built for developers.</p>
+      <div class="integration-checks"><span>✓ Simple REST API</span><span>✓ Scoped API keys</span><span>✓ Production ready</span><span>✓ Detailed docs</span></div>
+      <a class="primary compact-action" href="/docs">View API docs <b>→</b></a>
+      <div class="integration-flow"><span>Your App</span><i></i><strong><img src="/assets/ednai-mark.svg" alt=""> EDNAi</strong><i></i><span>N-ATLaS Models</span></div>
+    </article>
+    <article class="overview-info-card capabilities-card">
+      <span class="eyebrow">Our Models</span>
+      <h2>Powerful capabilities<br>for real-world applications</h2>
+      <p>N-ATLaS is designed for Nigerian languages and contexts with developer tooling across text and speech.</p>
+      <div class="capability-mini-grid">
+        <div><span>▣</span><strong>Text + Speech</strong><small>Official NCAIR components</small></div>
+        <div><span>◎</span><strong>Nigerian languages</strong><small>English, Yorùbá, Hausa, Igbo</small></div>
+        <div><span>ϟ</span><strong>Developer ready</strong><small>SDKs, APIs and evaluation</small></div>
+        <div><span>⬡</span><strong>Provenance locked</strong><small>Official N-ATLaS identity</small></div>
+      </div>
+    </article>
+  </div>
 </section>
 
-<section class="launchpad panel" id="launchpad">
+<div class="legacy-home-support hidden" aria-hidden="true"><section class="launchpad panel" id="launchpad">
   <div class="launchpad-copy">
     <div class="launchpad-heading">
       <div>
@@ -141,6 +205,8 @@
     </button>
   </div>
 </section>
+
+</div>
 
 <nav class="console-tabs" aria-label="EDNAi developer workspaces">
   <button class="console-tab active" data-panel="playground">Playground</button>
@@ -519,98 +585,116 @@ print(result.model)</code></pre>
 
 <section class="console-panel profile-settings-panel" id="panel-profile">
   <div id="profileSignedOut" class="profile-auth-gate panel">
-    <span class="eyebrow">Profile / Settings</span>
-    <h2>Sign in to manage your developer account.</h2>
-    <p>Access your prepaid balance, scoped API keys, token usage, pricing and account settings from one place.</p>
+    <img src="/assets/ednai-mark.svg" alt="" class="profile-auth-mark">
+    <span class="eyebrow">Developer Account</span>
+    <h2>Sign in to manage your EDNAi workspace.</h2>
+    <p>Access scoped API keys, usage, balance, runtime details and account settings.</p>
     <a class="primary linkbtn" href="/developer">Sign in to EDNAi</a>
   </div>
 
-  <div id="profileWorkspace" class="hidden">
-    <div id="profileAccountSection" class="workspace-head profile-workspace-head">
-      <div>
-        <span class="eyebrow">Profile / Settings</span>
-        <h2 id="profileGreeting">Developer account</h2>
-        <p id="profileEmail"></p>
-      </div>
-      <div class="workspace-actions">
-        <button id="profileRefreshBtn" class="ghost" type="button">Refresh</button>
-        <button id="profileLogoutBtn" class="ghost" type="button">Sign out</button>
-      </div>
-    </div>
+  <div id="profileWorkspace" class="hidden profile-product-shell">
+    <aside class="profile-side-nav">
+      <span class="profile-side-label">Developer</span>
+      <button type="button" data-console-target="overview"><span>⌂</span>Dashboard</button>
+      <button type="button" data-console-target="playground"><span>▷</span>Playground</button>
+      <button type="button" data-console-target="runtime"><span>⬡</span>Models</button>
+      <a href="/docs"><span>&lt;/&gt;</span>API & Integration</a>
+      <button type="button" data-console-target="usecases"><span>◇</span>Use Cases</button>
+      <a href="/guide"><span>▣</span>Docs</a>
+      <div class="profile-side-divider"></div>
+      <span class="profile-side-label">Account</span>
+      <button class="active" type="button" data-profile-destination="account"><span>♙</span>Profile & Settings</button>
+      <button type="button" data-profile-destination="keys"><span>⌘</span>API Keys</button>
+      <button type="button" data-profile-destination="usage"><span>▥</span>Usage & Billing</button>
+    </aside>
 
-    <div class="developer-metrics">
-      <article class="panel developer-metric"><span>Prepaid balance</span><strong id="profileBalance">$0.00</strong><small>USD developer credit</small></article>
-      <article class="panel developer-metric"><span>Tokens used</span><strong id="profileTokens">0</strong><small>Recent metered requests</small></article>
-      <article class="panel developer-metric"><span>Usage cost</span><strong id="profileCost">$0.00</strong><small>Recent ledger window</small></article>
-      <article class="panel developer-metric"><span>Active API keys</span><strong id="profileKeyCount">0</strong><small>Scoped credentials</small></article>
-    </div>
-
-    <div id="profileUsageBillingSection" class="developer-grid-two">
-      <article class="panel">
-        <div class="section-head">
-          <div><span class="eyebrow">Pricing</span><h3>Token rates</h3></div>
-          <span class="status good">Prepaid</span>
+    <div class="profile-main">
+      <div id="profileAccountSection" class="profile-page-head">
+        <div>
+          <span class="eyebrow">Account</span>
+          <h2>Profile & Settings</h2>
+          <p>Manage your developer account, API keys, usage, billing and preferences.</p>
         </div>
-        <div class="pricing-grid">
-          <div><span>Input</span><strong id="profileInputRate">—</strong><small>per 1M tokens</small></div>
-          <div><span>Output</span><strong id="profileOutputRate">—</strong><small>per 1M tokens</small></div>
-        </div>
-        <p class="hint">Current rates are configurable platform rates. Commercial pricing can change server-side without changing SDK code.</p>
-      </article>
-
-      <article id="profileApiKeysSection" class="panel">
-        <div class="section-head"><div><span class="eyebrow">Authentication</span><h3>Create API key</h3></div></div>
-        <label>Key name<input id="profileApiKeyName" value="My application" maxlength="80"></label>
-        <fieldset class="scope-fieldset">
-          <legend>Grant access</legend>
-          <div id="profileScopeOptions" class="scope-options"></div>
-        </fieldset>
-        <button id="profileCreateApiKeyBtn" class="primary" type="button">Create scoped API key</button>
-        <p class="hint">The secret is shown once. EDNAi stores only a SHA-256 hash.</p>
-      </article>
-    </div>
-
-    <article id="profileNewKeyReveal" class="panel key-reveal hidden">
-      <div>
-        <span class="eyebrow">New API key · copy now</span>
-        <h3>This secret cannot be recovered later.</h3>
+        <div class="workspace-actions"><button id="profileRefreshBtn" class="ghost" type="button">Refresh</button><button id="profileLogoutBtn" class="ghost logout-soft" type="button">Log out</button></div>
       </div>
-      <div class="key-secret-row"><code id="profileNewApiKeySecret"></code><button id="profileCopyNewApiKeyBtn" class="copy-chip" type="button">Copy</button></div>
-    </article>
 
-    <div class="developer-grid-two">
-      <article class="panel">
-        <div class="section-head"><div><span class="eyebrow">Credentials</span><h3>API keys</h3></div></div>
-        <div id="profileApiKeyList" class="developer-list"><p class="hint">No API keys yet.</p></div>
+      <nav class="profile-subtabs" aria-label="Profile settings sections">
+        <button class="active" type="button" data-profile-destination="account">Overview</button>
+        <button type="button" data-profile-destination="keys">API Keys</button>
+        <button type="button" data-profile-destination="usage">Usage & Billing</button>
+        <a href="/guide">Help & Docs</a>
+      </nav>
+
+      <div class="profile-dashboard-grid">
+        <article class="profile-identity-card">
+          <div class="identity-top">
+            <span id="profileHeroAvatar" class="profile-hero-avatar">DE</span>
+            <div><h3 id="profileGreeting">Developer account</h3><p id="profileEmail"></p><span class="developer-account-badge">Developer Account</span></div>
+          </div>
+          <div class="identity-meta">
+            <div><span>Account type</span><strong>Developer</strong></div>
+            <div><span>Status</span><strong class="status-live">● Active</strong></div>
+            <div><span>Model access</span><strong>N-ATLaS</strong></div>
+          </div>
+        </article>
+
+        <article class="profile-stat-card balance-card">
+          <div class="profile-card-title"><span class="mini-icon">▣</span><strong>Balance & Credits</strong><span class="status good">Prepaid</span></div>
+          <strong id="profileBalance" class="big-stat">$0.00</strong>
+          <small>USD developer credit</small>
+          <p>Prepaid balance is used for API requests across EDNAi developer tools.</p>
+        </article>
+
+        <article class="profile-stat-card usage-month-card">
+          <div class="profile-card-title"><span class="mini-icon blue">▥</span><strong>This Month Usage</strong></div>
+          <strong id="profileTokens" class="big-stat">0</strong>
+          <small>Recent metered tokens</small>
+          <div class="usage-sparkline"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div>
+        </article>
+
+        <article id="profileUsageBillingSection" class="profile-stat-card cost-card">
+          <div class="profile-card-title"><span class="mini-icon blue">▤</span><strong>Usage Cost</strong></div>
+          <strong id="profileCost" class="big-stat">$0.00</strong>
+          <small>Total cost (USD)</small>
+          <div class="pricing-mini"><span>Input <b id="profileInputRate">—</b></span><span>Output <b id="profileOutputRate">—</b></span></div>
+        </article>
+
+        <article id="profileApiKeysSection" class="profile-stat-card api-key-card">
+          <div class="profile-card-title"><span class="mini-icon">⌘</span><strong>API Keys</strong><span><b id="profileKeyCount">0</b> active</span></div>
+          <div id="profileApiKeyList" class="developer-list compact-keys"><p class="hint">No API keys yet.</p></div>
+          <details class="create-key-details">
+            <summary>＋ Create new API key</summary>
+            <label>Key name<input id="profileApiKeyName" value="My application" maxlength="80"></label>
+            <fieldset class="scope-fieldset"><legend>Grant access</legend><div id="profileScopeOptions" class="scope-options"></div></fieldset>
+            <button id="profileCreateApiKeyBtn" class="primary" type="button">Create scoped API key</button>
+          </details>
+        </article>
+
+        <article class="profile-stat-card runtime-account-card">
+          <div class="profile-card-title"><span class="mini-icon">▣</span><strong>N-ATLaS Runtime</strong><span class="status good">Connected</span></div>
+          <div class="runtime-account-list"><span><b>✓</b>N-ATLaS model<strong>Ready</strong></span><span><b>✓</b>API endpoint<strong>/v1</strong></span><span><b>✓</b>Model access<strong>NCAIR1/N-ATLaS</strong></span></div>
+        </article>
+      </div>
+
+      <article id="profileNewKeyReveal" class="panel key-reveal hidden">
+        <div><span class="eyebrow">New API key · copy now</span><h3>This secret cannot be recovered later.</h3></div>
+        <div class="key-secret-row"><code id="profileNewApiKeySecret"></code><button id="profileCopyNewApiKeyBtn" class="copy-chip" type="button">Copy</button></div>
       </article>
 
-      <article class="panel">
-        <div class="section-head"><div><span class="eyebrow">Quick integration</span><h3>Call N-ATLaS</h3></div><button id="profileCopyCurlBtn" class="copy-chip" type="button">Copy</button></div>
-        <pre class="speech-code"><code id="profileCurl">curl -X POST https://ednai-6znf.onrender.com/v1/generate \
+      <div class="profile-bottom-grid">
+        <article id="profileRecentUsageSection" class="panel usage-panel profile-usage-panel">
+          <div class="section-head"><div><span class="eyebrow">Recent activity</span><h3>Recent Usage</h3></div><span class="status">Metered</span></div>
+          <div class="usage-table-wrap"><table class="usage-table"><thead><tr><th>Feature</th><th>Input</th><th>Output</th><th>Total</th><th>Measurement</th><th>Cost</th><th>Time</th></tr></thead><tbody id="profileUsageRows"><tr><td colspan="7">No usage recorded yet.</td></tr></tbody></table></div>
+        </article>
+        <article class="panel profile-integration-panel">
+          <div class="section-head"><div><span class="eyebrow">Developer integration</span><h3>Quick Integration</h3></div><button id="profileCopyCurlBtn" class="copy-chip" type="button">Copy</button></div>
+          <pre class="speech-code"><code id="profileCurl">curl -X POST https://ednai-6znf.onrender.com/v1/generate \
   -H "Authorization: Bearer $EDNAI_API_KEY" \
   -H "Content-Type: application/json" \
   -d '{"model":"NCAIR1/N-ATLaS","messages":[{"role":"user","content":"Explain APIs simply."}]}'</code></pre>
-      </article>
+        </article>
+      </div>
     </div>
-
-    <article id="profileRecentUsageSection" class="panel usage-panel">
-      <div class="section-head">
-        <div><span class="eyebrow">Metering & ledger</span><h3>Recent usage</h3></div>
-        <span class="status">Exact when provider-reported</span>
-      </div>
-      <div class="usage-table-wrap">
-        <table class="usage-table">
-          <thead><tr><th>Feature</th><th>Input</th><th>Output</th><th>Total</th><th>Measurement</th><th>Cost</th><th>Time</th></tr></thead>
-          <tbody id="profileUsageRows"><tr><td colspan="7">No usage recorded yet.</td></tr></tbody>
-        </table>
-      </div>
-    </article>
-
-    <article class="panel billing-note">
-      <span class="eyebrow">Payments</span>
-      <h3>Wallet and charging are live; external checkout is intentionally not faked.</h3>
-      <p>EDNAi has the prepaid ledger, balance enforcement and per-request charges. A payment provider will credit this ledger after successful payment once the commercial PSP is selected and configured.</p>
-    </article>
   </div>
 </section>
 
