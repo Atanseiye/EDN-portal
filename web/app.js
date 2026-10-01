@@ -201,14 +201,14 @@ async function health(){
     $("runtimeStatus").textContent=connected?"N-ATLaS connected":"Runtime not connected";
     $("runtimeStatus").className="status "+(connected?"good":"warn");
     if(heroStatus){
-      heroStatus.className="runtime-inline "+(connected?"good":"warn");
+      heroStatus.className="runtime-inline nav-runtime "+(connected?"good":"warn");
       heroStatus.querySelector("span").textContent=connected?"N-ATLaS runtime connected":"Runtime not connected";
     }
   }catch{
     $("runtimeStatus").textContent="Offline";
     $("runtimeStatus").className="status warn";
     if(heroStatus){
-      heroStatus.className="runtime-inline warn";
+      heroStatus.className="runtime-inline nav-runtime warn";
       heroStatus.querySelector("span").textContent="Gateway offline";
     }
   }
@@ -1547,7 +1547,7 @@ const requestedPanel=(location.hash||"#overview").slice(1);
 if(["playground","usecases","speech","evaluate","dataset","finetune","runtime","profile","overview"].includes(requestedPanel))consolePanel(requestedPanel);
 
 window.addEventListener("hashchange",function(){
-  const next=(location.hash||"#playground").slice(1);
+  const next=(location.hash||"#overview").slice(1);
   if(["playground","usecases","speech","evaluate","dataset","finetune","runtime","profile","overview"].includes(next)){
     consolePanel(next);
   }
