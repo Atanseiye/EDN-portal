@@ -253,7 +253,9 @@ Developer Infrastructure requires at least two external beta testers. EDNAi reco
 
 ## License
 
-Apache-2.0.
+EDNAi is released under the **Apache License 2.0**. See [LICENSE](LICENSE) for the full terms.
+
+Contributions are welcome. See [CONTRIBUTING.md](CONTRIBUTING.md) for the contribution workflow, testing expectations and N-ATLaS provenance requirements.
 
 
 ## Speech development
