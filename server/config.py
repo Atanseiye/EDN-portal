@@ -17,12 +17,18 @@ class Settings(BaseSettings):
     ednai_database_url: str = ""
     ednai_auth_enabled: bool = True
     ednai_demo_account_enabled: bool = True
+    ednai_allow_public_demo_account: bool = False
     ednai_demo_email: str = "demo@edn.com"
     ednai_demo_password: str = "12345"
     ednai_demo_credit_usd: float = 10.0
     ednai_input_usd_per_1m_tokens: float = 0.50
     ednai_output_usd_per_1m_tokens: float = 1.50
+    ednai_pricing_mode: str = "demo"
+    ednai_require_exact_usage: bool = True
     ednai_session_hours: int = 24
+    ednai_login_rate_limit_per_minute: int = 10
+    ednai_api_rate_limit_per_minute: int = 60
+    trusted_hosts: str = "localhost,127.0.0.1,testserver"
     cors_origins: str = "http://localhost:8000"
 
     model_config = SettingsConfigDict(env_file=".env", extra="ignore")
@@ -30,6 +36,14 @@ class Settings(BaseSettings):
     @property
     def cors_origin_list(self) -> list[str]:
         return [x.strip() for x in self.cors_origins.split(",") if x.strip()]
+
+    @property
+    def trusted_host_list(self) -> list[str]:
+        return [x.strip() for x in self.trusted_hosts.split(",") if x.strip()]
+
+    @property
+    def allowed_origin_set(self) -> set[str]:
+        return set(self.cors_origin_list)
 
     @property
     def qualifying_provider(self) -> bool:
