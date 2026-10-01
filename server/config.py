@@ -29,6 +29,12 @@ class Settings(BaseSettings):
     ednai_max_api_keys_per_account: int = 10
     ednai_login_rate_limit_per_minute: int = 10
     ednai_api_rate_limit_per_minute: int = 60
+    ednai_demo_request_rate_limit_per_hour: int = 5
+    ednai_smtp_host: str = ""
+    ednai_smtp_port: int = 587
+    ednai_smtp_username: str = ""
+    ednai_smtp_password: str = ""
+    ednai_smtp_from: str = ""
     trusted_hosts: str = "*"
     cors_origins: str = "http://localhost:8000"
 
