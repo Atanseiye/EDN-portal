@@ -28,7 +28,7 @@ class Settings(BaseSettings):
     ednai_session_hours: int = 24
     ednai_login_rate_limit_per_minute: int = 10
     ednai_api_rate_limit_per_minute: int = 60
-    trusted_hosts: str = "localhost,127.0.0.1,testserver"
+    trusted_hosts: str = "*"
     cors_origins: str = "http://localhost:8000"
 
     model_config = SettingsConfigDict(env_file=".env", extra="ignore")
