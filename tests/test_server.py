@@ -86,9 +86,13 @@ def test_capabilities_expose_direct_natlas_tooling():
     assert body["documentation_languages"] == ["english", "yoruba", "hausa", "igbo"]
 
 
-def test_disabled_runtime_probe_fails_closed():
-    r = client.post("/api/runtime/probe")
-    assert r.status_code == 503
+def test_runtime_probe_requires_auth_and_fails_closed_without_runtime():
+    anonymous = client.post("/api/runtime/probe")
+    assert anonymous.status_code == 401
+
+    login_demo()
+    authenticated = client.post("/api/runtime/probe")
+    assert authenticated.status_code == 503
 
 
 def test_disabled_runtime_fails_closed():
@@ -127,3 +131,15 @@ def test_disabled_runtime_asr_fails_closed():
     )
     assert response.status_code == 503
     assert "official NCAIR ASR" in response.json()["detail"]
+
+
+def test_security_headers_and_health_probes():
+    live = client.get("/health/live")
+    assert live.status_code == 200
+    assert live.json()["status"] == "ok"
+    assert live.headers["x-content-type-options"] == "nosniff"
+    assert live.headers["x-frame-options"] == "DENY"
+    assert live.headers["x-request-id"]
+
+    ready = client.get("/health/ready")
+    assert ready.status_code == 503
