@@ -10,12 +10,43 @@
 <body>
 <header class="nav">
   <a class="brand" href="/"><span class="mark">E</span><span>EDN<span>Ai</span></span></a>
-  <nav>
-    <a id="profileNavLink" href="/#profile">Profile / Settings</a>
+  <nav class="top-nav">
     <a href="/guide">Docs</a>
     <a href="/challenge">Challenge readiness</a>
     <a href="/docs">API</a>
     <button id="quickstartNavBtn" class="nav-cta" type="button">Get started</button>
+
+    <div class="profile-menu-wrap">
+      <button id="profileMenuBtn" class="profile-menu-button" type="button" aria-haspopup="menu" aria-expanded="false">
+        <span id="profileAvatar" class="profile-avatar" aria-hidden="true">P</span>
+        <span class="profile-menu-label">Profile</span>
+        <span class="profile-chevron" aria-hidden="true">⌄</span>
+      </button>
+
+      <div id="profileMenu" class="profile-dropdown hidden" role="menu">
+        <div class="profile-dropdown-head">
+          <strong id="profileMenuName">Developer account</strong>
+          <small id="profileMenuEmail">Sign in to manage your account</small>
+        </div>
+        <div class="profile-dropdown-divider"></div>
+        <button class="profile-dropdown-item" type="button" data-profile-destination="account" role="menuitem">
+          <span>◎</span><span><strong>Profile & Settings</strong><small>Account overview and preferences</small></span>
+        </button>
+        <button class="profile-dropdown-item" type="button" data-profile-destination="keys" role="menuitem">
+          <span>⌘</span><span><strong>API Keys</strong><small>Create and manage credentials</small></span>
+        </button>
+        <button class="profile-dropdown-item" type="button" data-profile-destination="usage" role="menuitem">
+          <span>▦</span><span><strong>Usage & Billing</strong><small>Token usage, balance and pricing</small></span>
+        </button>
+        <div class="profile-dropdown-divider"></div>
+        <a id="profileSignInLink" class="profile-dropdown-item profile-signin-item" href="/developer" role="menuitem">
+          <span>→</span><span><strong>Sign in</strong><small>Access your developer account</small></span>
+        </a>
+        <button id="profileMenuLogoutBtn" class="profile-dropdown-item profile-logout-item hidden" type="button" role="menuitem">
+          <span>↪</span><span><strong>Log out</strong><small>End this developer session</small></span>
+        </button>
+      </div>
+    </div>
   </nav>
 </header>
 <main>
@@ -119,7 +150,6 @@
   <button class="console-tab" data-panel="dataset">Dataset Studio</button>
   <button class="console-tab" data-panel="finetune">Fine-tune Planner</button>
   <button class="console-tab" data-panel="runtime">Runtime & SDK</button>
-  <button class="console-tab" data-panel="profile">Profile / Settings</button>
   <button class="console-tab" data-panel="overview">Overview</button>
 </nav>
 
@@ -496,7 +526,7 @@ print(result.model)</code></pre>
   </div>
 
   <div id="profileWorkspace" class="hidden">
-    <div class="workspace-head profile-workspace-head">
+    <div id="profileAccountSection" class="workspace-head profile-workspace-head">
       <div>
         <span class="eyebrow">Profile / Settings</span>
         <h2 id="profileGreeting">Developer account</h2>
@@ -515,7 +545,7 @@ print(result.model)</code></pre>
       <article class="panel developer-metric"><span>Active API keys</span><strong id="profileKeyCount">0</strong><small>Scoped credentials</small></article>
     </div>
 
-    <div class="developer-grid-two">
+    <div id="profileUsageBillingSection" class="developer-grid-two">
       <article class="panel">
         <div class="section-head">
           <div><span class="eyebrow">Pricing</span><h3>Token rates</h3></div>
@@ -528,7 +558,7 @@ print(result.model)</code></pre>
         <p class="hint">Current rates are configurable platform rates. Commercial pricing can change server-side without changing SDK code.</p>
       </article>
 
-      <article class="panel">
+      <article id="profileApiKeysSection" class="panel">
         <div class="section-head"><div><span class="eyebrow">Authentication</span><h3>Create API key</h3></div></div>
         <label>Key name<input id="profileApiKeyName" value="My application" maxlength="80"></label>
         <fieldset class="scope-fieldset">
@@ -563,7 +593,7 @@ print(result.model)</code></pre>
       </article>
     </div>
 
-    <article class="panel usage-panel">
+    <article id="profileRecentUsageSection" class="panel usage-panel">
       <div class="section-head">
         <div><span class="eyebrow">Metering & ledger</span><h3>Recent usage</h3></div>
         <span class="status">Exact when provider-reported</span>
@@ -614,7 +644,7 @@ ai.generate("Báwo ni?")</code></pre></article>
     <button type="button" data-command="dataset"><span>▦</span><strong>Dataset Studio</strong><small>Validate training JSONL</small></button>
     <button type="button" data-command="finetune"><span>↗</span><strong>Fine-tune Planner</strong><small>Generate a QLoRA plan</small></button>
     <button type="button" data-command="runtime"><span>◉</span><strong>Runtime & SDK</strong><small>Inspect provenance and capabilities</small></button>
-    <button type="button" data-command="profile"><span>◎</span><strong>Profile / Settings</strong><small>Account, API keys, usage and billing</small></button>
+    <button type="button" data-command="profile"><span>◎</span><strong>Profile</strong><small>Settings, API keys, usage and billing</small></button>
     <button type="button" data-command="docs"><span>?</span><strong>Documentation</strong><small>English, Yorùbá, Hausa and Igbo</small></button>
   </div>
   <p class="command-foot">Tip: press <kbd>Esc</kbd> to close.</p>
