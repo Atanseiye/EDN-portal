@@ -6,6 +6,7 @@ import ssl
 import tempfile
 import time
 import uuid
+from datetime import datetime, timedelta, timezone
 from email.message import EmailMessage
 from pathlib import Path
 from typing import Any, Literal
@@ -126,6 +127,42 @@ def build_provider() -> Provider | None:
 
 
 provider = build_provider()
+
+
+def _zero_gpu_quota_headers(exc: ProviderQuotaError) -> dict[str, str]:
+    """Return retry metadata and the exact Hugging Face ZeroGPU reset time when available."""
+    retry_after = exc.retry_after_seconds
+    resets_at = None
+
+    if retry_after:
+        resets_at = datetime.now(timezone.utc) + timedelta(seconds=retry_after)
+    elif settings.hf_token:
+        try:
+            from huggingface_hub import HfApi
+
+            quota = HfApi(token=settings.hf_token).get_zero_gpu_quota()
+            resets_at = quota.resets_at
+            if resets_at is not None:
+                if resets_at.tzinfo is None:
+                    resets_at = resets_at.replace(tzinfo=timezone.utc)
+                retry_after = max(
+                    1,
+                    int((resets_at.astimezone(timezone.utc) - datetime.now(timezone.utc)).total_seconds()),
+                )
+        except Exception as quota_exc:
+            print(
+                f"EDNAI_ZERO_GPU_QUOTA_LOOKUP_FAILED {type(quota_exc).__name__}: {quota_exc}",
+                flush=True,
+            )
+
+    headers: dict[str, str] = {}
+    if retry_after:
+        headers["Retry-After"] = str(retry_after)
+    if resets_at is not None:
+        headers["X-ZeroGPU-Resets-At"] = (
+            resets_at.astimezone(timezone.utc).isoformat().replace("+00:00", "Z")
+        )
+    return headers
 
 
 class GenerateRequest(BaseModel):
@@ -746,12 +783,11 @@ async def audio_transcriptions(
         try:
             return await run_in_threadpool(transcribe, temp_path, language)
         except ProviderQuotaError as exc:
-            headers = (
-                {"Retry-After": str(exc.retry_after_seconds)}
-                if exc.retry_after_seconds
-                else None
-            )
-            raise HTTPException(status_code=429, detail=str(exc), headers=headers) from exc
+            raise HTTPException(
+                status_code=429,
+                detail=str(exc),
+                headers=_zero_gpu_quota_headers(exc),
+            ) from exc
         except ProviderError as exc:
             raise HTTPException(status_code=502, detail=str(exc)) from exc
     finally:
@@ -892,12 +928,11 @@ def runtime_probe(
             json_mode=False,
         )
     except ProviderQuotaError as exc:
-        headers = (
-            {"Retry-After": str(exc.retry_after_seconds)}
-            if exc.retry_after_seconds
-            else None
-        )
-        raise HTTPException(status_code=429, detail=str(exc), headers=headers) from exc
+        raise HTTPException(
+            status_code=429,
+            detail=str(exc),
+            headers=_zero_gpu_quota_headers(exc),
+        ) from exc
     except ProviderError as exc:
         raise HTTPException(status_code=502, detail=str(exc)) from exc
     if generation.model != NATLAS_MODEL_ID:
@@ -934,12 +969,11 @@ def _generate(req: GenerateRequest) -> Generation:
             json_mode=req.json_mode,
         )
     except ProviderQuotaError as exc:
-        headers = (
-            {"Retry-After": str(exc.retry_after_seconds)}
-            if exc.retry_after_seconds
-            else None
-        )
-        raise HTTPException(status_code=429, detail=str(exc), headers=headers) from exc
+        raise HTTPException(
+            status_code=429,
+            detail=str(exc),
+            headers=_zero_gpu_quota_headers(exc),
+        ) from exc
     except ProviderError as exc:
         raise HTTPException(status_code=502, detail=str(exc)) from exc
 
