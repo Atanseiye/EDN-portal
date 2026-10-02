@@ -30,7 +30,12 @@ async function api(path,options={}){
 }
 
 function openProfile(){
-  window.location.href="/#profile";
+  const params=new URLSearchParams(window.location.search);
+  const requested=params.get("return");
+  const safeReturn=requested&&requested.startsWith("/")&&!requested.startsWith("//")
+    ? requested
+    : "/#profile";
+  window.location.href=safeReturn;
 }
 
 async function redirectIfSignedIn(){
