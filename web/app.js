@@ -188,16 +188,27 @@ async function readApiResponse(response){
   }
   if(!response.ok){
     const detail=body&&body.detail;
-    const message=
+    const quotaResetsAt=response.headers.get("x-zerogpu-resets-at")||(detail&&detail.resets_at)||null;
+    let message=
       (typeof detail==="string"&&detail)||
       (detail&&typeof detail==="object"&&detail.message)||
       (body&&body.error)||
       text.trim()||
       ("Request failed ("+response.status+")");
+
+    if(response.status===429 && quotaResetsAt){
+      const resetLabel=formatQuotaResetTime(quotaResetsAt);
+      if(resetLabel && !message.includes("Next reset:")){
+        const generic="Please try again after the free quota resets.";
+        if(message.endsWith(generic))message=message.slice(0,-generic.length).trim();
+        message+=" Next reset: "+resetLabel+".";
+      }
+    }
+
     const error=new Error(message);
     error.status=response.status;
     error.retryAfter=response.headers.get("retry-after")||(detail&&detail.retry_after_seconds?String(detail.retry_after_seconds):null);
-    error.quotaResetsAt=response.headers.get("x-zerogpu-resets-at")||(detail&&detail.resets_at)||null;
+    error.quotaResetsAt=quotaResetsAt;
     error.code=detail&&typeof detail==="object"?detail.error:null;
     throw error;
   }
