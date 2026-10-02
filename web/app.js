@@ -909,12 +909,6 @@ function scrollToLaunchpad(){
 }
 if($("heroStartBtn"))$("heroStartBtn").addEventListener("click",focusPlayground);
 if($("quickstartNavBtn"))$("quickstartNavBtn").addEventListener("click",focusPlayground);
-if($("heroCopyCodeBtn"))$("heroCopyCodeBtn").addEventListener("click",async function(){
-  await copyText($("heroCodeSample").textContent);
-  $("heroCopyCodeBtn").textContent="Copied";
-  showToast("N-ATLaS request copied.","success");
-  setTimeout(function(){$("heroCopyCodeBtn").textContent="▣ Copy";},1200);
-});
 
 document.querySelectorAll(".template-card").forEach(card=>{
   card.addEventListener("click",()=>{

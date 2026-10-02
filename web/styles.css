@@ -1226,6 +1226,13 @@ kbd{background:#edf1ee;border:1px solid #d5ddd9;border-bottom-width:2px;border-r
   white-space:pre;
   overflow:auto;
 }
+.docs-copy-button{
+  position:absolute;right:10px;top:3px;padding:4px 9px;
+  border:0;border-radius:5px;background:#24494b;color:#e8fff3;
+  font-family:inherit;font-size:11px;font-weight:700;line-height:1.5;cursor:pointer;
+}
+.docs-copy-button:hover{background:#315b5d}
+.docs-copy-button:focus-visible{outline:2px solid #e8fff3;outline-offset:2px}
 .docs-callout{
   margin:17px 0;
   padding:17px 18px;
@@ -1441,10 +1448,16 @@ main{max-width:1440px;padding:24px 32px 84px}
   height:47px;display:flex;align-items:center;gap:8px;padding:0 13px;
   border-bottom:1px solid #284447;background:#18383a;
 }
-.hero-code-tabs span{padding:8px 10px;border-radius:8px;color:#a9bcb6;font-size:9px;font-weight:800}
-.hero-code-tabs span.active{background:#24494b;color:#fff}
-.hero-code-tabs button{margin-left:auto;border:0;background:transparent;color:#e9f5ef;font:inherit;font-size:9px;font-weight:800;cursor:pointer}
-.hero-code-card pre{margin:0;padding:18px;color:#d8f7e5;font:8.5px/1.72 ui-monospace,SFMono-Regular,Menlo,monospace;white-space:pre-wrap;min-height:168px}
+.hero-code-tabs button{border:0;background:transparent;color:#e9f5ef;font:inherit;font-size:9px;font-weight:800;cursor:pointer;white-space:nowrap}
+.hero-code-tabs .hero-code-tab{padding:8px 10px;border-radius:8px;color:#a9bcb6}
+.hero-code-tabs .hero-code-tab:hover,.hero-code-tabs .hero-code-tab.active{background:#24494b;color:#fff}
+#heroCopyCodeBtn{margin-left:auto;padding:8px 0}
+.hero-code-tabs button:focus-visible,.hero-code-options :focus-visible{outline:2px solid #a9edbd;outline-offset:2px}
+.hero-code-options{position:absolute;right:12px;top:51px;z-index:4;width:210px;padding:6px;border:1px solid #315052;border-radius:10px;background:#18383a;box-shadow:0 8px 20px #071b1e80}
+.hero-code-options[hidden]{display:none}
+.hero-code-options button,.hero-code-options a{display:block;width:100%;padding:9px;border:0;border-radius:6px;text-align:left;background:transparent;color:#e9f5ef;text-decoration:none;font-family:inherit;font-size:10px;font-weight:700;line-height:1.4;cursor:pointer}
+.hero-code-options button:hover,.hero-code-options a:hover{background:#24494b}
+.hero-code-card pre{margin:0;padding:18px;color:#d8f7e5;font:8.5px/1.72 ui-monospace,SFMono-Regular,Menlo,monospace;white-space:pre-wrap;min-height:168px;max-height:225px;overflow:auto;overflow-wrap:anywhere}
 .hero-code-card code{color:#d8f7e5}
 .hero-code-response{
   margin:0 12px 12px;
@@ -1646,7 +1659,7 @@ main{max-width:1440px;padding:24px 32px 84px}
   .brand-logo{flex-basis:150px;width:150px}
   .product-nav-links .nav-link:nth-child(1),.product-nav-links .nav-link:nth-child(3),.product-nav-links .nav-link:nth-child(6){display:none}
   .overview-hero{grid-template-columns:1fr;padding-top:30px}
-  .overview-visual{min-height:360px}
+  .overview-visual{min-height:390px}
   .overview-mark{right:5%;width:310px}
   .hero-code-card{left:4%;top:60px;width:min(88%,470px)}
   .overview-bottom-grid{grid-template-columns:1fr}
@@ -1668,7 +1681,9 @@ main{max-width:1440px;padding:24px 32px 84px}
   .overview-description{font-size:12px}
   .overview-actions{align-items:stretch;flex-direction:column}
   .overview-primary,.overview-secondary{width:100%}
-  .overview-visual{min-height:320px}
+  .overview-visual{min-height:390px}
+  .hero-code-tabs{gap:3px;padding:0 8px}
+  .hero-code-tabs .hero-code-tab{padding:8px 7px}
   .overview-mark{width:250px}
   .hero-code-card{left:0;width:100%;top:65px}
   .visual-note{display:none}

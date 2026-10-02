@@ -6,7 +6,7 @@
 <meta name="theme-color" content="#0d1b1e">
 <title>EDNAi — Build with N-ATLaS</title>
 <link rel="icon" href="/assets/ednai-logo.png?v=20261002-original" type="image/png">
-<link rel="stylesheet" href="/assets/styles.css?v=20261002-original">
+<link rel="stylesheet" href="/assets/styles.css?v=20261002-sdk-copy">
 </head>
 <body>
 <header class="nav product-nav">
@@ -82,7 +82,19 @@
     <div class="overview-visual" aria-label="N-ATLaS API example">
       <img class="overview-mark" src="/assets/ednai-logo.png?v=20261002-original" alt="">
       <div class="hero-code-card">
-        <div class="hero-code-tabs"><span class="active">cURL</span><span>Python</span><span>JavaScript</span><span>More⌄</span><button id="heroCopyCodeBtn" type="button">▣ Copy</button></div>
+        <div class="hero-code-tabs" role="group" aria-label="SDK example language">
+          <button class="hero-code-tab active" type="button" data-hero-stack="curl" aria-pressed="true">cURL</button>
+          <button class="hero-code-tab" type="button" data-hero-stack="python" aria-pressed="false">Python</button>
+          <button class="hero-code-tab" type="button" data-hero-stack="javascript" aria-pressed="false">JavaScript</button>
+          <button id="heroMoreCodeBtn" class="hero-code-tab" type="button" aria-expanded="false" aria-controls="heroMoreCodeOptions">More⌄</button>
+          <button id="heroCopyCodeBtn" type="button" aria-live="polite">▣ Copy</button>
+        </div>
+        <div id="heroMoreCodeOptions" class="hero-code-options" hidden>
+          <button type="button" data-hero-stack="typescript" aria-pressed="false">TypeScript</button>
+          <a href="/guide/en#python-sdk">Python SDK guide ↗</a>
+          <a href="/guide/en#typescript-sdk">JavaScript / TypeScript guide ↗</a>
+          <a href="/guide/en#http-api">HTTP API guide ↗</a>
+        </div>
         <pre><code id="heroCodeSample">curl -X POST https://ednai-6znf.onrender.com/v1/generate \
   -H "Authorization: Bearer $EDNAI_API_KEY" \
   -H "Content-Type: application/json" \
@@ -736,5 +748,6 @@ ai.generate("Báwo ni?")</code></pre></article>
 </dialog>
 
 <div id="toast" class="toast" role="status" aria-live="polite"></div>
-<script src="/assets/app.js"></script>
+<script src="/assets/app.js?v=20261002-sdk-copy"></script>
+<script src="/assets/code-examples.js?v=20261002-sdk-copy"></script>
 </body></html>
