@@ -72,6 +72,13 @@ let toastTimer=null;
 function showToast(message,type){
   const toast=$("toast");
   if(!toast)return;
+  if(type==="error" && (
+    message==="Developer session is invalid or expired." ||
+    message==="Developer login required."
+  )){
+    message="Your developer session expired. Opening sign in…";
+    setTimeout(()=>clearExpiredSessionAndOpenLogin(""),500);
+  }
   toast.textContent=message;
   toast.className="toast show "+(type||"");
   clearTimeout(toastTimer);
