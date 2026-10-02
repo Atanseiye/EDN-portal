@@ -1948,3 +1948,146 @@ small{
     font-size:15px !important;
   }
 }
+
+
+/* ---------- EDNAi navigation icon system ---------- */
+.profile-side-nav{
+  gap:6px;
+}
+.profile-side-nav button,
+.profile-side-nav a{
+  min-height:46px;
+  gap:12px;
+  padding:7px 10px;
+  border-radius:11px;
+  font-weight:750;
+  transition:background .16s ease,color .16s ease,transform .16s ease;
+}
+.profile-side-nav button:hover,
+.profile-side-nav a:hover{
+  background:#eef6f1;
+  color:#0b5f49;
+}
+.profile-side-nav button:active,
+.profile-side-nav a:active{
+  transform:translateY(1px);
+}
+.profile-side-nav button.active{
+  background:#e2f5eb;
+  color:#087457;
+}
+.profile-side-nav button>span,
+.profile-side-nav a>span{
+  width:auto;
+  text-align:initial;
+  font-size:inherit;
+}
+.profile-nav-icon{
+  width:32px !important;
+  height:32px;
+  flex:0 0 32px;
+  display:grid;
+  place-items:center;
+  border:1px solid #dce8e2;
+  border-radius:9px;
+  background:#fff;
+  color:#536a62;
+  box-shadow:0 1px 2px rgba(12,54,42,.04);
+}
+.profile-nav-icon svg,
+.dropdown-ui-icon svg{
+  width:18px;
+  height:18px;
+  display:block;
+  fill:none;
+  stroke:currentColor;
+  stroke-width:1.8;
+  stroke-linecap:round;
+  stroke-linejoin:round;
+}
+.profile-side-nav button:hover .profile-nav-icon,
+.profile-side-nav a:hover .profile-nav-icon{
+  border-color:#c6ddd2;
+  color:#087457;
+  background:#f9fffb;
+}
+.profile-side-nav button.active .profile-nav-icon{
+  border-color:#b9dece;
+  color:#067255;
+  background:#cdeede;
+  box-shadow:none;
+}
+.profile-nav-text{
+  min-width:0;
+  flex:1 1 auto;
+  line-height:1.25;
+}
+.profile-side-label{
+  margin-top:2px;
+  padding-left:11px;
+}
+.profile-side-divider{
+  margin:10px 6px;
+}
+
+/* Match dropdown icons to the sidebar icon language. */
+.profile-dropdown-item{
+  gap:11px;
+}
+.dropdown-ui-icon{
+  width:30px;
+  height:30px;
+  flex:0 0 30px;
+  display:grid;
+  place-items:center;
+  border-radius:9px;
+  background:#f2f7f4;
+  color:#48635a;
+}
+.profile-dropdown-item:hover .dropdown-ui-icon{
+  background:#e4f4eb;
+  color:#087457;
+}
+.profile-logout-item .dropdown-ui-icon{
+  background:#fff1f2;
+  color:#a53d47;
+}
+
+/* Login uses the same primary navigation shell as the product. */
+.login-product-nav{
+  max-width:1440px;
+}
+.login-account-chip{
+  min-width:126px;
+  display:flex;
+  align-items:center;
+  gap:9px;
+  padding:5px 8px;
+  border-radius:11px;
+  color:var(--ink);
+}
+.login-account-chip .profile-avatar{
+  width:34px;
+  height:34px;
+  font-size:12px;
+}
+.login-account-chip .profile-menu-text strong{
+  max-width:none;
+}
+@media(max-width:900px){
+  .login-nav-utilities .nav-runtime{
+    display:none !important;
+  }
+}
+@media(max-width:680px){
+  .login-product-nav .product-nav-links{
+    display:none !important;
+  }
+  .login-account-chip .profile-menu-text{
+    display:none;
+  }
+  .login-account-chip{
+    min-width:auto;
+    padding:4px;
+  }
+}
