@@ -874,7 +874,7 @@ def capabilities():
     return {
         "product": "EDNAi",
         "model": NATLAS_MODEL_ID,
-        "interfaces": ["python-sdk", "typescript-sdk", "openai-compatible-http", "playground", "audio-transcriptions", "speech-studio", "use-case-studio"],
+        "interfaces": ["python-sdk", "typescript-sdk", "openai-compatible-http", "playground", "translation-studio", "audio-transcriptions", "speech-studio", "use-case-studio"],
         "runtime_modes": ["local_transformers", "gradio_zerogpu", "openai_compatible_natlas"],
         "evaluation": ["jsonl-benchmarks", "json-validity", "keyword-regression", "language-smoke", "latency"],
         "adaptation": ["qlora", "lora", "nf4-4bit", "adapter-only-output"],
@@ -883,6 +883,11 @@ def capabilities():
         "speech": {
             "asr": "official-ncair-natlas-components",
             "submission_scope": "official-natlas-only",
+        },
+        "translation": {
+            "runtime": NATLAS_MODEL_ID,
+            "languages": ["english", "yoruba", "hausa", "igbo"],
+            "workflow": "/v1/use-cases/translation",
         },
         "use_cases": list(USE_CASES),
         "developer_platform": {
