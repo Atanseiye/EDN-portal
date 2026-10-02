@@ -1722,3 +1722,229 @@ main{max-width:1440px;padding:24px 32px 84px}
 @media(max-width:680px){
   .overview-mark{width:270px}
 }
+
+
+/* ---------- EDNAi typography accessibility standard ---------- */
+/* Keep the visual hierarchy, but never make functional/product copy tiny. */
+html{font-size:16px}
+body{
+  font-size:16px;
+  line-height:1.55;
+  -webkit-text-size-adjust:100%;
+  text-size-adjust:100%;
+}
+
+/* Global interactive/readable text */
+button,
+input,
+textarea,
+select{
+  font-size:15px;
+}
+label,
+.hint,
+.muted,
+small{
+  line-height:1.5;
+}
+
+/* Header and navigation */
+.nav nav a,
+.product-nav-links .nav-link,
+.nav-cta,
+.profile-menu-text strong,
+.profile-menu-text small,
+.nav-runtime,
+.runtime-inline{
+  font-size:14px !important;
+}
+
+/* Shared labels, pills, helper copy */
+.eyebrow,
+.language-label,
+.profile-side-label,
+.settings label,
+.beta-form label,
+.form-grid label,
+.full-field,
+.criterion strong,
+.criterion small,
+.hero-tags span,
+.status,
+.progress-pill,
+.language-links,
+.console-tab,
+.compact-btn,
+.copy-chip,
+.stack-tab,
+.quickstart-actions .primary,
+.quickstart-actions .ghost,
+.quickstart-note,
+.template-card small,
+.result-pill,
+.check-pill,
+.raw-details summary,
+.section-head.compact h3,
+.error-box,
+.warning-list,
+.runtime-pipeline,
+.capabilities section>strong,
+.docs-copy-button,
+.docs-callout strong,
+.docs-callout p,
+.docs-footer{
+  font-size:13px !important;
+}
+
+/* Core body copy */
+.hero>p,
+.overview-lead{
+  font-size:18px !important;
+}
+.overview-description,
+.launchpad-copy>p,
+.workspace-head p,
+.developer-grid p,
+.overview-info-card>p,
+.docs-section p,
+.docs-section li,
+.profile-page-head p{
+  font-size:15px !important;
+  line-height:1.65;
+}
+
+/* Playground + workspace */
+.message{
+  font-size:15px;
+  line-height:1.6;
+}
+.message span,
+.composer-foot{
+  font-size:13px !important;
+}
+.settings input,
+.settings textarea,
+.composer textarea,
+.beta-form input,
+.beta-form textarea,
+.beta-form select,
+.form-grid input,
+.full-field input{
+  font-size:15px !important;
+}
+.code-editor,
+.quickstart-code,
+.hero-code-card pre,
+.raw-details pre,
+.developer-grid pre,
+.docs-code{
+  font-size:13px !important;
+  line-height:1.6;
+}
+.metric-grid span{
+  font-size:12px !important;
+}
+.metric-grid strong{
+  font-size:18px !important;
+}
+.data-table{
+  font-size:13px !important;
+}
+.data-table th{
+  font-size:12px !important;
+}
+.data-table td small{
+  font-size:12px !important;
+}
+
+/* Overview cards */
+.overview-primary,
+.overview-secondary,
+.overview-tool strong,
+.overview-tool small,
+.integration-checks,
+.compact-action,
+.integration-flow,
+.capability-mini-grid strong,
+.capability-mini-grid small,
+.hero-code-tabs button,
+.hero-code-options button,
+.hero-code-options a,
+.visual-note{
+  font-size:13px !important;
+}
+.overview-info-card>p{
+  font-size:14px !important;
+}
+.integration-flow strong{
+  font-size:13px !important;
+}
+
+/* Onboarding */
+.onboarding-step .step-number,
+.onboarding-step strong,
+.onboarding-step small{
+  font-size:13px !important;
+}
+.onboarding-step.done .step-number{
+  font-size:0 !important;
+}
+.onboarding-step.done .step-number:after{
+  font-size:14px !important;
+}
+
+/* Profile / settings */
+.profile-side-nav button,
+.profile-side-nav a,
+.profile-subtabs button,
+.profile-subtabs a,
+.identity-top p,
+.developer-account-badge,
+.identity-meta span,
+.identity-meta strong,
+.profile-card-title>strong,
+.profile-card-title>.status,
+.profile-card-title>span:last-child,
+.profile-stat-card>small,
+.profile-stat-card>p,
+.pricing-mini span,
+.pricing-mini b,
+.create-key-details summary,
+.create-key-details label,
+.runtime-account-list,
+.runtime-account-list strong{
+  font-size:13px !important;
+}
+.identity-top h3{
+  font-size:20px !important;
+}
+
+/* Documentation */
+.docs-section h3{
+  font-size:19px !important;
+}
+.docs-section code,
+.docs-contract code,
+.docs-inline-code{
+  font-size:.95em !important;
+}
+
+/* Mobile: preserve readability instead of shrinking text */
+@media(max-width:680px){
+  body{font-size:16px}
+  .nav nav a,
+  .product-nav-links .nav-link,
+  button,
+  input,
+  textarea,
+  select{
+    font-size:14px !important;
+  }
+  .overview-description,
+  .launchpad-copy>p,
+  .workspace-head p,
+  .docs-section p,
+  .docs-section li{
+    font-size:15px !important;
+  }
+}
