@@ -6,7 +6,7 @@
 <meta name="theme-color" content="#0d1b1e">
 <title>EDNAi — Build with N-ATLaS</title>
 <link rel="icon" href="/assets/ednai-logo.png?v=20261002-original" type="image/png">
-<link rel="stylesheet" href="/assets/styles.css?v=20261002-translation-simple">
+<link rel="stylesheet" href="/assets/styles.css?v=20261002-translation-studio">
 </head>
 <body>
 <header class="nav product-nav">
@@ -266,52 +266,103 @@
 
 
 <section class="console-panel" id="panel-translation">
-  <div class="translation-simple-wrap">
-    <div class="translation-simple-head">
-      <div>
-        <span class="eyebrow">Translation</span>
-        <h2>Translate between Nigerian languages</h2>
-        <p>English, Yorùbá, Hausa and Igbo — powered by N-ATLaS.</p>
-      </div>
+  <div class="workspace-head translation-workspace-head">
+    <div>
+      <span class="eyebrow">Nigerian language intelligence</span>
+      <h2>Translation Studio</h2>
+      <p>Translate naturally between English / Nigerian English, Yorùbá, Hausa and Igbo with the NCAIR1/N-ATLaS runtime.</p>
     </div>
+    <span class="status good">N-ATLaS powered</span>
+  </div>
 
-    <article class="panel translation-simple-card">
-      <div class="translation-simple-languages">
-        <select id="translationSourceLanguage" aria-label="Source language">
-          <option value="english">English / Nigerian English</option>
-          <option value="yoruba">Yorùbá</option>
-          <option value="hausa">Hausa</option>
-          <option value="igbo">Igbo</option>
-        </select>
-
-        <button id="swapTranslationBtn" class="translation-swap-button" type="button" title="Swap languages" aria-label="Swap languages">
+  <div class="translation-shell">
+    <article class="panel translation-card translation-source-card">
+      <div class="translation-language-bar">
+        <label>
+          Source language
+          <select id="translationSourceLanguage">
+            <option value="english">English / Nigerian English</option>
+            <option value="yoruba">Yorùbá</option>
+            <option value="hausa">Hausa</option>
+            <option value="igbo">Igbo</option>
+          </select>
+        </label>
+        <button id="swapTranslationBtn" class="translation-swap-button" type="button" title="Swap languages" aria-label="Swap source and target languages">
           <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 7h11m0 0-3-3m3 3-3 3M17 17H6m0 0 3 3m-3-3 3-3"></path></svg>
         </button>
-
-        <select id="translationTargetLanguage" aria-label="Target language">
-          <option value="yoruba">Yorùbá</option>
-          <option value="hausa">Hausa</option>
-          <option value="igbo">Igbo</option>
-          <option value="english">English / Nigerian English</option>
-        </select>
+        <label>
+          Target language
+          <select id="translationTargetLanguage">
+            <option value="yoruba">Yorùbá</option>
+            <option value="hausa">Hausa</option>
+            <option value="igbo">Igbo</option>
+            <option value="english">English / Nigerian English</option>
+          </select>
+        </label>
       </div>
 
-      <div class="translation-simple-editors">
-        <div class="translation-simple-pane">
-          <textarea id="translationInput" rows="12" maxlength="12000" placeholder="Type or paste text…"></textarea>
-          <span id="translationCharCount" class="translation-count">0 / 12,000</span>
+      <div class="translation-editor-grid">
+        <div class="translation-editor-pane">
+          <div class="translation-pane-head">
+            <span>Source text</span>
+            <div class="inline-actions">
+              <button id="translationExampleBtn" class="text-button" type="button">Load sample</button>
+              <button id="translationClearBtn" class="text-button" type="button">Clear</button>
+            </div>
+          </div>
+          <textarea id="translationInput" rows="13" maxlength="12000" placeholder="Enter the text you want to translate…"></textarea>
+          <div class="translation-pane-foot">
+            <span id="translationCharCount">0 / 12,000 characters</span>
+            <span>Names, numbers and paragraph structure are preserved.</span>
+          </div>
         </div>
 
-        <div class="translation-simple-pane translation-simple-output">
-          <textarea id="translationOutput" rows="12" readonly placeholder="Translation appears here…"></textarea>
-          <button id="translationCopyBtn" class="translation-copy-button" type="button" disabled>Copy</button>
+        <div class="translation-editor-pane translation-output-pane">
+          <div class="translation-pane-head">
+            <span>Translation</span>
+            <div class="inline-actions">
+              <button id="translationCopyBtn" class="text-button" type="button" disabled>Copy</button>
+              <button id="translationToPlaygroundBtn" class="text-button" type="button" disabled>Use in Playground →</button>
+            </div>
+          </div>
+          <textarea id="translationOutput" rows="13" readonly placeholder="Your N-ATLaS translation will appear here."></textarea>
+          <div class="translation-pane-foot">
+            <span id="translationMeta">Ready</span>
+            <span id="translationModelLabel">NCAIR1/N-ATLaS</span>
+          </div>
         </div>
       </div>
 
-      <div class="translation-simple-actions">
-        <span id="translationMeta" class="translation-status" aria-live="polite">Ready</span>
-        <button id="runTranslationBtn" class="primary translation-run-button" type="button">Translate</button>
+      <div class="translation-controls">
+        <label class="translation-notes-field">
+          Translation guidance
+          <input id="translationNotes" maxlength="500" placeholder="Optional: e.g. use simple vocabulary; preserve technical terms">
+        </label>
+        <button id="runTranslationBtn" class="primary translation-run-button" type="button">
+          <span>Translate with N-ATLaS</span>
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"></path></svg>
+        </button>
       </div>
+    </article>
+
+    <article class="panel translation-developer-card">
+      <div class="section-head">
+        <div>
+          <span class="eyebrow">Developer integration</span>
+          <h3>Translation as an API workflow</h3>
+        </div>
+        <span class="status good">usecases.run</span>
+      </div>
+      <p>Translation Studio uses EDNAi's existing N-ATLaS use-case API, so the same workflow can be embedded in web, mobile and backend applications.</p>
+      <div class="translation-language-pills" aria-label="Supported translation languages">
+        <span>English</span><span>Yorùbá</span><span>Hausa</span><span>Igbo</span>
+      </div>
+      <div class="section-head compact">
+        <h3>HTTP example</h3>
+        <button id="copyTranslationCodeBtn" class="text-button" type="button">Copy</button>
+      </div>
+      <pre class="speech-code translation-code"><code id="translationCode"></code></pre>
+      <p class="hint">Each translation request is metered through the developer account and is executed by the configured N-ATLaS runtime.</p>
     </article>
   </div>
 </section>
@@ -802,6 +853,6 @@ ai.generate("Báwo ni?")</code></pre></article>
 </dialog>
 
 <div id="toast" class="toast" role="status" aria-live="polite"></div>
-<script src="/assets/app.js?v=20261002-translation-simple"></script>
+<script src="/assets/app.js?v=20261002-translation-studio"></script>
 <script src="/assets/code-examples.js?v=20261002-sdk-copy"></script>
 </body></html>
