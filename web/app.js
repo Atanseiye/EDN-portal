@@ -75,7 +75,26 @@ function showToast(message,type){
   toast.textContent=message;
   toast.className="toast show "+(type||"");
   clearTimeout(toastTimer);
-  toastTimer=setTimeout(()=>{toast.className="toast";},2800);
+  const duration=type==="error"?6500:2800;
+  toastTimer=setTimeout(()=>{toast.className="toast";},duration);
+}
+
+function formatQuotaResetTime(value){
+  if(!value)return "";
+  const date=new Date(value);
+  if(Number.isNaN(date.getTime()))return "";
+  try{
+    return new Intl.DateTimeFormat(undefined,{
+      weekday:"short",
+      month:"short",
+      day:"numeric",
+      hour:"numeric",
+      minute:"2-digit",
+      timeZoneName:"short"
+    }).format(date);
+  }catch(_){
+    return date.toLocaleString();
+  }
 }
 
 async function copyText(text){
@@ -172,6 +191,7 @@ async function readApiResponse(response){
     const error=new Error(message);
     error.status=response.status;
     error.retryAfter=response.headers.get("retry-after");
+    error.quotaResetsAt=response.headers.get("x-zerogpu-resets-at");
     throw error;
   }
   if(body!==null)return body;
@@ -256,9 +276,15 @@ async function runPrompt(){
     showToast("N-ATLaS response completed.","success");
   }catch(e){
     removePendingMessage();
-    addMessage("assistant",`Runtime error: ${e.message}`);
-    $("meta").textContent=e.status===429?"Free ZeroGPU quota temporarily exhausted":"Request failed";
-    showToast(e.message,"error");
+    const resetLabel=e.status===429?formatQuotaResetTime(e.quotaResetsAt):"";
+    const runtimeMessage=resetLabel
+      ? `${e.message} Next reset: ${resetLabel}.`
+      : e.message;
+    addMessage("assistant",`Runtime error: ${runtimeMessage}`);
+    $("meta").textContent=resetLabel
+      ? `ZeroGPU quota exhausted · resets ${resetLabel}`
+      : (e.status===429?"Free ZeroGPU quota temporarily exhausted":"Request failed");
+    showToast(runtimeMessage,"error");
   }finally{
     setButtonLoading($("sendBtn"),false);
     setButtonLoading($("runBtn"),false);
