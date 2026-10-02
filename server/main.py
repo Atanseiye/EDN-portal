@@ -1117,5 +1117,5 @@ def readiness():
         "model": NATLAS_MODEL_ID,
         "checks": checks,
         "validation": beta,
-        "note": "EDNAi counts only reviewed, consented external developers; self-declared or synthetic submissions do not satisfy the beta requirement.",
+        "note": "NAIC PS1 requires at least two external beta testers. EDNAi counts distinct, consented external tester submissions toward that requirement; internal evidence review remains a separate QA workflow.",
     }
