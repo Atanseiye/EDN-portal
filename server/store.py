@@ -179,6 +179,44 @@ class BetaStore:
         )
         return evidence_id
 
+    def restore_submissions(self, records: list[dict]) -> int:
+        """Insert original recorded identities; never overwrite existing evidence or review."""
+        values = [
+            (
+                record["id"], record["created_at"], record["tester_hash"],
+                record.get("display_name"), record.get("affiliation"), record.get("role"),
+                json.dumps(record["features"], ensure_ascii=False), record["rating"],
+                record["useful"], record.get("blocker"), record.get("notes"),
+                record["external_tester_claimed"], record["consent"],
+            )
+            for record in records
+        ]
+        columns = (
+            "id,created_at,tester_hash,display_name,affiliation,role,features,"
+            "rating,useful,blocker,notes,external_tester,consent,verified_external,verified_at"
+        )
+        if self.use_postgres:
+            inserted = 0
+            with self._postgres() as con:
+                with con.cursor() as cur:
+                    for row in values:
+                        cur.execute(
+                            f"INSERT INTO beta_feedback ({columns}) "
+                            "VALUES (%s,%s,%s,%s,%s,%s,%s::jsonb,%s,%s,%s,%s,%s,%s,FALSE,NULL) "
+                            "ON CONFLICT (id) DO NOTHING",
+                            row,
+                        )
+                        inserted += cur.rowcount
+            return inserted
+        with self._sqlite() as con:
+            before = con.total_changes
+            con.executemany(
+                f"INSERT INTO beta_feedback ({columns}) "
+                "VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,0,NULL) ON CONFLICT (id) DO NOTHING",
+                values,
+            )
+            return con.total_changes - before
+
     def verify_external(self, evidence_id: str) -> dict:
         now = datetime.now(timezone.utc)
         if self.use_postgres:

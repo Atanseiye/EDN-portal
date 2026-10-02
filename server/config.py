@@ -1,4 +1,5 @@
 from functools import lru_cache
+from pydantic import Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 from ednai.providers import NATLAS_MODEL_ID
@@ -15,6 +16,7 @@ class Settings(BaseSettings):
     ednai_admin_token: str = "change-me"
     ednai_database_path: str = "/tmp/ednai.sqlite3"
     ednai_database_url: str = ""
+    ednai_beta_recovery_json: str = Field(default="", repr=False)
     ednai_auth_enabled: bool = True
     ednai_demo_account_enabled: bool = True
     ednai_allow_public_demo_account: bool = False

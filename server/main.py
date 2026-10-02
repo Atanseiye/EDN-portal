@@ -35,6 +35,7 @@ from ednai.use_cases import USE_CASES, build_use_case_prompt, public_use_case_re
 from server.billing import Pricing, estimate_prompt_tokens, usage_tokens
 from server.config import get_settings
 from server.developer_store import ALL_SCOPES, DEFAULT_SCOPES, DeveloperStore
+from server.evidence_recovery import restore_recorded_submissions
 from server.security import production_security_middleware, rate_limiter, validate_production_settings
 from server.store import BetaStore
 from server.studio import EvalRunRequest, router as studio_router, run_studio_eval
@@ -44,6 +45,9 @@ validate_production_settings(settings)
 ROOT = Path(__file__).resolve().parents[1]
 WEB = ROOT / "web"
 store = BetaStore(settings.ednai_database_path, settings.ednai_database_url or None)
+recovered_submissions = restore_recorded_submissions(store, settings.ednai_beta_recovery_json)
+if recovered_submissions:
+    print(f"EDNAI_BETA_RECOVERY restored {recovered_submissions} recorded submissions", flush=True)
 developer_store = DeveloperStore(
     settings.ednai_database_path,
     settings.ednai_database_url or None,
