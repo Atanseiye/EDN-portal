@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import base64
 import hmac
 import smtplib
 import ssl
@@ -190,6 +191,20 @@ class BetaFeedback(BaseModel):
 @app.head("/", include_in_schema=False)
 def root_head():
     return Response(status_code=200)
+
+
+@app.get("/brand/ednai-logo.png", include_in_schema=False)
+def ednai_logo_asset():
+    parts_dir = WEB / "logo-parts"
+    encoded = "".join(
+        (parts_dir / f"ednai-logo.part{i}").read_text(encoding="utf-8").strip()
+        for i in range(5)
+    )
+    return Response(
+        content=base64.b64decode(encoded),
+        media_type="image/png",
+        headers={"Cache-Control": "public, max-age=31536000, immutable"},
+    )
 
 
 @app.get("/", include_in_schema=False)
