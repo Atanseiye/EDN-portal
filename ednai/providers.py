@@ -160,7 +160,6 @@ class GradioSpaceProvider(Provider):
         except Exception as exc:
             message = str(exc)
             if ("ZeroGPU quota" in message or "exceeded your ZeroGPU quota" in message or "ZeroGPU runs limit" in message):
-                print(f"EDNAI_ZERO_GPU_UPSTREAM {message[:1200]}", flush=True)
                 retry_after = _parse_retry_after_seconds(message)
                 retry_text = (
                     f" Try again in about {retry_after // 3600}h "
