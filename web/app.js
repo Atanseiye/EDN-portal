@@ -1058,6 +1058,184 @@ document.addEventListener("keydown",event=>{
 });
 
 
+/* ---------- N-ATLaS Translation Studio ---------- */
+const translationLanguageLabels={
+  english:"English / Nigerian English",
+  yoruba:"Yorùbá",
+  hausa:"Hausa",
+  igbo:"Igbo"
+};
+let lastTranslationResult="";
+
+function translationPayload(){
+  const source=$("translationSourceLanguage")?$("translationSourceLanguage").value:"english";
+  const target=$("translationTargetLanguage")?$("translationTargetLanguage").value:"yoruba";
+  return {
+    language:target,
+    inputs:{
+      source_language:source,
+      target_language:target,
+      text:$("translationInput")?$("translationInput").value.trim():"",
+      notes:$("translationNotes")?$("translationNotes").value.trim():""
+    },
+    temperature:0.1,
+    max_tokens:900,
+    json_mode:false
+  };
+}
+
+function updateTranslationCount(){
+  if(!$("translationInput")||!$("translationCharCount"))return;
+  const length=$("translationInput").value.length;
+  $("translationCharCount").textContent=length.toLocaleString()+" / 12,000 characters";
+}
+
+function updateTranslationCode(){
+  if(!$("translationCode"))return;
+  const payload=translationPayload();
+  $("translationCode").textContent=
+`curl -X POST ${location.origin}/v1/use-cases/translation \\\n`+
+`  -H "Authorization: Bearer $EDNAI_API_KEY" \\\n`+
+`  -H "Content-Type: application/json" \\\n`+
+`  --data-binary @- <<'JSON'\n`+
+JSON.stringify(payload,null,2)+
+`\nJSON`;
+}
+
+function resetTranslationOutput(){
+  lastTranslationResult="";
+  if($("translationOutput"))$("translationOutput").value="";
+  if($("translationCopyBtn"))$("translationCopyBtn").disabled=true;
+  if($("translationToPlaygroundBtn"))$("translationToPlaygroundBtn").disabled=true;
+  if($("translationMeta"))$("translationMeta").textContent="Ready";
+}
+
+function loadTranslationExample(){
+  if(!$("translationInput"))return;
+  $("translationSourceLanguage").value="english";
+  $("translationTargetLanguage").value="yoruba";
+  $("translationInput").value="Digital tools should be understandable and useful to everyone.";
+  $("translationNotes").value="Keep the translation clear, natural and easy to understand.";
+  updateTranslationCount();
+  updateTranslationCode();
+  resetTranslationOutput();
+  showToast("Translation sample loaded.","success");
+}
+
+async function runTranslation(){
+  const payload=translationPayload();
+  if(!payload.inputs.text){
+    showToast("Enter the text you want to translate.","error");
+    if($("translationInput"))$("translationInput").focus();
+    return;
+  }
+  if(payload.inputs.source_language===payload.inputs.target_language){
+    showToast("Choose a different target language.","error");
+    if($("translationTargetLanguage"))$("translationTargetLanguage").focus();
+    return;
+  }
+
+  setButtonLoading($("runTranslationBtn"),true);
+  if($("translationMeta"))$("translationMeta").textContent="Translating with N-ATLaS…";
+  if($("translationOutput"))$("translationOutput").value="";
+
+  try{
+    const response=await fetch("/v1/use-cases/translation",{
+      method:"POST",
+      headers:{"content-type":"application/json"},
+      body:JSON.stringify(payload)
+    });
+    const result=await readApiResponse(response);
+    lastTranslationResult=result.text||"";
+    $("translationOutput").value=lastTranslationResult;
+    $("translationCopyBtn").disabled=!lastTranslationResult;
+    $("translationToPlaygroundBtn").disabled=!lastTranslationResult;
+    $("translationMeta").textContent=[
+      translationLanguageLabels[payload.inputs.source_language]+" → "+translationLanguageLabels[payload.inputs.target_language],
+      result.model||"NCAIR1/N-ATLaS",
+      result.provider||"EDNAi",
+      result.latency_ms!=null?result.latency_ms+" ms":""
+    ].filter(Boolean).join(" · ");
+    showToast("Translation completed with N-ATLaS.","success");
+  }catch(error){
+    lastTranslationResult="";
+    $("translationOutput").value="Runtime error: "+error.message;
+    $("translationMeta").textContent=error.status===429?"N-ATLaS quota temporarily exhausted":"Translation failed";
+    $("translationCopyBtn").disabled=true;
+    $("translationToPlaygroundBtn").disabled=true;
+    showToast(error.message,"error");
+  }finally{
+    setButtonLoading($("runTranslationBtn"),false);
+  }
+}
+
+if($("translationInput")){
+  $("translationInput").addEventListener("input",()=>{
+    updateTranslationCount();
+    updateTranslationCode();
+  });
+}
+if($("translationNotes"))$("translationNotes").addEventListener("input",updateTranslationCode);
+if($("translationSourceLanguage"))$("translationSourceLanguage").addEventListener("change",()=>{
+  updateTranslationCode();
+  resetTranslationOutput();
+});
+if($("translationTargetLanguage"))$("translationTargetLanguage").addEventListener("change",()=>{
+  updateTranslationCode();
+  resetTranslationOutput();
+});
+if($("translationExampleBtn"))$("translationExampleBtn").addEventListener("click",loadTranslationExample);
+if($("translationClearBtn"))$("translationClearBtn").addEventListener("click",()=>{
+  $("translationInput").value="";
+  $("translationNotes").value="";
+  updateTranslationCount();
+  updateTranslationCode();
+  resetTranslationOutput();
+  $("translationInput").focus();
+});
+if($("swapTranslationBtn"))$("swapTranslationBtn").addEventListener("click",()=>{
+  const source=$("translationSourceLanguage").value;
+  const target=$("translationTargetLanguage").value;
+  $("translationSourceLanguage").value=target;
+  $("translationTargetLanguage").value=source;
+  if(lastTranslationResult){
+    const previousSource=$("translationInput").value;
+    $("translationInput").value=lastTranslationResult;
+    $("translationOutput").value=previousSource;
+    lastTranslationResult=previousSource;
+    $("translationCopyBtn").disabled=!lastTranslationResult;
+    $("translationToPlaygroundBtn").disabled=!lastTranslationResult;
+  }else{
+    resetTranslationOutput();
+  }
+  updateTranslationCount();
+  updateTranslationCode();
+});
+if($("runTranslationBtn"))$("runTranslationBtn").addEventListener("click",runTranslation);
+if($("translationInput"))$("translationInput").addEventListener("keydown",event=>{
+  if((event.ctrlKey||event.metaKey)&&event.key==="Enter")runTranslation();
+});
+if($("translationCopyBtn"))$("translationCopyBtn").addEventListener("click",async()=>{
+  if(!lastTranslationResult)return;
+  await copyText(lastTranslationResult);
+  showToast("Translation copied.","success");
+});
+if($("translationToPlaygroundBtn"))$("translationToPlaygroundBtn").addEventListener("click",()=>{
+  if(!lastTranslationResult)return;
+  $("prompt").value=lastTranslationResult;
+  consolePanel("playground");
+  $("panel-playground").scrollIntoView({behavior:"smooth",block:"start"});
+  setTimeout(()=>$("prompt").focus(),300);
+});
+if($("copyTranslationCodeBtn"))$("copyTranslationCodeBtn").addEventListener("click",async()=>{
+  await copyText($("translationCode").textContent);
+  showToast("Translation API example copied.","success");
+});
+
+updateTranslationCount();
+updateTranslationCode();
+
+
 /* ---------- N-ATLaS Use Case Studio ---------- */
 let useCaseRegistry=null;
 let activeUseCase="chatbot";
