@@ -2098,193 +2098,199 @@ small{
   display:grid;
   place-items:center;
   font-weight:900;
-  background:#eef8f3 !important;
+  background:linear-gradient(145deg,#e9f8f0,#dff2ff) !important;
   color:#087457 !important;
 }
-
-.translation-simple-wrap{
-  max-width:1180px;
-  margin:0 auto;
+.translation-shell{
+  display:grid;
+  grid-template-columns:minmax(0,1.65fr) minmax(300px,.75fr);
+  gap:18px;
+  align-items:start;
 }
-
-.translation-simple-head{
-  margin-bottom:18px;
+.translation-card{
+  padding:20px;
 }
-
-.translation-simple-head h2{
-  margin:5px 0 6px;
-}
-
-.translation-simple-head p{
-  margin:0;
-  color:#62756d;
-}
-
-.translation-simple-card{
-  padding:18px;
-}
-
-.translation-simple-languages{
+.translation-language-bar{
   display:grid;
   grid-template-columns:minmax(0,1fr) 44px minmax(0,1fr);
-  gap:10px;
-  align-items:center;
-  margin-bottom:12px;
+  gap:12px;
+  align-items:end;
+  margin-bottom:16px;
 }
-
-.translation-simple-languages select{
+.translation-language-bar label,
+.translation-notes-field{
+  display:grid;
+  gap:7px;
+  font-weight:750;
+  color:var(--ink);
+}
+.translation-language-bar select,
+.translation-notes-field input{
   width:100%;
   min-height:44px;
-  border:1px solid #d7e3dd;
+  border:1px solid #d8e4de;
   border-radius:11px;
-  background:#fff;
+  background:#fbfdfc;
   color:var(--ink);
   padding:0 12px;
   outline:none;
-  font-weight:700;
 }
-
-.translation-simple-languages select:focus,
-.translation-simple-pane textarea:focus{
-  border-color:#78bfa3;
-  box-shadow:0 0 0 3px rgba(26,143,103,.09);
+.translation-language-bar select:focus,
+.translation-notes-field input:focus,
+.translation-editor-pane textarea:focus{
+  border-color:#7fc3a8;
+  box-shadow:0 0 0 3px rgba(26,143,103,.1);
 }
-
 .translation-swap-button{
   width:44px;
   height:44px;
   display:grid;
   place-items:center;
-  border:1px solid #d7e3dd;
-  border-radius:11px;
-  background:#f7faf8;
+  border:1px solid #cfe0d8;
+  border-radius:12px;
+  background:#f4faf7;
   color:#087457;
   cursor:pointer;
 }
-
 .translation-swap-button:hover{
-  background:#edf7f2;
+  background:#e8f6ef;
+  border-color:#add4c3;
 }
-
-.translation-swap-button svg{
-  width:18px;
-  height:18px;
+.translation-swap-button svg,
+.translation-run-button svg{
+  width:19px;
+  height:19px;
   fill:none;
   stroke:currentColor;
   stroke-width:1.8;
   stroke-linecap:round;
   stroke-linejoin:round;
 }
-
-.translation-simple-editors{
+.translation-editor-grid{
   display:grid;
   grid-template-columns:1fr 1fr;
-  border:1px solid #dce6e1;
-  border-radius:14px;
+  border:1px solid #dbe6e1;
+  border-radius:16px;
   overflow:hidden;
   background:#fff;
 }
-
-.translation-simple-pane{
-  position:relative;
+.translation-editor-pane{
   min-width:0;
+  display:flex;
+  flex-direction:column;
 }
-
-.translation-simple-pane+.translation-simple-pane{
-  border-left:1px solid #dce6e1;
+.translation-editor-pane+.translation-editor-pane{
+  border-left:1px solid #dbe6e1;
   background:#fbfdfc;
 }
-
-.translation-simple-pane textarea{
-  width:100%;
-  min-height:330px;
-  border:0;
-  outline:0;
-  resize:vertical;
-  background:transparent;
-  color:var(--ink);
-  padding:18px;
-  padding-bottom:42px;
-  font:inherit;
-  line-height:1.65;
-}
-
-.translation-simple-output textarea{
-  padding-right:72px;
-}
-
-.translation-count{
-  position:absolute;
-  left:18px;
-  bottom:14px;
-  color:#84958e;
-  font-size:12px;
-}
-
-.translation-copy-button{
-  position:absolute;
-  right:14px;
-  top:14px;
-  min-height:34px;
-  padding:0 11px;
-  border:1px solid #d7e3dd;
-  border-radius:9px;
-  background:#fff;
-  color:#36594c;
-  font-weight:750;
-  cursor:pointer;
-}
-
-.translation-copy-button:disabled{
-  opacity:.45;
-  cursor:default;
-}
-
-.translation-simple-actions{
+.translation-pane-head{
+  min-height:48px;
+  padding:10px 13px;
   display:flex;
   align-items:center;
   justify-content:space-between;
-  gap:14px;
-  margin-top:14px;
+  gap:10px;
+  border-bottom:1px solid #edf2ef;
+  font-weight:800;
 }
-
-.translation-status{
-  color:#697b74;
-  font-size:13px;
+.translation-editor-pane textarea{
+  width:100%;
+  min-height:280px;
+  resize:vertical;
+  border:0;
+  outline:0;
+  padding:16px;
+  background:transparent;
+  color:var(--ink);
+  font:inherit;
+  line-height:1.65;
 }
-
-.translation-run-button{
-  min-width:132px;
+.translation-output-pane textarea{
+  background:#fbfdfc;
+}
+.translation-pane-foot{
   min-height:44px;
+  padding:9px 13px;
+  display:flex;
+  justify-content:space-between;
+  gap:12px;
+  border-top:1px solid #edf2ef;
+  color:#677a72;
+  font-size:12px;
 }
-
+.translation-controls{
+  margin-top:16px;
+  display:grid;
+  grid-template-columns:minmax(0,1fr) auto;
+  gap:14px;
+  align-items:end;
+}
+.translation-run-button{
+  min-height:44px;
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  gap:9px;
+  white-space:nowrap;
+}
+.translation-developer-card{
+  padding:20px;
+}
+.translation-developer-card>p{
+  margin:4px 0 14px;
+  color:#5e7169;
+  line-height:1.6;
+}
+.translation-language-pills{
+  display:flex;
+  flex-wrap:wrap;
+  gap:8px;
+  margin-bottom:18px;
+}
+.translation-language-pills span{
+  display:inline-flex;
+  align-items:center;
+  min-height:30px;
+  padding:5px 10px;
+  border-radius:999px;
+  background:#edf7f2;
+  border:1px solid #d4e9df;
+  color:#17654f;
+  font-size:12px;
+  font-weight:800;
+}
+.translation-code{
+  max-height:360px;
+  overflow:auto;
+}
+@media(max-width:1100px){
+  .translation-shell{
+    grid-template-columns:1fr;
+  }
+}
 @media(max-width:760px){
-  .translation-simple-languages{
+  .translation-language-bar{
     grid-template-columns:1fr 44px;
   }
-  .translation-simple-languages select:last-child{
+  .translation-language-bar label:last-child{
     grid-column:1 / -1;
   }
   .translation-swap-button{
     grid-column:2;
     grid-row:1;
   }
-  .translation-simple-editors{
+  .translation-editor-grid{
     grid-template-columns:1fr;
   }
-  .translation-simple-pane+.translation-simple-pane{
+  .translation-editor-pane+.translation-editor-pane{
     border-left:0;
-    border-top:1px solid #dce6e1;
+    border-top:1px solid #dbe6e1;
   }
-  .translation-simple-pane textarea{
-    min-height:230px;
+  .translation-controls{
+    grid-template-columns:1fr;
   }
-  .translation-simple-actions{
-    align-items:stretch;
+  .translation-pane-foot{
     flex-direction:column;
-  }
-  .translation-run-button{
-    width:100%;
+    align-items:flex-start;
   }
 }
-
