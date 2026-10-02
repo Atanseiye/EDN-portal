@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import base64
 import hmac
 import smtplib
 import ssl
@@ -195,29 +194,8 @@ def root_head():
 
 @app.get("/brand/ednai-logo.png", include_in_schema=False)
 def ednai_logo_asset():
-    parts_dir = WEB / "logo-parts"
-    part_names = [
-        "ednai-logo.0a",
-        "ednai-logo.0b",
-        "ednai-logo.0c",
-        "ednai-logo.0d",
-        "ednai-logo.part1",
-        "ednai-logo.part2",
-        "ednai-logo.part3",
-        "ednai-logo.4a",
-        "ednai-logo.4b",
-        "ednai-logo.4c",
-        "ednai-logo.4d",
-    ]
-    encoded = "".join(
-        (parts_dir / part_name).read_text(encoding="utf-8").strip()
-        for part_name in part_names
-    )
-    return Response(
-        content=base64.b64decode(encoded),
-        media_type="image/png",
-        headers={"Cache-Control": "public, max-age=31536000, immutable"},
-    )
+    # Keep legacy links on the same complete, byte-for-byte supplied artwork.
+    return FileResponse(WEB / "ednai-logo.png", media_type="image/png")
 
 
 @app.get("/", include_in_schema=False)
