@@ -4,8 +4,12 @@ function nice(k){return k.replaceAll("_"," ").replace(/\b\w/g,c=>c.toUpperCase()
 let feedbackRevision=0;
 
 function renderValidation(validation){
-  $("betaCount").textContent=validation.unique_external_beta_submissions??0;
-  $("betaReviewStatus").textContent=`${validation.unique_verified_external_beta_testers??0} / ${validation.beta_target??2} reviewed · ${validation.unique_pending_external_beta_testers??0} awaiting review`;
+  const submitted=validation.unique_external_beta_submissions??0;
+  const target=validation.beta_target??2;
+  $("betaCount").textContent=submitted;
+  $("betaReviewStatus").textContent=submitted>=target
+    ? `${submitted} / ${target} submitted · requirement met`
+    : `${submitted} / ${target} submitted · ${Math.max(0,target-submitted)} more needed`;
 }
 
 async function refresh(){
@@ -54,7 +58,7 @@ $("feedbackForm").addEventListener("submit",async(e)=>{
     if(!r.ok)throw new Error(body.detail||"Submission failed");
     feedbackRevision++;
     renderValidation(body.validation);
-    $("formStatus").textContent="Feedback recorded. The tester count is updated; repeat submissions from the same tester count once. Your evidence is awaiting review. Thank you.";
+    $("formStatus").textContent="Feedback recorded. The tester count is updated; repeat submissions from the same tester count once. Thank you.";
     $("feedbackForm").reset();
     void refresh();
   }catch(err){$("formStatus").textContent=err.message;}
