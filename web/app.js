@@ -322,14 +322,11 @@ async function runPrompt(){
     }
 
     const resetLabel=e.status===429?formatQuotaResetTime(e.quotaResetsAt):"";
-    const runtimeMessage=resetLabel
-      ? `${e.message} Next reset: ${resetLabel}.`
-      : e.message;
-    addMessage("assistant",`Runtime error: ${runtimeMessage}`);
+    addMessage("assistant",`Runtime error: ${e.message}`);
     $("meta").textContent=resetLabel
       ? `ZeroGPU quota exhausted · resets ${resetLabel}`
       : (e.status===429?"Free ZeroGPU quota temporarily exhausted":"Request failed");
-    showToast(runtimeMessage,"error");
+    showToast(e.message,"error");
   }finally{
     setButtonLoading($("sendBtn"),false);
     setButtonLoading($("runBtn"),false);
