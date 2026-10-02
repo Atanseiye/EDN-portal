@@ -6,12 +6,26 @@
 <meta name="theme-color" content="#0d1b1e">
 <title>EDNAi Developer — Accounts, API Keys & Usage</title>
 <link rel="icon" href="/assets/ednai-logo.png?v=20261002-original" type="image/png">
-<link rel="stylesheet" href="/assets/styles.css?v=20261002-type-standard">
+<link rel="stylesheet" href="/assets/styles.css?v=20261002-nav-icons">
 </head>
 <body>
-<header class="nav">
-  <a class="brand brand-logo" href="/" aria-label="EDNAi home"><img src="/assets/ednai-logo.png?v=20261002-original" alt="EDNAi" width="2048" height="682"></a>
-  <nav><a href="/">Console</a><a href="/guide">Docs</a><a href="/challenge">Challenge</a></nav>
+<header class="nav product-nav login-product-nav">
+  <a class="brand brand-logo" href="/#overview" aria-label="EDNAi home"><img src="/assets/ednai-logo.png?v=20261002-original" alt="EDNAi" width="2048" height="682"></a>
+  <nav class="top-nav product-nav-links" aria-label="Primary navigation">
+    <a class="nav-link" href="/#overview">Overview</a>
+    <a class="nav-link" href="/#playground">Playground</a>
+    <a class="nav-link" href="/#runtime">Models</a>
+    <a class="nav-link" href="/guide">Docs</a>
+    <a class="nav-link" href="/docs">API</a>
+    <a class="nav-link" href="/#usecases">Use Cases</a>
+  </nav>
+  <div class="nav-utilities login-nav-utilities">
+    <span class="runtime-inline nav-runtime"><i></i><span>N-ATLaS developer access</span></span>
+    <div class="login-account-chip" aria-current="page">
+      <span class="profile-avatar" aria-hidden="true">P</span>
+      <span class="profile-menu-text"><strong>Sign in</strong><small>Developer</small></span>
+    </div>
+  </div>
 </header>
 
 <main class="developer-main developer-login-page">
