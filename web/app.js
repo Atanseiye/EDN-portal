@@ -187,11 +187,18 @@ async function readApiResponse(response){
     catch(_){body=null;}
   }
   if(!response.ok){
-    const message=(body&&body.detail)||(body&&body.error)||text.trim()||("Request failed ("+response.status+")");
+    const detail=body&&body.detail;
+    const message=
+      (typeof detail==="string"&&detail)||
+      (detail&&typeof detail==="object"&&detail.message)||
+      (body&&body.error)||
+      text.trim()||
+      ("Request failed ("+response.status+")");
     const error=new Error(message);
     error.status=response.status;
-    error.retryAfter=response.headers.get("retry-after");
-    error.quotaResetsAt=response.headers.get("x-zerogpu-resets-at");
+    error.retryAfter=response.headers.get("retry-after")||(detail&&detail.retry_after_seconds?String(detail.retry_after_seconds):null);
+    error.quotaResetsAt=response.headers.get("x-zerogpu-resets-at")||(detail&&detail.resets_at)||null;
+    error.code=detail&&typeof detail==="object"?detail.error:null;
     throw error;
   }
   if(body!==null)return body;
@@ -212,6 +219,18 @@ function addMessage(role,text){
   }
   $("messages").scrollTop=$("messages").scrollHeight;
 }
+async function clearExpiredSessionAndOpenLogin(prompt){
+  try{
+    if(prompt)sessionStorage.setItem("ednai-pending-prompt",prompt);
+    sessionStorage.setItem("ednai-return-after-login","/#playground");
+  }catch(_){}
+  try{
+    await fetch("/api/developer/logout",{method:"POST",credentials:"same-origin"});
+  }catch(_){}
+  if(typeof renderHeaderProfile==="function")renderHeaderProfile(null);
+  window.location.href="/developer?return="+encodeURIComponent("/#playground");
+}
+
 async function health(){
   const heroStatus=$("heroRuntimeStatus");
   try{
@@ -276,6 +295,14 @@ async function runPrompt(){
     showToast("N-ATLaS response completed.","success");
   }catch(e){
     removePendingMessage();
+
+    if(e.status===401){
+      $("meta").textContent="Sign in required";
+      showToast("Your developer session expired. Opening sign in…","error");
+      setTimeout(()=>clearExpiredSessionAndOpenLogin(prompt),500);
+      return;
+    }
+
     const resetLabel=e.status===429?formatQuotaResetTime(e.quotaResetsAt):"";
     const runtimeMessage=resetLabel
       ? `${e.message} Next reset: ${resetLabel}.`
@@ -1563,6 +1590,16 @@ renderQuickstart(savedStack,false);
 
 workspaceRestore();
 refreshHeaderProfile();
+
+try{
+  const pendingPrompt=sessionStorage.getItem("ednai-pending-prompt");
+  if(pendingPrompt && $("prompt")){
+    $("prompt").value=pendingPrompt;
+    sessionStorage.removeItem("ednai-pending-prompt");
+    showToast("Session restored. Your prompt is ready to run.","success");
+  }
+}catch(_){}
+
 const requestedPanel=(location.hash||"#overview").slice(1);
 if(["playground","usecases","speech","evaluate","dataset","finetune","runtime","profile","overview"].includes(requestedPanel))consolePanel(requestedPanel);
 
