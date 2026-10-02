@@ -79,6 +79,7 @@ app.add_middleware(
     allow_credentials=True,
     allow_methods=["GET", "POST", "DELETE", "HEAD", "OPTIONS"],
     allow_headers=["Authorization", "Content-Type", "X-Request-ID", "Idempotency-Key"],
+    expose_headers=["Retry-After", "X-ZeroGPU-Resets-At"],
 )
 app.mount("/assets", StaticFiles(directory=WEB), name="assets")
 app.include_router(studio_router)
@@ -129,8 +130,8 @@ def build_provider() -> Provider | None:
 provider = build_provider()
 
 
-def _zero_gpu_quota_headers(exc: ProviderQuotaError) -> dict[str, str]:
-    """Return retry metadata and the exact Hugging Face ZeroGPU reset time when available."""
+def _zero_gpu_quota_metadata(exc: ProviderQuotaError) -> tuple[dict[str, str], dict[str, Any]]:
+    """Return machine-readable quota metadata for API clients and the browser console."""
     retry_after = exc.retry_after_seconds
     resets_at = None
 
@@ -145,9 +146,10 @@ def _zero_gpu_quota_headers(exc: ProviderQuotaError) -> dict[str, str]:
             if resets_at is not None:
                 if resets_at.tzinfo is None:
                     resets_at = resets_at.replace(tzinfo=timezone.utc)
+                resets_at = resets_at.astimezone(timezone.utc)
                 retry_after = max(
                     1,
-                    int((resets_at.astimezone(timezone.utc) - datetime.now(timezone.utc)).total_seconds()),
+                    int((resets_at - datetime.now(timezone.utc)).total_seconds()),
                 )
         except Exception as quota_exc:
             print(
@@ -155,14 +157,30 @@ def _zero_gpu_quota_headers(exc: ProviderQuotaError) -> dict[str, str]:
                 flush=True,
             )
 
+    reset_iso = (
+        resets_at.astimezone(timezone.utc).isoformat().replace("+00:00", "Z")
+        if resets_at is not None
+        else None
+    )
+
     headers: dict[str, str] = {}
     if retry_after:
         headers["Retry-After"] = str(retry_after)
-    if resets_at is not None:
-        headers["X-ZeroGPU-Resets-At"] = (
-            resets_at.astimezone(timezone.utc).isoformat().replace("+00:00", "Z")
-        )
-    return headers
+    if reset_iso:
+        headers["X-ZeroGPU-Resets-At"] = reset_iso
+
+    message = str(exc)
+    generic_suffix = " Please try again after the free quota resets."
+    if reset_iso and message.endswith(generic_suffix):
+        message = message[:-len(generic_suffix)]
+
+    detail: dict[str, Any] = {
+        "error": "zerogpu_quota_exhausted",
+        "message": message,
+        "retry_after_seconds": retry_after,
+        "resets_at": reset_iso,
+    }
+    return headers, detail
 
 
 class GenerateRequest(BaseModel):
@@ -783,10 +801,11 @@ async def audio_transcriptions(
         try:
             return await run_in_threadpool(transcribe, temp_path, language)
         except ProviderQuotaError as exc:
+            headers, detail = _zero_gpu_quota_metadata(exc)
             raise HTTPException(
                 status_code=429,
-                detail=str(exc),
-                headers=_zero_gpu_quota_headers(exc),
+                detail=detail,
+                headers=headers,
             ) from exc
         except ProviderError as exc:
             raise HTTPException(status_code=502, detail=str(exc)) from exc
@@ -928,10 +947,11 @@ def runtime_probe(
             json_mode=False,
         )
     except ProviderQuotaError as exc:
+        headers, detail = _zero_gpu_quota_metadata(exc)
         raise HTTPException(
             status_code=429,
-            detail=str(exc),
-            headers=_zero_gpu_quota_headers(exc),
+            detail=detail,
+            headers=headers,
         ) from exc
     except ProviderError as exc:
         raise HTTPException(status_code=502, detail=str(exc)) from exc
@@ -969,10 +989,11 @@ def _generate(req: GenerateRequest) -> Generation:
             json_mode=req.json_mode,
         )
     except ProviderQuotaError as exc:
+        headers, detail = _zero_gpu_quota_metadata(exc)
         raise HTTPException(
             status_code=429,
-            detail=str(exc),
-            headers=_zero_gpu_quota_headers(exc),
+            detail=detail,
+            headers=headers,
         ) from exc
     except ProviderError as exc:
         raise HTTPException(status_code=502, detail=str(exc)) from exc
