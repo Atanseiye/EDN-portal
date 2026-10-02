@@ -1,18 +1,30 @@
 const $=(id)=>document.getElementById(id);
 function nice(k){return k.replaceAll("_"," ").replace(/\b\w/g,c=>c.toUpperCase());}
 
+let feedbackRevision=0;
+
+function renderValidation(validation){
+  $("betaCount").textContent=validation.unique_external_beta_submissions??0;
+  $("betaReviewStatus").textContent=`${validation.unique_verified_external_beta_testers??0} / ${validation.beta_target??2} reviewed · ${validation.unique_pending_external_beta_testers??0} awaiting review`;
+}
+
 async function refresh(){
+  const revision=feedbackRevision;
   try{
     const r=await fetch("/api/challenge/readiness",{cache:"no-store"});
+    if(!r.ok)throw new Error("Readiness unavailable");
     const d=await r.json();
+    if(revision!==feedbackRevision)return;
     $("readyLabel").textContent=d.ready?"Submission gates met":"Build/validation in progress";
     $("readyLabel").className=d.ready?"ready-yes":"ready-no";
-    $("betaCount").textContent=d.validation.unique_external_beta_testers||0;
+    renderValidation(d.validation);
     $("checks").innerHTML=Object.entries(d.checks).map(([k,v]) =>
       '<article class="criterion '+(v?'pass':'fail')+'"><span>'+(v?'✓':'○')+'</span><div><strong>'+nice(k)+'</strong><small>'+(v?'Verified':'Not yet verified')+'</small></div></article>'
     ).join("");
   }catch(e){
+    if(revision!==feedbackRevision)return;
     $("readyLabel").textContent="Readiness unavailable";
+    if($("betaCount").textContent==="—")$("betaReviewStatus").textContent="Feedback count unavailable; reload to retry.";
   }
 }
 
@@ -20,6 +32,8 @@ $("feedbackForm").addEventListener("submit",async(e)=>{
   e.preventDefault();
   const features=[...document.querySelectorAll('input[name="feature"]:checked')].map(x=>x.value);
   if(!features.length){$("formStatus").textContent="Select at least one feature you actually tested.";return;}
+  if($("feedbackSubmit").disabled)return;
+  $("feedbackSubmit").disabled=true;
   $("formStatus").textContent="Submitting…";
   const payload={
     tester_identity:$("testerIdentity").value,
@@ -38,9 +52,12 @@ $("feedbackForm").addEventListener("submit",async(e)=>{
     const r=await fetch("/api/beta/feedback",{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify(payload)});
     const body=await r.json();
     if(!r.ok)throw new Error(body.detail||"Submission failed");
-    $("formStatus").textContent="Feedback recorded and queued for external-tester verification. Thank you.";
+    feedbackRevision++;
+    renderValidation(body.validation);
+    $("formStatus").textContent="Feedback recorded. The tester count is updated; repeat submissions from the same tester count once. Your evidence is awaiting review. Thank you.";
     $("feedbackForm").reset();
-    await refresh();
+    void refresh();
   }catch(err){$("formStatus").textContent=err.message;}
+  finally{$("feedbackSubmit").disabled=false;}
 });
 refresh();

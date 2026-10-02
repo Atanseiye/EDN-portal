@@ -11,12 +11,12 @@
 <section class="hero"><span class="eyebrow">NAIC 2026 · Developer Infrastructure</span><h1>Engineering<br><em>readiness.</em></h1><p>A live view of the build, direct N-ATLaS integration and external developer validation gates.</p></section>
 
 <section class="panel readiness">
-  <div class="readiness-top"><div><span class="eyebrow">Submission state</span><h2 id="readyLabel">Checking…</h2></div><div class="beta-score"><strong id="betaCount">0</strong><span>/ 2 external beta testers</span></div></div>
+  <div class="readiness-top"><div><span class="eyebrow">Submission state</span><h2 id="readyLabel">Checking…</h2></div><div class="beta-score" aria-live="polite"><strong id="betaCount">—</strong><span>external beta testers<br><small id="betaReviewStatus">Loading feedback…</small></span></div></div>
   <div id="checks" class="check-grid"></div>
 </section>
 
 <section class="panel beta-form">
-  <div><span class="eyebrow">External developer feedback</span><h2>Test EDNAi and record evidence.</h2><p class="muted">Use this after actually trying the SDK, playground, evaluation tooling or fine-tuning starter. Repeated submissions from the same tester count once toward the challenge target.</p></div>
+  <div><span class="eyebrow">External developer feedback</span><h2>Test EDNAi and record evidence.</h2><p class="muted">Use this after actually trying the SDK, playground, evaluation tooling or fine-tuning starter. Your submission updates the tester count immediately. Each tester counts once; the challenge requires two reviewed external testers.</p></div>
   <form id="feedbackForm">
     <div class="form-grid">
       <label>Stable identifier (email works)<input id="testerIdentity" required placeholder="Used only to deduplicate; stored as a hash"></label>
@@ -40,11 +40,11 @@
     <label>Other notes<textarea id="notes" rows="3"></textarea></label>
     <label class="validation-consent"><input id="externalTester" type="checkbox" required> I am an external tester and not a member of the EDNAi build team.</label>
     <label class="validation-consent"><input id="consent" type="checkbox" required> I consent to this feedback being used as anonymised NAIC validation evidence.</label>
-    <button class="primary" type="submit">Submit beta feedback</button>
-    <p id="formStatus" class="muted"></p>
+    <button id="feedbackSubmit" class="primary" type="submit">Submit beta feedback</button>
+    <p id="formStatus" class="muted" role="status" aria-live="polite"></p>
   </form>
 </section>
 </main>
 <footer><strong>EDNAi</strong> · Developer infrastructure for NCAIR1/N-ATLaS.</footer>
-<script src="/assets/challenge.js"></script>
+<script src="/assets/challenge.js?v=20261002-beta-counter"></script>
 </body></html>

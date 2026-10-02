@@ -22,6 +22,8 @@ def test_unreviewed_external_feedback_does_not_count(tmp_path):
     evidence_id = add(store, "dev1@example.com")
     stats = store.stats()
     assert stats["pending_external_submissions"] == 1
+    assert stats["unique_external_beta_submissions"] == 1
+    assert stats["unique_pending_external_beta_testers"] == 1
     assert stats["unique_verified_external_beta_testers"] == 0
     assert stats["beta_target_met"] is False
 
@@ -29,6 +31,8 @@ def test_unreviewed_external_feedback_does_not_count(tmp_path):
     stats = store.stats()
     assert stats["unique_verified_external_beta_testers"] == 1
     assert stats["pending_external_submissions"] == 0
+    assert stats["unique_external_beta_submissions"] == 1
+    assert stats["unique_pending_external_beta_testers"] == 0
 
 
 def test_unique_verified_external_beta_testers(tmp_path):
@@ -57,3 +61,21 @@ def test_internal_tester_cannot_be_verified_as_external(tmp_path):
         assert False, "Internal evidence should not be externally verifiable"
     except KeyError:
         pass
+
+
+def test_submitted_count_deduplicates_and_survives_reopening(tmp_path):
+    path = str(tmp_path / "beta.sqlite3")
+    store = BetaStore(path)
+    first = add(store, "  Developer@Example.com ")
+    add(store, "developer@example.com")
+    add(store, "second@example.com")
+    add(store, "internal@example.com", external=False)
+    store = BetaStore(path)
+    assert store.stats()["unique_external_beta_submissions"] == 2
+    assert store.stats()["unique_pending_external_beta_testers"] == 2
+    assert store.stats()["beta_target_met"] is False
+    store.verify_external(first)
+    stats = store.stats()
+    assert stats["unique_external_beta_submissions"] == 2
+    assert stats["unique_verified_external_beta_testers"] == 1
+    assert stats["unique_pending_external_beta_testers"] == 1

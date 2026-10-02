@@ -996,7 +996,8 @@ def beta_feedback(data: BetaFeedback):
         "ok": True,
         "evidence_id": evidence_id,
         "status": "pending_review",
-        "note": "External-tester evidence is counted only after review.",
+        "validation": store.stats(),
+        "note": "Submission recorded. Challenge verification requires review.",
     }
 
 

@@ -275,6 +275,11 @@ class BetaStore:
                     )
                     pending = cur.fetchone()[0]
                     cur.execute(
+                        "SELECT count(DISTINCT tester_hash) FROM beta_feedback "
+                        "WHERE consent=TRUE AND external_tester=TRUE"
+                    )
+                    submitted_external = cur.fetchone()[0]
+                    cur.execute(
                         f"SELECT count(DISTINCT tester_hash) FROM beta_feedback WHERE {verified_filter}"
                     )
                     external = cur.fetchone()[0]
@@ -292,6 +297,10 @@ class BetaStore:
                     "SELECT count(*) c FROM beta_feedback "
                     "WHERE consent=1 AND external_tester=1 AND verified_external=0"
                 ).fetchone()["c"]
+                submitted_external = con.execute(
+                    "SELECT count(DISTINCT tester_hash) c FROM beta_feedback "
+                    "WHERE consent=1 AND external_tester=1"
+                ).fetchone()["c"]
                 external = con.execute(
                     "SELECT count(DISTINCT tester_hash) c FROM beta_feedback "
                     "WHERE consent=1 AND external_tester=1 AND verified_external=1"
@@ -305,6 +314,8 @@ class BetaStore:
         return {
             "consented_feedback_records": int(total),
             "pending_external_submissions": int(pending),
+            "unique_external_beta_submissions": int(submitted_external),
+            "unique_pending_external_beta_testers": int(submitted_external) - int(external),
             "unique_verified_external_beta_testers": int(external),
             "unique_external_beta_testers": int(external),
             "beta_target": 2,
