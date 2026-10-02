@@ -35,23 +35,23 @@
         </div>
         <div class="profile-dropdown-divider"></div>
         <button class="profile-dropdown-item" type="button" data-profile-destination="account" role="menuitem">
-          <span>◎</span><span><strong>Profile & Settings</strong><small>Account overview and preferences</small></span>
+          <span class="dropdown-ui-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"></circle><path d="M4.5 21a7.5 7.5 0 0 1 15 0"></path></svg></span><span><strong>Profile & Settings</strong><small>Account overview and preferences</small></span>
         </button>
         <button class="profile-dropdown-item" type="button" data-profile-destination="keys" role="menuitem">
-          <span>⌘</span><span><strong>API Keys</strong><small>Create and manage credentials</small></span>
+          <span class="dropdown-ui-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><circle cx="8" cy="15" r="4"></circle><path d="m11 12 8-8M16 7l2 2M14 9l2 2"></path></svg></span><span><strong>API Keys</strong><small>Create and manage credentials</small></span>
         </button>
         <button class="profile-dropdown-item" type="button" data-profile-destination="usage" role="menuitem">
-          <span>▦</span><span><strong>Usage & Billing</strong><small>Token usage, balance and pricing</small></span>
+          <span class="dropdown-ui-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"></path></svg></span><span><strong>Usage & Billing</strong><small>Token usage, balance and pricing</small></span>
         </button>
         <a class="profile-dropdown-item" href="/guide" role="menuitem">
-          <span>?</span><span><strong>Help & Docs</strong><small>Guides and API reference</small></span>
+          <span class="dropdown-ui-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"></circle><path d="M9.8 9a2.5 2.5 0 1 1 4.6 1.4c-.7 1-2.4 1.4-2.4 3.1M12 17h.01"></path></svg></span><span><strong>Help & Docs</strong><small>Guides and API reference</small></span>
         </a>
         <div class="profile-dropdown-divider"></div>
         <a id="profileSignInLink" class="profile-dropdown-item profile-signin-item" href="/developer" role="menuitem">
-          <span>→</span><span><strong>Sign in</strong><small>Access your developer account</small></span>
+          <span class="dropdown-ui-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M10 17l5-5-5-5M15 12H3"></path><path d="M14 3h4a3 3 0 0 1 3 3v12a3 3 0 0 1-3 3h-4"></path></svg></span><span><strong>Sign in</strong><small>Access your developer account</small></span>
         </a>
         <button id="profileMenuLogoutBtn" class="profile-dropdown-item profile-logout-item hidden" type="button" role="menuitem">
-          <span>↪</span><span><strong>Log out</strong><small>End this developer session</small></span>
+          <span class="dropdown-ui-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="m14 8 4 4-4 4M18 12H6"></path><path d="M10 4H5a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h5"></path></svg></span><span><strong>Log out</strong><small>End this developer session</small></span>
         </button>
       </div>
     </div>
@@ -606,19 +606,19 @@ print(result.model)</code></pre>
   </div>
 
   <div id="profileWorkspace" class="hidden profile-product-shell">
-    <aside class="profile-side-nav">
+    <aside class="profile-side-nav" aria-label="Developer workspace navigation">
       <span class="profile-side-label">Developer</span>
-      <button type="button" data-console-target="overview"><span>⌂</span>Dashboard</button>
-      <button type="button" data-console-target="playground"><span>▷</span>Playground</button>
-      <button type="button" data-console-target="runtime"><span>⬡</span>Models</button>
-      <a href="/docs"><span>&lt;/&gt;</span>API & Integration</a>
-      <button type="button" data-console-target="usecases"><span>◇</span>Use Cases</button>
-      <a href="/guide"><span>▣</span>Docs</a>
+      <button type="button" data-console-target="overview"><span class="profile-nav-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="2"></rect><rect x="14" y="3" width="7" height="7" rx="2"></rect><rect x="3" y="14" width="7" height="7" rx="2"></rect><rect x="14" y="14" width="7" height="7" rx="2"></rect></svg></span><span class="profile-nav-text">Dashboard</span></button>
+      <button type="button" data-console-target="playground"><span class="profile-nav-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"></circle><path d="m10 8 6 4-6 4Z"></path></svg></span><span class="profile-nav-text">Playground</span></button>
+      <button type="button" data-console-target="runtime"><span class="profile-nav-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="m12 3 8 4.5v9L12 21l-8-4.5v-9L12 3Z"></path><path d="m4.3 7.7 7.7 4.4 7.7-4.4M12 12.1V21"></path></svg></span><span class="profile-nav-text">Models</span></button>
+      <a href="/docs"><span class="profile-nav-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="m8 9-3 3 3 3M16 9l3 3-3 3M14 5l-4 14"></path></svg></span><span class="profile-nav-text">API &amp; Integration</span></a>
+      <button type="button" data-console-target="usecases"><span class="profile-nav-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M9 18h6M10 22h4"></path><path d="M8.3 14.7A7 7 0 1 1 15.7 14.7c-.9.7-1.4 1.4-1.6 2.3H9.9c-.2-.9-.7-1.6-1.6-2.3Z"></path></svg></span><span class="profile-nav-text">Use Cases</span></button>
+      <a href="/guide"><span class="profile-nav-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M4 5.5A3.5 3.5 0 0 1 7.5 2H11v18H7.5A3.5 3.5 0 0 0 4 23V5.5ZM20 5.5A3.5 3.5 0 0 0 16.5 2H13v18h3.5A3.5 3.5 0 0 1 20 23V5.5Z"></path></svg></span><span class="profile-nav-text">Docs</span></a>
       <div class="profile-side-divider"></div>
       <span class="profile-side-label">Account</span>
-      <button class="active" type="button" data-profile-destination="account"><span>♙</span>Profile & Settings</button>
-      <button type="button" data-profile-destination="keys"><span>⌘</span>API Keys</button>
-      <button type="button" data-profile-destination="usage"><span>▥</span>Usage & Billing</button>
+      <button class="active" type="button" data-profile-destination="account"><span class="profile-nav-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"></circle><path d="M4.5 21a7.5 7.5 0 0 1 15 0"></path></svg></span><span class="profile-nav-text">Profile &amp; Settings</span></button>
+      <button type="button" data-profile-destination="keys"><span class="profile-nav-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><circle cx="8" cy="15" r="4"></circle><path d="m11 12 8-8M16 7l2 2M14 9l2 2"></path></svg></span><span class="profile-nav-text">API Keys</span></button>
+      <button type="button" data-profile-destination="usage"><span class="profile-nav-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"></path></svg></span><span class="profile-nav-text">Usage &amp; Billing</span></button>
     </aside>
 
     <div class="profile-main">
