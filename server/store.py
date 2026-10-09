@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import hashlib
 import json
-import sqlite3
 import uuid
 from datetime import datetime, timezone
 from pathlib import Path
@@ -59,6 +58,7 @@ class BetaStore:
             self._init()
 
     def _sqlite(self):
+        import sqlite3
         Path(self.sqlite_path).parent.mkdir(parents=True, exist_ok=True)
         con = sqlite3.connect(self.sqlite_path)
         con.row_factory = sqlite3.Row
@@ -248,7 +248,7 @@ class BetaStore:
                     )
         if not row:
             raise KeyError(evidence_id)
-        tester_hash = row[0] if not isinstance(row, sqlite3.Row) else row["tester_hash"]
+        tester_hash = row[0] if self.use_postgres else row["tester_hash"]
         payload = {
             "event": "verified_external",
             "id": evidence_id,

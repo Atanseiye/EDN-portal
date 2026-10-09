@@ -5,7 +5,6 @@ import hmac
 import json
 import os
 import secrets
-import sqlite3
 import uuid
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
@@ -189,6 +188,7 @@ class DeveloperStore:
             self._init()
 
     def _sqlite(self):
+        import sqlite3
         Path(self.sqlite_path).parent.mkdir(parents=True, exist_ok=True)
         con = sqlite3.connect(self.sqlite_path)
         con.row_factory = sqlite3.Row
