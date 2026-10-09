@@ -33,7 +33,7 @@ with tempfile.TemporaryFile(mode='w+') as logfile:
     tail = subprocess.Popen(['npx', 'wrangler', 'tail', 'ednai', '--format', 'json'], stdout=logfile, stderr=subprocess.STDOUT)
     try:
         time.sleep(8)
-        for path in ['/health/live', '/health/ready']:
+        for path in ['/health/live', '/health/ready', '/v1/models']:
             try:
                 probe = urllib.request.Request(origin + path, headers={'User-Agent': 'Mozilla/5.0 (compatible; EDNAi-Deployment-Check/1.0)', 'Accept': 'application/json'})
                 with urllib.request.urlopen(probe, timeout=35) as response:
