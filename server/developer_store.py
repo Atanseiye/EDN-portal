@@ -493,15 +493,21 @@ class DeveloperStore:
                 with con.cursor() as cur:
                     cur.execute(
                         """
-                        SELECT developer_id FROM developer_sessions
-                        WHERE token_hash=%s AND revoked_at IS NULL AND expires_at>%s
+                        SELECT a.id,a.email,a.display_name,a.status,a.is_demo,a.created_at,
+                               COALESCE(w.balance_microusd,0)
+                        FROM developer_sessions s
+                        JOIN developer_accounts a ON a.id=s.developer_id
+                        LEFT JOIN developer_wallets w ON w.developer_id=a.id
+                        WHERE s.token_hash=%s AND s.revoked_at IS NULL AND s.expires_at>%s
                         """,
                         (token_hash,now),
                     )
                     row = cur.fetchone()
                     if not row:
                         return None
-                    account_id = row[0]
+                    return dict(zip(
+                        ["id", "email", "display_name", "status", "is_demo", "created_at", "balance_microusd"], row
+                    ))
         else:
             with self._sqlite() as con:
                 row = con.execute(

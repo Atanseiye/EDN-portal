@@ -25,3 +25,25 @@ def test_challenge_cannot_bypass_disabled_auth(monkeypatch):
     with TestClient(main.app) as client:
         assert client.get('/api/challenge/readiness').status_code == 503
         assert client.get('/challenge').status_code == 503
+
+
+def test_postgres_session_loads_account_and_balance_in_one_transaction():
+    import hashlib
+    from unittest.mock import MagicMock
+    from server.developer_store import DeveloperStore
+    store = DeveloperStore.__new__(DeveloperStore)
+    store.use_postgres = True
+    store._postgres = MagicMock()
+    connection = store._postgres.return_value.__enter__.return_value
+    cursor = connection.cursor.return_value.__enter__.return_value
+    cursor.fetchone.return_value = ('demo-id', 'demo@edn.com', 'Demo', 'active', True, 'created', 123)
+    store.account = MagicMock(side_effect=AssertionError('Extra connection required'))
+    account = store.resolve_session('session-token')
+    assert account['email'] == 'demo@edn.com' and account['is_demo'] is True
+    assert account['balance_microusd'] == 123
+    store._postgres.assert_called_once()
+    query, parameters = cursor.execute.call_args.args
+    assert parameters[0] == hashlib.sha256(b'session-token').hexdigest()
+    assert 's.revoked_at IS NULL' in query and 's.expires_at>%s' in query
+    cursor.fetchone.return_value = None
+    assert store.resolve_session('expired-session') is None

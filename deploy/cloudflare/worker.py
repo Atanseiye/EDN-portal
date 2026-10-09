@@ -105,7 +105,7 @@ class Default(WorkerEntrypoint):
         url = urlsplit(request.url)
         path = url.path
         protected = main.is_challenge_resource(path)
-        if protected:
+        if protected and not path.startswith('/api/'):
             from http.cookies import SimpleCookie
             from workers import Response
             from fastapi import HTTPException
