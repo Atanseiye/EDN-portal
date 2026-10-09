@@ -2,6 +2,7 @@
 import json
 import os
 import secrets
+import re
 import urllib.error
 import urllib.parse
 import urllib.request
@@ -26,7 +27,18 @@ def api(base, token, path, method="GET", payload=None):
             return result
     except urllib.error.HTTPError as error:
         # API bodies can contain connection strings. Keep failure output redacted.
-        raise RuntimeError(f"{service} {method} {operation} failed with HTTP {error.code}") from None
+        detail = ""
+        if service == "Neon" and operation == "/projects" and method == "GET":
+            try:
+                body = json.loads(error.read())
+                message = str(body.get("message", body.get("error", "")))
+                message = message.replace(token, "[redacted]")
+                message = re.sub(r"(?:https?|postgres(?:ql)?)://\S+", "[redacted URL]", message)
+                message = message.replace("\n", " ").replace("\r", " ")[:300]
+                detail = f": {message}" if message else ""
+            except (ValueError, AttributeError):
+                pass
+        raise RuntimeError(f"{service} {method} {operation} failed with HTTP {error.code}{detail}") from None
     except urllib.error.URLError:
         raise RuntimeError(f"{service} {method} {operation}: connection unavailable") from None
 
