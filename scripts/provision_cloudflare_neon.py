@@ -28,10 +28,14 @@ def api(base, token, path, method="GET", payload=None):
     except urllib.error.HTTPError as error:
         # API bodies can contain connection strings. Keep failure output redacted.
         detail = ""
-        if service == "Neon" and operation == "/projects" and method == "GET":
+        if method == "GET" and ((service == "Neon" and operation == "/projects") or
+                                (service == "Cloudflare" and operation.endswith("/containers/me"))):
             try:
                 body = json.loads(error.read())
                 message = str(body.get("message", body.get("error", "")))
+                if service == "Cloudflare":
+                    message = "; ".join(f"{entry.get('code')}: {entry.get('message', '')}"
+                                        for entry in body.get("errors", []))
                 message = message.replace(token, "[redacted]")
                 message = re.sub(r"(?:https?|postgres(?:ql)?)://\S+", "[redacted URL]", message)
                 message = message.replace("\n", " ").replace("\r", " ")[:300]
@@ -53,6 +57,7 @@ def main():
     subdomain = cf(f"/accounts/{account}/workers/subdomain")["result"]["subdomain"]
     if not subdomain:
         raise RuntimeError("Configure the account's workers.dev subdomain before deploying")
+    cf(f"/accounts/{account}/containers/me")
     origin = f"https://ednai.{subdomain}.workers.dev"
     project_id = os.environ.get("NEON_PROJECT_ID")
     if not project_id:
