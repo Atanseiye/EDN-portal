@@ -108,7 +108,14 @@ for name in ['sha1', 'sha256', 'sha384', 'sha512']:
 assert hashlib.pbkdf2_hmac('sha256', b'password', b'salt', 2, 16) == native_pbkdf2('sha256', b'password', b'salt', 2, 16)
 import server.developer_store as store
 salt = '00' * 16
+from unittest.mock import MagicMock
+connection = MagicMock()
+cursor = connection.cursor.return_value.__enter__.return_value
+cursor.fetchone.return_value = [native_pbkdf2('sha256', b'demo-password', bytes.fromhex(salt), 310000).hex()]
+worker.main.developer_store._postgres = MagicMock()
+worker.main.developer_store._postgres.return_value.__enter__.return_value = connection
 assert store._password_hash('demo-password', salt)[1] == native_pbkdf2('sha256', b'demo-password', bytes.fromhex(salt), 310000).hex()
+assert cursor.execute.call_args.args[1] == ('demo-password', salt)
 from fastapi.testclient import TestClient
 with TestClient(worker._app) as client:
     assert client.get('/health/live').json()['status'] == 'ok'

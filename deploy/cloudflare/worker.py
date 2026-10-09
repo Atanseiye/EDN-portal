@@ -54,7 +54,12 @@ def configure_password_hashing():
 
     def password_hash(password, salt_hex=None):
         salt = bytes.fromhex(salt_hex) if salt_hex else secrets.token_bytes(16)
-        return salt.hex(), pbkdf2_hmac("sha256", password.encode(), salt, 310000).hex()
+        with main.developer_store._postgres() as connection:
+            with connection.cursor() as cursor:
+                cursor.execute("SELECT encode(ednai_pbkdf2_sha256(%s, decode(%s, 'hex'), 310000), 'hex')",
+                               (password, salt.hex()))
+                digest = cursor.fetchone()[0]
+        return salt.hex(), digest
     store._password_hash = password_hash
 
 

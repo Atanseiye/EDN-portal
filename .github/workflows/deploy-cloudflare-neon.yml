@@ -72,11 +72,18 @@ jobs:
       - name: Initialize Neon schema and demo account
         run: |
           python - <<'PY'
-          import json, os
+          import json, os, hashlib
+          from pathlib import Path
           with open(os.environ['EDNAI_CONFIG_FILE']) as stream:
               os.environ.update(json.load(stream))
           from server.main import developer_store
           assert developer_store.ping()
+          with developer_store._postgres() as connection:
+              with connection.cursor() as cursor:
+                  cursor.execute(Path('server/password_crypto.sql').read_text())
+                  for iterations in [2, 4096, 310000]:
+                      cursor.execute("SELECT ednai_pbkdf2_sha256(%s, %s, %s)", ('test-password', b'test-salt', iterations))
+                      assert bytes(cursor.fetchone()[0]) == hashlib.pbkdf2_hmac('sha256', b'test-password', b'test-salt', iterations)
           print('Neon schema and demo account initialized')
           PY
       - name: Deploy free-tier Python Worker
