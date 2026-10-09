@@ -6,10 +6,11 @@ Pushing deployment changes to `ednai` runs `.github/workflows/deploy-cloudflare-
 It uses repository secrets `CLOUDFLARE_API_TOKEN`, `NEON_API_KEY`, and `HF_TOKEN`,
 and repository variable `CLOUDFLARE_ACCOUNT_ID`. Optional `NEON_PROJECT_ID` selects
 an existing **dedicated demo** project. Without it, the workflow creates/reuses
-`ednai-cloudflare-demo` in London. Optional `EDNAI_GRADIO_SPACE_ID` selects the
+`ednai-cloudflare-demo` in London.
 If your API key has access to multiple Neon organizations, set `NEON_ORG_ID` to
 the desired organization ID; a single organization is selected automatically.
-existing model runtime. The default remains `KoladeOdunope/ednai-natlas-runtime`.
+Optional `EDNAI_GRADIO_SPACE_ID` selects the existing model runtime. The default
+remains `KoladeOdunope/ednai-natlas-runtime`.
 
 The workflow preserves Render and deploys a separate public challenge/demo
 account into Neon. It does not migrate Render users or balances or switch DNS.

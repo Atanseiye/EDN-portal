@@ -7,6 +7,7 @@ on:
     paths:
       - 'deploy/cloudflare/**'
       - 'scripts/provision_cloudflare_neon.py'
+      - 'scripts/deploy_cloudflare.py'
       - '.github/workflows/deploy-cloudflare-neon.yml'
       - 'server/**'
       - 'ednai/**'
@@ -68,7 +69,7 @@ jobs:
         run: python scripts/provision_cloudflare_neon.py
       - name: Deploy Worker and container
         working-directory: deploy/cloudflare
-        run: npm run deploy
+        run: python ../../scripts/deploy_cloudflare.py
       - name: Install server configuration secret
         working-directory: deploy/cloudflare
         run: npx wrangler secret put EDNAI_CONFIG < "$EDNAI_CONFIG_FILE"
