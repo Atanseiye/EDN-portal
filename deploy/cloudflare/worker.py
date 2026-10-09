@@ -36,15 +36,25 @@ def configure_password_hashing():
     from js import crypto, Uint8Array, Object
     from pyodide.ffi import to_js, run_sync
     import secrets
+    import hashlib
     import server.developer_store as store
+
+    def pbkdf2_hmac(hash_name, password, salt, iterations, dklen=None):
+        algorithms = {"sha1": ("SHA-1", 20), "sha256": ("SHA-256", 32),
+                      "sha384": ("SHA-384", 48), "sha512": ("SHA-512", 64)}
+        algorithm_name, default_length = algorithms[hash_name.lower()]
+        key = run_sync(crypto.subtle.importKey("raw", to_js(bytes(password)), "PBKDF2", False, to_js(["deriveBits"])))
+        algorithm = to_js({"name": "PBKDF2", "salt": to_js(bytes(salt)), "iterations": iterations,
+                           "hash": algorithm_name}, dict_converter=Object.fromEntries)
+        result = run_sync(crypto.subtle.deriveBits(algorithm, key, (dklen or default_length) * 8))
+        return bytes(Uint8Array.new(result).to_py())
+
+    # CPython's OpenSSL PBKDF2 is absent in Workers; SCRAM needs the same operation.
+    hashlib.pbkdf2_hmac = pbkdf2_hmac
 
     def password_hash(password, salt_hex=None):
         salt = bytes.fromhex(salt_hex) if salt_hex else secrets.token_bytes(16)
-        raw = to_js(password.encode())
-        key = run_sync(crypto.subtle.importKey("raw", raw, "PBKDF2", False, to_js(["deriveBits"])))
-        algorithm = to_js({"name": "PBKDF2", "salt": to_js(salt), "iterations": 310000, "hash": "SHA-256"}, dict_converter=Object.fromEntries)
-        result = run_sync(crypto.subtle.deriveBits(algorithm, key, 256))
-        return salt.hex(), bytes(Uint8Array.new(result).to_py()).hex()
+        return salt.hex(), pbkdf2_hmac("sha256", password.encode(), salt, 310000).hex()
     store._password_hash = password_hash
 
 
