@@ -94,16 +94,28 @@ jobs:
           def request(path, data=None):
               req = urllib.request.Request(origin + path, data=json.dumps(data).encode() if data is not None else None,
                   headers={'Content-Type': 'application/json'})
-              with opener.open(req, timeout=240) as response:
-                  body=response.read()
-                  return json.loads(body) if 'application/json' in response.headers.get('Content-Type', '') else body
+              try:
+                  with opener.open(req, timeout=240) as response:
+                      body=response.read()
+                      return json.loads(body) if 'application/json' in response.headers.get('Content-Type', '') else body
+              except urllib.error.HTTPError as error:
+                  import re
+                  body=error.read().decode(errors='replace')
+                  code=re.search(r'\b(1101|1102)\b', body)
+                  detail=f'Cloudflare error {code.group(1)}' if code else ''
+                  if body.startswith('{'):
+                      detail=str(json.loads(body).get('detail', ''))[:250]
+                  print(f'::warning::{path} HTTP {error.code}: {detail}', flush=True)
+                  raise
           for attempt in range(20):
               try:
                   ready=request('/health/ready')
                   assert all(ready['checks'].values())
                   break
               except (urllib.error.URLError, AssertionError):
-                  if attempt == 19: raise
+                  if attempt == 19:
+                      print('::error::Worker readiness failed; see HTTP status annotations above', flush=True)
+                      raise
                   time.sleep(15)
           for path in ['/', '/developer', '/guide/en', '/health/live', '/v1/models']:
               request(path)
