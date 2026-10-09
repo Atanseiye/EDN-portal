@@ -84,15 +84,31 @@ def test_worker_gradio_rejects_substituted_models(monkeypatch):
 def test_worker_asgi_routes_await_wrapped_sync_endpoints():
     # Isolate Workers-only initialization from the normal-host test application.
     script = '''
-import importlib.util, sys
+import importlib.util, sys, hashlib
 from types import SimpleNamespace
+native_pbkdf2 = hashlib.pbkdf2_hmac
+class Subtle:
+    def importKey(self, format, raw, algorithm, extractable, usages):
+        assert format == 'raw' and algorithm == 'PBKDF2' and usages == ['deriveBits']
+        return raw
+    def deriveBits(self, algorithm, key, length):
+        return native_pbkdf2(algorithm['hash'].lower().replace('-', ''), key,
+                             algorithm['salt'], algorithm['iterations'], length // 8)
 sys.modules['workers'] = SimpleNamespace(WorkerEntrypoint=object)
-sys.modules['js'] = SimpleNamespace(crypto=None, Uint8Array=None, Object=None)
+sys.modules['js'] = SimpleNamespace(crypto=SimpleNamespace(subtle=Subtle()),
+    Uint8Array=SimpleNamespace(new=lambda value: SimpleNamespace(to_py=lambda: value)),
+    Object=SimpleNamespace(fromEntries=None))
 sys.modules['pyodide'] = SimpleNamespace()
-sys.modules['pyodide.ffi'] = SimpleNamespace(to_js=None, run_sync=None)
+sys.modules['pyodide.ffi'] = SimpleNamespace(to_js=lambda value, **kw: value, run_sync=lambda value: value)
 spec=importlib.util.spec_from_file_location('worker', 'deploy/cloudflare/worker.py')
 worker=importlib.util.module_from_spec(spec)
 spec.loader.exec_module(worker)
+for name in ['sha1', 'sha256', 'sha384', 'sha512']:
+    assert hashlib.pbkdf2_hmac(name, b'password', b'salt', 2) == native_pbkdf2(name, b'password', b'salt', 2)
+assert hashlib.pbkdf2_hmac('sha256', b'password', b'salt', 2, 16) == native_pbkdf2('sha256', b'password', b'salt', 2, 16)
+import server.developer_store as store
+salt = '00' * 16
+assert store._password_hash('demo-password', salt)[1] == native_pbkdf2('sha256', b'demo-password', bytes.fromhex(salt), 310000).hex()
 from fastapi.testclient import TestClient
 with TestClient(worker._app) as client:
     assert client.get('/health/live').json()['status'] == 'ok'
