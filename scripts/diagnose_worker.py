@@ -38,6 +38,8 @@ with tempfile.TemporaryFile(mode='w+') as logfile:
                 probe = urllib.request.Request(origin + path, headers={'User-Agent': 'Mozilla/5.0 (compatible; EDNAi-Deployment-Check/1.0)', 'Accept': 'application/json'})
                 with urllib.request.urlopen(probe, timeout=35) as response:
                     print(f'::notice::{path} HTTP {response.status}', flush=True)
+                    if path == '/health/ready':
+                        print('::notice::Readiness checks: ' + redact(json.dumps(json.load(response).get('checks', {}))), flush=True)
             except urllib.error.HTTPError as error:
                 body=error.read().decode(errors='replace')
                 code=re.search(r'\b(1101|1102)\b', body)
