@@ -127,6 +127,10 @@ jobs:
           assert probe['provenance_verified'] is True
           print('Deployed gateway, Neon persistence, login and N-ATLaS runtime verified')
           PY
+      - name: Diagnose failed application verification
+        if: failure() && env.EDNAI_BASE_URL != ''
+        working-directory: deploy/cloudflare
+        run: python ../../scripts/diagnose_worker.py
       - name: Remove temporary server configuration
         if: always()
         run: |
