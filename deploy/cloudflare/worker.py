@@ -104,11 +104,28 @@ class Default(WorkerEntrypoint):
         from urllib.parse import urlsplit
         url = urlsplit(request.url)
         path = url.path
+        protected = main.is_challenge_resource(path)
+        if protected:
+            from http.cookies import SimpleCookie
+            from workers import Response
+            from fastapi import HTTPException
+            cookies = SimpleCookie()
+            cookies.load(request.js_object.headers.get('cookie') or '')
+            session = cookies.get('ednai_session')
+            try:
+                main._require_challenge_demo(session.value if session else None)
+            except HTTPException as error:
+                return Response(json.dumps({'detail': error.detail}), status=error.status_code,
+                                headers={'Content-Type': 'application/json', 'Cache-Control': 'private, no-store'})
         if path in PAGES or path.startswith("/assets/"):
             from js import Request
             asset_path = PAGES.get(path, path.removeprefix("/assets"))
             asset_url = f"{url.scheme}://{url.netloc}{asset_path}"
             response = await self.env.ASSETS.fetch(Request.new(asset_url, request.js_object))
+            if protected:
+                from js import Response as JSResponse
+                response = JSResponse.new(response.body, response)
+                response.headers.set('Cache-Control', 'private, no-store')
             return response
         import asgi
         return await asgi.fetch(logged_app, request.js_object, self.env)

@@ -26,6 +26,7 @@ def test_feedback_response_updates_count_before_review_and_on_reload(tmp_path, m
         feedback["tester_identity"] = "second@example.com"
         second = client.post("/api/beta/feedback", json=feedback).json()
         assert second["validation"]["unique_external_beta_submissions"] == 2
+        assert client.post('/api/developer/login', json={'email': 'demo@edn.com', 'password': '12345'}).status_code == 200
         reload = client.get("/api/challenge/readiness").json()
         assert reload["validation"]["unique_external_beta_submissions"] == 2
         assert reload["checks"]["minimum_two_external_beta_testers"] is False

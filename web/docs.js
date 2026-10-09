@@ -10,6 +10,9 @@ function docsInitials(account){
 }
 
 function docsRenderProfile(account){
+  document.querySelectorAll('[data-challenge-only]').forEach(link=>{
+    link.hidden=!(account?.is_demo && account.email?.toLowerCase()==="demo@edn.com");
+  });
   if(!$("docsProfileAvatar"))return;
   $("docsProfileAvatar").textContent=docsInitials(account);
   $("docsProfileName").textContent=account?(account.display_name||"Developer account"):"Developer account";

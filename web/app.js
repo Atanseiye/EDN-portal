@@ -642,6 +642,9 @@ function profileInitials(account){
 }
 
 function renderHeaderProfile(account){
+  document.querySelectorAll('[data-challenge-only]').forEach(link=>{
+    link.hidden=!(account?.is_demo && account.email?.toLowerCase()==="demo@edn.com");
+  });
   if(!$("profileAvatar"))return;
   const initials=profileInitials(account);
   $("profileAvatar").textContent=initials;

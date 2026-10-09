@@ -93,6 +93,15 @@ async def _production_security(request: Request, call_next):
 
 @app.middleware("http")
 async def _studio_scope_guard(request: Request, call_next):
+    if is_challenge_resource(request.url.path):
+        try:
+            _require_challenge_demo(request.cookies.get("ednai_session"))
+        except HTTPException as exc:
+            return JSONResponse(status_code=exc.status_code, content={"detail": exc.detail},
+                                headers={"Cache-Control": "private, no-store"})
+        response = await call_next(request)
+        response.headers["Cache-Control"] = "private, no-store"
+        return response
     scope_map = {
         ("POST", "/api/studio/dataset/inspect"): "dataset.inspect",
         ("POST", "/api/studio/fine-tune/plan"): "finetuning.plan",
@@ -357,6 +366,21 @@ def _session_account(ednai_session: str | None) -> dict[str, Any]:
     account = developer_store.resolve_session(ednai_session)
     if not account:
         raise HTTPException(status_code=401, detail="Developer session is invalid or expired.")
+    return account
+
+
+def is_challenge_resource(path: str) -> bool:
+    from posixpath import normpath
+    from urllib.parse import unquote
+    return normpath('/' + unquote(path).lstrip('/')) in {
+        '/challenge', '/challenge.html', '/assets/challenge.html', '/api/challenge/readiness',
+    }
+
+
+def _require_challenge_demo(ednai_session: str | None) -> dict[str, Any]:
+    account = _session_account(ednai_session)
+    if not account.get("is_demo") or account.get("email", "").strip().lower() != "demo@edn.com":
+        raise HTTPException(status_code=403, detail="Challenge readiness is available only to the demo account.")
     return account
 
 

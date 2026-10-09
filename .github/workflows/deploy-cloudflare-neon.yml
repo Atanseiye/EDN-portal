@@ -60,7 +60,7 @@ jobs:
         run: |
           pip install -e '.[server,dev]'
           python -m pip check
-          pytest -q tests/test_worker_adapters.py tests/test_production_security.py tests/test_provider_guard.py tests/test_server.py
+          pytest -q tests/test_worker_adapters.py tests/test_production_security.py tests/test_provider_guard.py tests/test_server.py tests/test_challenge_access.py
       - name: Validate Cloudflare adapter
         working-directory: deploy/cloudflare
         run: |
@@ -128,8 +128,19 @@ jobs:
                   time.sleep(15)
           for path in ['/', '/developer', '/guide/en', '/health/live', '/v1/models']:
               request(path)
+          for path in ['/challenge', '/assets/challenge.html', '/assets/%63hallenge.html', '/api/challenge/readiness']:
+              req = urllib.request.Request(origin + path, headers={'User-Agent': 'Mozilla/5.0 (compatible; EDNAi-Deployment-Check/1.0)'})
+              try:
+                  with opener.open(req, timeout=45):
+                      raise AssertionError('Challenge access was allowed without a demo session')
+              except urllib.error.HTTPError as error:
+                  assert error.code == 401
+                  assert error.headers.get('Cache-Control') == 'private, no-store'
+                  print(f'::notice::Anonymous challenge access blocked: {path}', flush=True)
           request('/api/developer/login', {'email': 'demo@edn.com', 'password': '12345'})
           assert request('/api/developer/me')['account']['is_demo'] is True
+          for path in ['/challenge', '/assets/challenge.html', '/api/challenge/readiness']:
+              request(path)
           probe=request('/api/runtime/probe', {})
           assert probe['ok'] is True and probe['model']=='NCAIR1/N-ATLaS'
           assert probe['provenance_verified'] is True

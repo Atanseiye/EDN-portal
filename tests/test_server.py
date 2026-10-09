@@ -50,6 +50,7 @@ def test_playground_and_guides_are_real_pages():
     assert client.get("/guide/yo").status_code == 200
     assert client.get("/guide/ha").status_code == 200
     assert client.get("/guide/ig").status_code == 200
+    login_demo()
     assert client.get("/challenge").status_code == 200
     assert client.get("/developer").status_code == 200
 
@@ -109,6 +110,7 @@ def test_disabled_runtime_fails_closed():
 
 
 def test_readiness_is_not_green_without_direct_runtime():
+    login_demo()
     body = client.get("/api/challenge/readiness").json()
     assert body["problem_statement"] == "Developer Infrastructure"
     assert body["checks"]["direct_natlas_runtime_configured"] is False
