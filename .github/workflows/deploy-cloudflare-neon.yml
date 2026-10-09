@@ -1,0 +1,106 @@
+name: Deploy EDNAi to Cloudflare and Neon
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [ednai]
+    paths:
+      - 'deploy/cloudflare/**'
+      - 'scripts/provision_cloudflare_neon.py'
+      - '.github/workflows/deploy-cloudflare-neon.yml'
+      - 'server/**'
+      - 'ednai/**'
+      - 'web/**'
+      - 'Dockerfile'
+      - 'pyproject.toml'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ednai-cloudflare-deploy
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+      CLOUDFLARE_ACCOUNT_ID: ${{ vars.CLOUDFLARE_ACCOUNT_ID }}
+      NEON_API_KEY: ${{ secrets.NEON_API_KEY }}
+      HF_TOKEN: ${{ secrets.HF_TOKEN }}
+      NEON_PROJECT_ID: ${{ vars.NEON_PROJECT_ID }}
+      EDNAI_GRADIO_SPACE_ID: ${{ vars.EDNAI_GRADIO_SPACE_ID }}
+      EDNAI_ADMIN_TOKEN: ${{ secrets.EDNAI_ADMIN_TOKEN }}
+      WRANGLER_SEND_METRICS: 'false'
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: npm
+          cache-dependency-path: deploy/cloudflare/package-lock.json
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Check required credentials
+        shell: bash
+        run: |
+          set -euo pipefail
+          for name in CLOUDFLARE_API_TOKEN CLOUDFLARE_ACCOUNT_ID NEON_API_KEY HF_TOKEN; do
+            test -n "${!name}" || { echo "::error::Missing $name"; exit 1; }
+          done
+      - name: Validate gateway security and provider routing
+        run: |
+          pip install -e '.[server,dev]'
+          python -m pip check
+          pytest -q tests/test_production_security.py tests/test_provider_guard.py tests/test_server.py
+      - name: Validate Cloudflare adapter
+        working-directory: deploy/cloudflare
+        run: |
+          npm ci
+          npm test
+          npm run typecheck
+          npm run dry-run -- --containers-rollout none
+      - name: Provision dedicated Neon demo database
+        run: python scripts/provision_cloudflare_neon.py
+      - name: Deploy Worker and container
+        working-directory: deploy/cloudflare
+        run: npm run deploy
+      - name: Install server configuration secret
+        working-directory: deploy/cloudflare
+        run: npx wrangler secret put EDNAI_CONFIG < "$EDNAI_CONFIG_FILE"
+      - name: Verify deployed application
+        run: |
+          python - <<'PY'
+          import http.cookiejar, json, os, time, urllib.request, urllib.error
+          origin = os.environ['EDNAI_BASE_URL']
+          opener = urllib.request.build_opener(urllib.request.HTTPCookieProcessor(http.cookiejar.CookieJar()))
+          def request(path, data=None):
+              req = urllib.request.Request(origin + path, data=json.dumps(data).encode() if data is not None else None,
+                  headers={'Content-Type': 'application/json'})
+              with opener.open(req, timeout=240) as response:
+                  body=response.read()
+                  return json.loads(body) if 'application/json' in response.headers.get('Content-Type', '') else body
+          for attempt in range(20):
+              try:
+                  ready=request('/health/ready')
+                  assert all(ready['checks'].values())
+                  break
+              except (urllib.error.URLError, AssertionError):
+                  if attempt == 19: raise
+                  time.sleep(15)
+          for path in ['/', '/developer', '/guide/en', '/health/live', '/v1/models']:
+              request(path)
+          request('/api/developer/login', {'email': 'demo@edn.com', 'password': '12345'})
+          assert request('/api/developer/me')['account']['is_demo'] is True
+          probe=request('/api/runtime/probe', {})
+          assert probe['ok'] is True and probe['model']=='NCAIR1/N-ATLaS'
+          assert probe['provenance_verified'] is True
+          print('Deployed gateway, Neon persistence, login and N-ATLaS runtime verified')
+          PY
+      - name: Remove temporary server configuration
+        if: always()
+        run: |
+          if [ -n "${EDNAI_CONFIG_FILE:-}" ]; then rm -f "$EDNAI_CONFIG_FILE"; fi

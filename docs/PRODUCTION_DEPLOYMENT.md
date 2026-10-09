@@ -2,6 +2,12 @@
 
 This document defines the minimum deployment standard for serving real EDNAi developers.
 
+The target hosting platform is now Cloudflare Containers with Neon PostgreSQL.
+Follow [the Cloudflare deployment and migration guide](../deploy/cloudflare/README.md)
+for platform-specific commands, secret injection, and cutover checks. The Azure
+examples below describe the existing security baseline and are not the new
+deployment instructions.
+
 ## Environment separation
 
 Use separate deployments and databases for:

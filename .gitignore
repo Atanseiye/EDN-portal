@@ -11,3 +11,5 @@ coverage/
 outputs/
 data/private/
 *.sqlite3
+.wrangler/
+.dev.vars

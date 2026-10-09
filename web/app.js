@@ -6,7 +6,7 @@ const quickstartSamples={
   python:`import os\nfrom ednai import EDNAi
 
 ai = EDNAi(
-    base_url="https://ednai-6znf.onrender.com",
+    base_url="${window.location.origin}",
     api_key=os.environ["EDNAI_API_KEY"]
 )
 
@@ -19,7 +19,7 @@ print(result.text)`,
   typescript:`import { EDNAi } from "@ednai/sdk";
 
 const ai = new EDNAi({
-  baseUrl: "https://ednai-6znf.onrender.com",
+  baseUrl: "${window.location.origin}",
   apiKey: process.env.EDNAI_API_KEY
 });
 
@@ -30,7 +30,7 @@ const result = await ai.generate(
 
 console.log(result.text);`,
   curl:`curl -X POST \
-  https://ednai-6znf.onrender.com/v1/chat/completions \
+  ${window.location.origin}/v1/chat/completions \
   -H "Authorization: Bearer $EDNAI_API_KEY" \
   -H "Content-Type: application/json" \
   -d '{
@@ -1400,7 +1400,7 @@ function updateUseCaseCode(){
     code=`import { EDNAi } from "@ednai/sdk";
 
 const ai = new EDNAi({
-  baseUrl: "https://ednai-6znf.onrender.com",
+  baseUrl: "${window.location.origin}",
   apiKey: process.env.EDNAI_API_KEY
 });
 
@@ -1417,7 +1417,7 @@ const result = await ai.runUseCase(
 
 console.log(result.text);`;
   }else if(useCaseStack==="curl"){
-    code=`curl -X POST https://ednai-6znf.onrender.com/v1/use-cases/${activeUseCase} \\\n  -H "Authorization: Bearer $EDNAI_API_KEY" \\\n  -H "Content-Type: application/json" \\\n  --data-binary @- <<'JSON'
+    code=`curl -X POST ${window.location.origin}/v1/use-cases/${activeUseCase} \\\n  -H "Authorization: Bearer $EDNAI_API_KEY" \\\n  -H "Content-Type: application/json" \\\n  --data-binary @- <<'JSON'
 ${JSON.stringify(payload,null,2)}
 JSON`;
   }else{
@@ -1425,7 +1425,7 @@ JSON`;
 from ednai import EDNAi
 
 ai = EDNAi(
-    base_url="https://ednai-6znf.onrender.com",
+    base_url="${window.location.origin}",
     api_key=os.environ["EDNAI_API_KEY"],
 )
 

@@ -1,4 +1,7 @@
 (() => {
+  document.querySelectorAll("pre code").forEach(block => {
+    block.textContent = block.textContent.replaceAll("https://ednai-6znf.onrender.com", window.location.origin);
+  });
   const code = document.getElementById("heroCodeSample");
   const more = document.getElementById("heroMoreCodeBtn");
   const options = document.getElementById("heroMoreCodeOptions");
@@ -51,7 +54,7 @@
 from ednai import EDNAi
 
 ai = EDNAi(
-    base_url="https://ednai-6znf.onrender.com",
+    base_url="${window.location.origin}",
     api_key=os.environ["EDNAI_API_KEY"]
 )
 result = ai.generate("Explain APIs simply.")
@@ -59,7 +62,7 @@ print(result.text)`,
       javascript: `import { EDNAi } from "@ednai/sdk";
 
 const ai = new EDNAi({
-  baseUrl: "https://ednai-6znf.onrender.com",
+  baseUrl: "${window.location.origin}",
   apiKey: process.env.EDNAI_API_KEY
 });
 const result = await ai.generate("Explain APIs simply.");
@@ -67,7 +70,7 @@ console.log(result.text);`,
       typescript: `import { EDNAi } from "@ednai/sdk";
 
 const ai = new EDNAi({
-  baseUrl: "https://ednai-6znf.onrender.com",
+  baseUrl: "${window.location.origin}",
   apiKey: process.env.EDNAI_API_KEY
 });
 const prompt: string = "Explain APIs simply.";

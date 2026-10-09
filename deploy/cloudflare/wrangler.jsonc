@@ -1,0 +1,18 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "ednai",
+  "main": "src/index.ts",
+  "compatibility_date": "2026-10-09",
+  "workers_dev": true,
+  "containers": [{
+    "class_name": "EDNAiContainer",
+    "image": "../../Dockerfile",
+    "image_build_context": "../..",
+    "max_instances": 1,
+    "instance_type": "basic"
+  }],
+  "durable_objects": {
+    "bindings": [{ "name": "EDNAI_CONTAINER", "class_name": "EDNAiContainer" }]
+  },
+  "migrations": [{ "tag": "v1", "new_sqlite_classes": ["EDNAiContainer"] }]
+}

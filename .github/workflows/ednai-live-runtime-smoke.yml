@@ -10,11 +10,18 @@ on:
 jobs:
   smoke:
     runs-on: ubuntu-latest
+    env:
+      EDNAI_BASE_URL: ${{ vars.EDNAI_BASE_URL }}
+      EDNAI_SMOKE_API_KEY: ${{ secrets.EDNAI_SMOKE_API_KEY }}
     steps:
+      - name: Validate deployment configuration
+        run: |
+          test -n "$EDNAI_BASE_URL" || { echo "Set EDNAI_BASE_URL to the deployment HTTPS origin."; exit 1; }
+          test -n "$EDNAI_SMOKE_API_KEY" || { echo "Set EDNAI_SMOKE_API_KEY for authenticated smoke requests."; exit 1; }
       - name: Verify gateway health
         run: |
           set -euo pipefail
-          curl --fail --silent --show-error --max-time 60             https://ednai-6znf.onrender.com/health | tee /tmp/health.json
+          curl --fail --silent --show-error --max-time 60             "${EDNAI_BASE_URL%/}"/health | tee /tmp/health.json
           python - <<'PY'
           import json
           body=json.load(open("/tmp/health.json"))
@@ -30,7 +37,7 @@ jobs:
           status=0
           for attempt in 1 2 3; do
             echo "Probe attempt $attempt"
-            if curl --fail --silent --show-error --max-time 240               -X POST https://ednai-6znf.onrender.com/api/runtime/probe               -o /tmp/probe.json; then
+            if curl --fail --silent --show-error --max-time 240               -H "Authorization: Bearer $EDNAI_SMOKE_API_KEY" -X POST "${EDNAI_BASE_URL%/}"/api/runtime/probe               -o /tmp/probe.json; then
               status=1
               break
             fi
