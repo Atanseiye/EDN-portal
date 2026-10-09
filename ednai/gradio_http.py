@@ -2,10 +2,12 @@
 import json
 import httpx
 
+worker_transport = None
+
 
 def predict(space_id, token, endpoint, data, audio_path=None):
     headers = {"Authorization": f"Bearer {token}"} if token else {}
-    with httpx.Client(headers=headers, timeout=240) as client:
+    with httpx.Client(headers=headers, timeout=240, transport=worker_transport) as client:
         info = client.get(f"https://huggingface.co/api/spaces/{space_id}")
         info.raise_for_status()
         host = info.json().get("host")

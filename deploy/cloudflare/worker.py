@@ -15,6 +15,9 @@ from server.billing import Pricing
 from fastapi.middleware.cors import CORSMiddleware
 from starlette.middleware.trustedhost import TrustedHostMiddleware
 from fastapi.routing import request_response
+import ednai.gradio_http as gradio_http
+from ednai.worker_http import WorkerHTTPTransport
+gradio_http.worker_transport = WorkerHTTPTransport()
 
 _app = main.app
 _initialized = False
