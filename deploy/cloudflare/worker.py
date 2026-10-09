@@ -14,6 +14,7 @@ from server.security import validate_production_settings
 from server.billing import Pricing
 from fastapi.middleware.cors import CORSMiddleware
 from starlette.middleware.trustedhost import TrustedHostMiddleware
+from starlette.routing import request_response
 
 _app = main.app
 _initialized = False
@@ -45,6 +46,9 @@ def configure_password_hashing():
 
 
 configure_password_hashing()
+async def run_inline(function, *args, **kwargs):
+    return function(*args, **kwargs)
+main.run_in_threadpool = run_inline
 for route in _app.routes:
     if hasattr(route, "dependant") and not inspect.iscoroutinefunction(route.dependant.call):
         def wrap(function):
@@ -53,6 +57,7 @@ for route in _app.routes:
                 return function(**kwargs)
             return call
         route.dependant.call = wrap(route.dependant.call)
+        route.app = request_response(route.get_route_handler())
 
 
 class Default(WorkerEntrypoint):
