@@ -34,7 +34,10 @@ ledger verification before changing client URLs or DNS.
 - `server/postgres.py` selects pg8000 on Workers and psycopg on normal hosts.
   Both retain commit/rollback transactions and enforce TLS; wallet operations
   are not split into independent HTTP queries.
-- PBKDF2 uses WebCrypto with the existing salt/hash format and iteration count.
+- Neon `pgcrypto` performs password PBKDF2 at the existing 310,000 iterations,
+  preserving salt/hash compatibility. CI checks it against Python's derivation
+  before deploying. WebCrypto supplies PostgreSQL's lower-cost SCRAM derivation.
+  Cloudflare's 100,000-iteration WebCrypto limit is respected.
 - Gradio uses its HTTP/SSE API without native clients or background threads.
   Model provenance and exact usage checks remain in the shared provider code.
 - Repository pages/assets use the Workers static-assets binding.
