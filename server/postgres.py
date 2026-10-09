@@ -16,10 +16,11 @@ def connect(database_url):
     parsed = urlsplit(database_url)
     if parsed.scheme not in {"postgres", "postgresql"} or not parsed.hostname:
         raise ValueError("A PostgreSQL connection URL is required")
-    transport = {"ssl_context": ssl.create_default_context()}
     if os.environ.get("EDNAI_WORKERS") == "true":
         from server.worker_socket import WorkerSocket
         transport = {"sock": WorkerSocket(parsed.hostname, parsed.port or 5432), "ssl_context": False}
+    else:
+        transport = {"ssl_context": ssl.create_default_context()}
     connection = pg8000.dbapi.connect(
         host=parsed.hostname, port=parsed.port or 5432,
         user=unquote(parsed.username or ""), password=unquote(parsed.password or ""),
