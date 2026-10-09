@@ -34,7 +34,7 @@ EDNAi deliberately refuses to identify a different general-purpose model as N-AT
 
 For real-user deployment, follow the fail-closed production baseline in `docs/PRODUCTION_DEPLOYMENT.md`. The shared challenge demo account must not share a database/environment with real customer accounts.
 
-Cloudflare Containers + Neon deployment configuration and migration steps are
+Cloudflare Workers Free + Neon deployment configuration and migration steps are
 available in [deploy/cloudflare/README.md](deploy/cloudflare/README.md). The Render
 links above remain the current live deployment until cloud validation and data
 migration are complete.

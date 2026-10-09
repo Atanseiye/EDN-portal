@@ -8,6 +8,7 @@ on:
       - 'deploy/cloudflare/**'
       - 'scripts/provision_cloudflare_neon.py'
       - 'scripts/deploy_cloudflare.py'
+      - 'scripts/prepare_python_worker.py'
       - '.github/workflows/deploy-cloudflare-neon.yml'
       - 'server/**'
       - 'ednai/**'
@@ -46,6 +47,8 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: '3.12'
+      - name: Install Python Workers tooling
+        run: pip install uv
       - name: Check required credentials
         shell: bash
         run: |
@@ -57,17 +60,26 @@ jobs:
         run: |
           pip install -e '.[server,dev]'
           python -m pip check
-          pytest -q tests/test_production_security.py tests/test_provider_guard.py tests/test_server.py
+          pytest -q tests/test_worker_adapters.py tests/test_production_security.py tests/test_provider_guard.py tests/test_server.py
       - name: Validate Cloudflare adapter
         working-directory: deploy/cloudflare
         run: |
           npm ci
-          npm test
-          npm run typecheck
-          npm run dry-run -- --containers-rollout none
+          python ../../scripts/prepare_python_worker.py
+          python ../../scripts/deploy_cloudflare.py dry-run
       - name: Provision dedicated Neon demo database
         run: python scripts/provision_cloudflare_neon.py
-      - name: Deploy Worker and container
+      - name: Initialize Neon schema and demo account
+        run: |
+          python - <<'PY'
+          import json, os
+          with open(os.environ['EDNAI_CONFIG_FILE']) as stream:
+              os.environ.update(json.load(stream))
+          from server.main import developer_store
+          assert developer_store.ping()
+          print('Neon schema and demo account initialized')
+          PY
+      - name: Deploy free-tier Python Worker
         working-directory: deploy/cloudflare
         run: python ../../scripts/deploy_cloudflare.py
       - name: Install server configuration secret

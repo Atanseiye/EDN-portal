@@ -54,7 +54,9 @@ class BetaStore:
         self.sqlite_path = sqlite_path
         self.database_url = database_url
         self.use_postgres = bool(database_url)
-        self._init()
+        import os
+        if os.environ.get("EDNAI_SKIP_DB_INIT") != "true":
+            self._init()
 
     def _sqlite(self):
         Path(self.sqlite_path).parent.mkdir(parents=True, exist_ok=True)
@@ -63,8 +65,8 @@ class BetaStore:
         return con
 
     def _postgres(self):
-        import psycopg
-        return psycopg.connect(self.database_url)
+        from server.postgres import connect
+        return connect(self.database_url)
 
     def _init(self):
         if self.use_postgres:

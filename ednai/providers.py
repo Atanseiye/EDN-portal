@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import os
 import re
 import time
 from pathlib import Path
@@ -143,20 +144,21 @@ class GradioSpaceProvider(Provider):
                  temperature=0.2, max_tokens=512, json_mode=False) -> Generation:
         assert_natlas_model(model)
         try:
-            from gradio_client import Client
+            if os.environ.get("EDNAI_WORKERS") != "true":
+                from gradio_client import Client
         except ImportError as exc:
             raise ProviderError("Install ednai[server] to use a Gradio N-ATLaS runtime") from exc
         started = time.perf_counter()
         try:
             client_kwargs = {"hf_token": self.hf_token} if self.hf_token else {}
-            client = Client(self.space_id, **client_kwargs)
-            result = client.predict(
-                json.dumps([m.model_dump() for m in messages], ensure_ascii=False),
-                float(temperature),
-                int(max_tokens),
-                bool(json_mode),
-                api_name="/generate",
-            )
+            data = [json.dumps([m.model_dump() for m in messages], ensure_ascii=False),
+                    float(temperature), int(max_tokens), bool(json_mode)]
+            if os.environ.get("EDNAI_WORKERS") == "true":
+                from .gradio_http import predict
+                result = predict(self.space_id, self.hf_token, "generate", data)
+            else:
+                client = Client(self.space_id, **client_kwargs)
+                result = client.predict(*data, api_name="/generate")
         except Exception as exc:
             message = str(exc)
             if ("ZeroGPU quota" in message or "exceeded your ZeroGPU quota" in message or "ZeroGPU runs limit" in message):
@@ -206,7 +208,8 @@ class GradioSpaceProvider(Provider):
         language = assert_asr_language(language)
         expected_model = NATLAS_ASR_MODELS[language]
         try:
-            from gradio_client import Client, handle_file
+            if os.environ.get("EDNAI_WORKERS") != "true":
+                from gradio_client import Client, handle_file
         except ImportError as exc:
             raise ProviderError(
                 "Install ednai[server] to use the hosted NCAIR ASR runtime"
@@ -215,12 +218,12 @@ class GradioSpaceProvider(Provider):
         started = time.perf_counter()
         try:
             client_kwargs = {"hf_token": self.hf_token} if self.hf_token else {}
-            client = Client(self.space_id, **client_kwargs)
-            result = client.predict(
-                handle_file(str(audio_path)),
-                language,
-                api_name="/transcribe",
-            )
+            if os.environ.get("EDNAI_WORKERS") == "true":
+                from .gradio_http import predict
+                result = predict(self.space_id, self.hf_token, "transcribe", [None, language], audio_path)
+            else:
+                client = Client(self.space_id, **client_kwargs)
+                result = client.predict(handle_file(str(audio_path)), language, api_name="/transcribe")
         except Exception as exc:
             message = str(exc)
             if ("ZeroGPU quota" in message or "exceeded your ZeroGPU quota" in message or "ZeroGPU runs limit" in message):

@@ -1,0 +1,15 @@
+[project]
+name = "ednai-worker"
+version = "0.1.0"
+requires-python = ">=3.12"
+dependencies = [
+  "fastapi>=0.115,<1",
+  "pydantic>=2.8,<3",
+  "pydantic-settings>=2.6,<3",
+  "python-multipart>=0.0.12,<1",
+  "httpx==0.28.1",
+  "pg8000==1.31.5",
+]
+
+[dependency-groups]
+dev = ["workers-py", "workers-runtime-sdk"]

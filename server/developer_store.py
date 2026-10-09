@@ -3,6 +3,7 @@ from __future__ import annotations
 import hashlib
 import hmac
 import json
+import os
 import secrets
 import sqlite3
 import uuid
@@ -184,7 +185,8 @@ class DeveloperStore:
         self.sqlite_path = sqlite_path
         self.database_url = database_url
         self.use_postgres = bool(database_url)
-        self._init()
+        if os.environ.get("EDNAI_SKIP_DB_INIT") != "true":
+            self._init()
 
     def _sqlite(self):
         Path(self.sqlite_path).parent.mkdir(parents=True, exist_ok=True)
@@ -194,8 +196,8 @@ class DeveloperStore:
         return con
 
     def _postgres(self):
-        import psycopg
-        return psycopg.connect(self.database_url)
+        from server.postgres import connect
+        return connect(self.database_url)
 
     def ping(self) -> bool:
         try:

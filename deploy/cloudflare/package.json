@@ -3,15 +3,12 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "test": "node --test tests/*.test.cjs",
-    "typecheck": "tsc --noEmit",
-    "deploy": "wrangler deploy",
-    "dry-run": "wrangler deploy --dry-run"
+    "deploy": "uv run pywrangler deploy",
+    "dry-run": "uv run pywrangler deploy --dry-run",
+    "dev": "uv run pywrangler dev"
   },
-  "dependencies": { "@cloudflare/containers": "0.3.7" },
+  "dependencies": {},
   "devDependencies": {
-    "@cloudflare/workers-types": "5.20261009.1",
-    "typescript": "^5.9.0",
     "wrangler": "4.149.0"
   }
 }

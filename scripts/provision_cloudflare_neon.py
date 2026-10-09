@@ -57,7 +57,6 @@ def main():
     subdomain = cf(f"/accounts/{account}/workers/subdomain")["result"]["subdomain"]
     if not subdomain:
         raise RuntimeError("Configure the account's workers.dev subdomain before deploying")
-    cf(f"/accounts/{account}/containers/me")
     origin = f"https://ednai.{subdomain}.workers.dev"
     project_id = os.environ.get("NEON_PROJECT_ID")
     if not project_id:

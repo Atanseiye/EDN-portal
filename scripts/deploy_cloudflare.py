@@ -13,13 +13,14 @@ def failure_summary(output):
     output = re.sub(r"postgres(?:ql)?://\S+", "[redacted database URL]", output)
     lines = output.splitlines()
     for index, line in enumerate(lines):
-        if "[ERROR]" in line or "ERROR:" in line:
+        if "[ERROR]" in line or "ERROR:" in line or line.lstrip().startswith("ERROR "):
             return " | ".join(lines[index:index + 12])[:1500]
     return "Wrangler deployment failed; open the deployment step logs for details."
 
 
 def main():
-    process = subprocess.Popen(["npm", "run", "deploy"], stdout=subprocess.PIPE,
+    command = sys.argv[1] if len(sys.argv) > 1 else "deploy"
+    process = subprocess.Popen(["npm", "run", command], stdout=subprocess.PIPE,
                                stderr=subprocess.STDOUT, text=True)
     lines = []
     for line in process.stdout:

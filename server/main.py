@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import hmac
+import os
 import smtplib
 import ssl
 import tempfile
@@ -57,7 +58,7 @@ pricing = Pricing.from_values(
     settings.ednai_input_usd_per_1m_tokens,
     settings.ednai_output_usd_per_1m_tokens,
 )
-if settings.ednai_demo_account_enabled:
+if settings.ednai_demo_account_enabled and os.environ.get("EDNAI_SKIP_DB_INIT") != "true":
     developer_store.ensure_demo_account(
         settings.ednai_demo_email,
         settings.ednai_demo_password,
