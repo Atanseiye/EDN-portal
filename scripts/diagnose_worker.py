@@ -33,9 +33,10 @@ with tempfile.TemporaryFile(mode='w+') as logfile:
     tail = subprocess.Popen(['npx', 'wrangler', 'tail', 'ednai', '--format', 'json'], stdout=logfile, stderr=subprocess.STDOUT)
     try:
         time.sleep(8)
-        for path in ['/health/live', '/health/ready', '/v1/models']:
+        for path in ['/health/live', '/health/ready', '/v1/models', '/api/developer/login']:
             try:
-                probe = urllib.request.Request(origin + path, headers={'User-Agent': 'Mozilla/5.0 (compatible; EDNAi-Deployment-Check/1.0)', 'Accept': 'application/json'})
+                data = json.dumps({'email': 'demo@edn.com', 'password': '12345'}).encode() if path == '/api/developer/login' else None
+                probe = urllib.request.Request(origin + path, data=data, headers={'User-Agent': 'Mozilla/5.0 (compatible; EDNAi-Deployment-Check/1.0)', 'Accept': 'application/json', 'Content-Type': 'application/json'})
                 with urllib.request.urlopen(probe, timeout=35) as response:
                     print(f'::notice::{path} HTTP {response.status}', flush=True)
                     if path == '/health/ready':
@@ -70,3 +71,5 @@ with tempfile.TemporaryFile(mode='w+') as logfile:
             message=' '.join(str(part) for part in log.get('message', []))
             if 'EDNAI_DATABASE_ERROR' in message:
                 print('::error::' + redact(message), flush=True)
+            elif log.get('level') == 'error':
+                print('::error::Application: ' + redact(message.strip().splitlines()[-1]), flush=True)
