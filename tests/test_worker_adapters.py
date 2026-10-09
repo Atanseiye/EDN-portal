@@ -24,7 +24,8 @@ def test_cloudflare_postgres_transport_upgrades_tls_and_buffers_fragments(monkey
     monkeypatch.setitem(sys.modules, "js", SimpleNamespace(Object=SimpleNamespace(fromEntries=None)))
     monkeypatch.setitem(sys.modules, "pyodide.ffi", SimpleNamespace(run_sync=lambda value: value, to_js=lambda value, **kw: value))
     stream = WorkerSocket("database.neon.tech", 5432)
-    socket.startTls.assert_called_once_with({"expectedServerHostname": "database.neon.tech"})
+    socket.startTls.assert_called_once_with()
+    assert api.connect.call_args.args[0]["hostname"] == "database.neon.tech"
     assert stream.read(3) == b"abc"
     assert stream.read(3) == b"def"
     assert reader.read.call_count == 3

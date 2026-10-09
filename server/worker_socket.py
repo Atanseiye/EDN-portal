@@ -20,8 +20,8 @@ class WorkerSocket:
                 raise ConnectionError("PostgreSQL server refused TLS")
             self._reader.releaseLock()
             self._writer.releaseLock()
-            # Cloudflare verifies the certificate against this hostname.
-            self._socket = self._socket.startTls(options({"expectedServerHostname": host}))
+            # Cloudflare verifies TLS against the original connection hostname.
+            self._socket = self._socket.startTls()
             self._wait(self._socket.opened)
             self._open_streams()
         except BaseException:
