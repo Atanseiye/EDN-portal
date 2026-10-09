@@ -35,7 +35,8 @@ with tempfile.TemporaryFile(mode='w+') as logfile:
         time.sleep(8)
         for path in ['/health/live', '/health/ready']:
             try:
-                with urllib.request.urlopen(origin + path, timeout=35) as response:
+                probe = urllib.request.Request(origin + path, headers={'User-Agent': 'Mozilla/5.0 (compatible; EDNAi-Deployment-Check/1.0)', 'Accept': 'application/json'})
+                with urllib.request.urlopen(probe, timeout=35) as response:
                     print(f'::notice::{path} HTTP {response.status}', flush=True)
             except urllib.error.HTTPError as error:
                 body=error.read().decode(errors='replace')
