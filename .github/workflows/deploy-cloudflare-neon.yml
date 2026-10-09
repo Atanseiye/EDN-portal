@@ -107,13 +107,13 @@ jobs:
                       detail=str(json.loads(body).get('detail', ''))[:250]
                   print(f'::warning::{path} HTTP {error.code}: {detail}', flush=True)
                   raise
-          for attempt in range(20):
+          for attempt in range(8):
               try:
                   ready=request('/health/ready')
                   assert all(ready['checks'].values())
                   break
               except (urllib.error.URLError, AssertionError):
-                  if attempt == 19:
+                  if attempt == 7:
                       print('::error::Worker readiness failed; see HTTP status annotations above', flush=True)
                       raise
                   time.sleep(15)

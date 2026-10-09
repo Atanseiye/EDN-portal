@@ -58,6 +58,7 @@ def main():
     if not subdomain:
         raise RuntimeError("Configure the account's workers.dev subdomain before deploying")
     origin = f"https://ednai.{subdomain}.workers.dev"
+    print(f"::notice::EDNAi deployment target: {origin}", flush=True)
     project_id = os.environ.get("NEON_PROJECT_ID")
     if not project_id:
         org_id = os.environ.get("NEON_ORG_ID")
