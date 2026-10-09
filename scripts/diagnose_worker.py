@@ -24,6 +24,11 @@ with urllib.request.urlopen(request) as response:
     subdomain = json.load(response)['result']['subdomain']
 origin = f'https://ednai.{subdomain}.workers.dev'
 print(f'::notice::Live Worker: {origin}', flush=True)
+request = urllib.request.Request(f'https://api.cloudflare.com/client/v4/accounts/{account}/workers/scripts/ednai/subdomain',
+    headers={'Authorization': 'Bearer ' + os.environ['CLOUDFLARE_API_TOKEN']})
+with urllib.request.urlopen(request) as response:
+    settings = json.load(response)['result']
+print('::notice::Worker public endpoint settings: ' + redact(json.dumps(settings)), flush=True)
 with tempfile.TemporaryFile(mode='w+') as logfile:
     tail = subprocess.Popen(['npx', 'wrangler', 'tail', 'ednai', '--format', 'json'], stdout=logfile, stderr=subprocess.STDOUT)
     try:
@@ -36,6 +41,8 @@ with tempfile.TemporaryFile(mode='w+') as logfile:
                 body=error.read().decode(errors='replace')
                 code=re.search(r'\b(1101|1102)\b', body)
                 print(f'::error::{path} HTTP {error.code}' + (f' Cloudflare {code.group(1)}' if code else ''), flush=True)
+                details = {name: error.headers.get(name) for name in ['server', 'content-type', 'cf-ray', 'location']}
+                print('::notice::Response details: ' + redact(json.dumps(details) + ' body=' + body[:700]), flush=True)
             except urllib.error.URLError:
                 print(f'::error::{path} connection failed', flush=True)
         time.sleep(5)
