@@ -44,12 +44,20 @@ def main():
     origin = f"https://ednai.{subdomain}.workers.dev"
     project_id = os.environ.get("NEON_PROJECT_ID")
     if not project_id:
+        org_id = os.environ.get("NEON_ORG_ID")
+        if not org_id:
+            organizations = neon("/users/me/organizations")["organizations"]
+            if len(organizations) != 1:
+                raise RuntimeError("Set GitHub variable NEON_ORG_ID to select the target Neon organization")
+            org_id = organizations[0]["id"]
         # A dedicated demo project avoids mixing public demo and customer data.
         name = "ednai-cloudflare-demo"
         matches = []
         cursor = ""
         while True:
-            query = "?limit=100" + ("&cursor=" + urllib.parse.quote(cursor) if cursor else "")
+            query = "?" + urllib.parse.urlencode({"limit": 100, "org_id": org_id})
+            if cursor:
+                query += "&cursor=" + urllib.parse.quote(cursor)
             page = neon("/projects" + query)
             matches.extend(p for p in page["projects"] if p["name"] == name)
             next_cursor = page.get("pagination", {}).get("cursor")
@@ -63,7 +71,7 @@ def main():
         else:
             result = neon("/projects", method="POST", payload={"project": {
                 "name": name, "region_id": os.environ.get("NEON_REGION", "aws-eu-west-2"),
-                "pg_version": 17,
+                "pg_version": 17, "org_id": org_id,
             }})
             project_id = result["project"]["id"]
     branches = neon(f"/projects/{project_id}/branches")["branches"]

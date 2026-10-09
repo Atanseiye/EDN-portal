@@ -31,6 +31,7 @@ jobs:
       NEON_API_KEY: ${{ secrets.NEON_API_KEY }}
       HF_TOKEN: ${{ secrets.HF_TOKEN }}
       NEON_PROJECT_ID: ${{ vars.NEON_PROJECT_ID }}
+      NEON_ORG_ID: ${{ vars.NEON_ORG_ID }}
       EDNAI_GRADIO_SPACE_ID: ${{ vars.EDNAI_GRADIO_SPACE_ID }}
       EDNAI_ADMIN_TOKEN: ${{ secrets.EDNAI_ADMIN_TOKEN }}
       WRANGLER_SEND_METRICS: 'false'
