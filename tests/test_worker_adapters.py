@@ -120,6 +120,32 @@ from fastapi.testclient import TestClient
 with TestClient(worker._app) as client:
     assert client.get('/health/live').json()['status'] == 'ok'
     assert client.get('/v1/models').json()['data'][0]['id'] == 'NCAIR1/N-ATLaS'
+import asyncio
+from unittest.mock import AsyncMock
+worker._initialized = True
+worker.main._require_challenge_demo = lambda session: {'email': 'demo@edn.com', 'is_demo': True}
+raw_response = SimpleNamespace(body=b'private challenge page')
+wrapped_response = SimpleNamespace(js_object=raw_response)
+asset_fetch = AsyncMock(return_value=wrapped_response)
+entry = worker.Default()
+entry.env = SimpleNamespace(ASSETS=SimpleNamespace(fetch=asset_fetch))
+sys.modules['js'].Request = SimpleNamespace(new=lambda url, request: url)
+private_response = SimpleNamespace(headers=MagicMock())
+def clone_response(body, original):
+    assert original is raw_response and body == b'private challenge page'
+    return private_response
+sys.modules['js'].Response = SimpleNamespace(new=clone_response)
+sys.modules['workers'].Response = lambda *args, **kwargs: SimpleNamespace(status=kwargs['status'])
+request = SimpleNamespace(url='https://example.com/challenge', js_object=SimpleNamespace(headers=SimpleNamespace(get=lambda name: 'ednai_session=demo-session')))
+assert asyncio.run(entry.fetch(request)) is private_response
+private_response.headers.set.assert_called_once_with('Cache-Control', 'private, no-store')
+from fastapi import HTTPException
+def reject(session):
+    raise HTTPException(status_code=403)
+worker.main._require_challenge_demo = reject
+asset_fetch.reset_mock()
+assert asyncio.run(entry.fetch(request)).status == 403
+asset_fetch.assert_not_called()
 '''
     result = subprocess.run([sys.executable, "-c", script], capture_output=True, text=True)
     assert result.returncode == 0, result.stderr

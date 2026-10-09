@@ -124,7 +124,8 @@ class Default(WorkerEntrypoint):
             response = await self.env.ASSETS.fetch(Request.new(asset_url, request.js_object))
             if protected:
                 from js import Response as JSResponse
-                response = JSResponse.new(response.body, response)
+                raw_response = getattr(response, 'js_object', response)
+                response = JSResponse.new(raw_response.body, raw_response)
                 response.headers.set('Cache-Control', 'private, no-store')
             return response
         import asgi
