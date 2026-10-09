@@ -14,7 +14,7 @@ from server.security import validate_production_settings
 from server.billing import Pricing
 from fastapi.middleware.cors import CORSMiddleware
 from starlette.middleware.trustedhost import TrustedHostMiddleware
-from starlette.routing import request_response
+from fastapi.routing import request_response
 
 _app = main.app
 _initialized = False
