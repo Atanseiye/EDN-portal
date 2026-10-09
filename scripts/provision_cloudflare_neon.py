@@ -9,6 +9,8 @@ from pathlib import Path
 
 
 def api(base, token, path, method="GET", payload=None):
+    service = "Cloudflare" if "cloudflare.com" in base else "Neon"
+    operation = urllib.parse.urlsplit(path).path
     request = urllib.request.Request(
         base + path,
         data=json.dumps(payload).encode() if payload is not None else None,
@@ -17,12 +19,16 @@ def api(base, token, path, method="GET", payload=None):
     )
     try:
         with urllib.request.urlopen(request, timeout=90) as response:
-            return json.load(response)
+            result = json.load(response)
+            if result.get("success") is False:
+                codes = [e.get("code") for e in result.get("errors", [])]
+                raise RuntimeError(f"{service} {method} {operation} rejected request (codes: {codes})")
+            return result
     except urllib.error.HTTPError as error:
         # API bodies can contain connection strings. Keep failure output redacted.
-        raise RuntimeError(f"Cloud API request failed with HTTP {error.code}") from None
+        raise RuntimeError(f"{service} {method} {operation} failed with HTTP {error.code}") from None
     except urllib.error.URLError:
-        raise RuntimeError("Cloud API request failed: connection unavailable") from None
+        raise RuntimeError(f"{service} {method} {operation}: connection unavailable") from None
 
 
 def main():
@@ -95,4 +101,11 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
+    try:
+        main()
+    except RuntimeError as error:
+        print(f"::error::{error}", flush=True)
+        raise SystemExit(1)
+    except KeyError as error:
+        print(f"::error::Provisioning response/configuration missing expected field: {error}", flush=True)
+        raise SystemExit(1)
