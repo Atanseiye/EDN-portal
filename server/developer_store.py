@@ -208,7 +208,13 @@ class DeveloperStore:
                         return cur.fetchone()[0] == 1
             with self._sqlite() as con:
                 return con.execute("SELECT 1").fetchone()[0] == 1
-        except Exception:
+        except Exception as error:
+            if os.environ.get("EDNAI_WORKERS") == "true":
+                # Log the exception type and traceback locations, never database credentials.
+                import traceback
+                frames = traceback.extract_tb(error.__traceback__)
+                locations = " -> ".join(f"{frame.filename.rsplit('/', 1)[-1]}:{frame.lineno}:{frame.name}" for frame in frames)
+                print(f"EDNAI_DATABASE_ERROR {type(error).__name__} {locations}", flush=True)
             return False
 
     def _init(self):
