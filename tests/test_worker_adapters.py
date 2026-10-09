@@ -10,6 +10,28 @@ from server.postgres import connect
 from ednai.providers import GradioSpaceProvider, ProviderError
 
 
+def test_cloudflare_postgres_transport_upgrades_tls_and_buffers_fragments(monkeypatch):
+    from server.worker_socket import WorkerSocket
+    reader = MagicMock()
+    reader.read.side_effect = [SimpleNamespace(done=False, value=SimpleNamespace(to_py=lambda: b"S")),
+                              SimpleNamespace(done=False, value=SimpleNamespace(to_py=lambda: b"ab")),
+                              SimpleNamespace(done=False, value=SimpleNamespace(to_py=lambda: b"cdef"))]
+    socket = MagicMock()
+    socket.readable.getReader.return_value = reader
+    socket.startTls.return_value = socket
+    api = SimpleNamespace(connect=MagicMock(return_value=socket))
+    monkeypatch.setitem(sys.modules, "workers", SimpleNamespace(import_from_javascript=lambda name: api))
+    monkeypatch.setitem(sys.modules, "js", SimpleNamespace(Object=SimpleNamespace(fromEntries=None)))
+    monkeypatch.setitem(sys.modules, "pyodide.ffi", SimpleNamespace(run_sync=lambda value: value, to_js=lambda value, **kw: value))
+    stream = WorkerSocket("database.neon.tech", 5432)
+    socket.startTls.assert_called_once_with({"expectedServerHostname": "database.neon.tech"})
+    assert stream.read(3) == b"abc"
+    assert stream.read(3) == b"def"
+    assert reader.read.call_count == 3
+    stream.close()
+    socket.close.assert_called_once()
+
+
 def test_worker_database_transaction_commits_and_rolls_back(monkeypatch):
     monkeypatch.setenv("EDNAI_DATABASE_DRIVER", "pg8000")
     connection = MagicMock()
