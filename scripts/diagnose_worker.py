@@ -46,7 +46,7 @@ with tempfile.TemporaryFile(mode='w+') as logfile:
                 print(f'::error::{path} HTTP {error.code}' + (f' Cloudflare {code.group(1)}' if code else ''), flush=True)
                 details = {name: error.headers.get(name) for name in ['server', 'content-type', 'cf-ray', 'location']}
                 print('::notice::Response details: ' + redact(json.dumps(details) + ' body=' + body[:700]), flush=True)
-            except urllib.error.URLError:
+            except (urllib.error.URLError, TimeoutError):
                 print(f'::error::{path} connection failed', flush=True)
         time.sleep(5)
     finally:
