@@ -1,4 +1,4 @@
-"""Read-only deployed Worker diagnostics through authenticated CI."""
+"""Deployed Worker health and demo-login diagnostics through authenticated CI."""
 import json
 import os
 import re
@@ -69,7 +69,9 @@ with tempfile.TemporaryFile(mode='w+') as logfile:
             print('::error::Runtime: ' + redact(str(error.get('message', 'Unknown runtime error'))), flush=True)
         for log in event.get('logs', []):
             message=' '.join(str(part) for part in log.get('message', []))
-            if 'EDNAI_DATABASE_ERROR' in message:
+            if 'EDNAI_DATABASE_ERROR' in message or 'EDNAI_APP_ERROR' in message:
                 print('::error::' + redact(message), flush=True)
-            elif log.get('level') == 'error':
-                print('::error::Application: ' + redact(message.strip().splitlines()[-1]), flush=True)
+            elif log.get('level') == 'error' and message.strip():
+                lines = [line.strip() for line in message.splitlines() if re.search(r'\b\w*(?:Error|Exception):', line)]
+                for line in lines:
+                    print('::error::Application: ' + redact(line), flush=True)

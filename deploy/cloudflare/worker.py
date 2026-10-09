@@ -106,4 +106,21 @@ class Default(WorkerEntrypoint):
             response = await self.env.ASSETS.fetch(Request.new(asset_url, request.js_object))
             return response
         import asgi
-        return await asgi.fetch(_app, request.js_object, self.env)
+        return await asgi.fetch(logged_app, request.js_object, self.env)
+
+
+async def logged_app(scope, receive, send):
+    try:
+        await _app(scope, receive, send)
+    except Exception as error:
+        import traceback
+        def report(exception):
+            if hasattr(exception, 'exceptions'):
+                for child in exception.exceptions:
+                    report(child)
+                return
+            frames = traceback.extract_tb(exception.__traceback__)
+            locations = ' -> '.join(f'{frame.filename.rsplit("/", 1)[-1]}:{frame.lineno}:{frame.name}' for frame in frames)
+            print(f'EDNAI_APP_ERROR {type(exception).__name__} {locations}', flush=True)
+        report(error)
+        raise
