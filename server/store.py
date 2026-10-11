@@ -23,7 +23,8 @@ CREATE TABLE IF NOT EXISTS beta_feedback (
     external_tester INTEGER NOT NULL,
     consent INTEGER NOT NULL,
     verified_external INTEGER NOT NULL DEFAULT 0,
-    verified_at TEXT
+    verified_at TEXT,
+    test_details TEXT NOT NULL DEFAULT '{}'
 )
 """
 
@@ -43,7 +44,8 @@ CREATE TABLE IF NOT EXISTS beta_feedback (
     external_tester BOOLEAN NOT NULL,
     consent BOOLEAN NOT NULL,
     verified_external BOOLEAN NOT NULL DEFAULT FALSE,
-    verified_at TIMESTAMPTZ
+    verified_at TIMESTAMPTZ,
+    test_details JSONB NOT NULL DEFAULT '{}'
 )
 """
 
@@ -73,6 +75,7 @@ class BetaStore:
             with self._postgres() as con:
                 with con.cursor() as cur:
                     cur.execute(POSTGRES_SCHEMA)
+                    cur.execute("ALTER TABLE beta_feedback ADD COLUMN IF NOT EXISTS test_details JSONB NOT NULL DEFAULT '{}'")
                     cur.execute(
                         "ALTER TABLE beta_feedback ADD COLUMN IF NOT EXISTS "
                         "verified_external BOOLEAN NOT NULL DEFAULT FALSE"
@@ -87,6 +90,8 @@ class BetaStore:
                     row["name"]
                     for row in con.execute("PRAGMA table_info(beta_feedback)").fetchall()
                 }
+                if "test_details" not in columns:
+                    con.execute("ALTER TABLE beta_feedback ADD COLUMN test_details TEXT NOT NULL DEFAULT '{}'")
                 if "verified_external" not in columns:
                     con.execute(
                         "ALTER TABLE beta_feedback ADD COLUMN "
@@ -111,6 +116,7 @@ class BetaStore:
         notes: str | None,
         external_tester: bool,
         consent: bool,
+        test_details: dict | None = None,
     ) -> str:
         if not consent:
             raise ValueError("Validation consent is required")
@@ -131,13 +137,13 @@ class BetaStore:
                         INSERT INTO beta_feedback
                         (id,created_at,tester_hash,display_name,affiliation,role,features,
                          rating,useful,blocker,notes,external_tester,consent,
-                         verified_external,verified_at)
-                        VALUES (%s,%s,%s,%s,%s,%s,%s::jsonb,%s,%s,%s,%s,%s,%s,FALSE,NULL)
+                         verified_external,verified_at,test_details)
+                        VALUES (%s,%s,%s,%s,%s,%s,%s::jsonb,%s,%s,%s,%s,%s,%s,FALSE,NULL,%s::jsonb)
                         """,
                         (
                             evidence_id, now, tester_hash, display_name, affiliation, role,
                             json.dumps(features, ensure_ascii=False), int(rating), bool(useful),
-                            blocker, notes, bool(external_tester), bool(consent),
+                            blocker, notes, bool(external_tester), bool(consent), json.dumps(test_details or {}, ensure_ascii=False),
                         ),
                     )
         else:
@@ -147,13 +153,13 @@ class BetaStore:
                     INSERT INTO beta_feedback
                     (id,created_at,tester_hash,display_name,affiliation,role,features,
                      rating,useful,blocker,notes,external_tester,consent,
-                     verified_external,verified_at)
-                    VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,0,NULL)
+                     verified_external,verified_at,test_details)
+                    VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,0,NULL,?)
                     """,
                     (
                         evidence_id, now.isoformat(), tester_hash, display_name, affiliation,
                         role, json.dumps(features, ensure_ascii=False), int(rating),
-                        int(useful), blocker, notes, int(external_tester), int(consent),
+                        int(useful), blocker, notes, int(external_tester), int(consent), json.dumps(test_details or {}, ensure_ascii=False),
                     ),
                 )
 
@@ -359,9 +365,28 @@ class BetaStore:
             "unique_verified_external_beta_testers": int(external),
             "unique_external_beta_testers": int(submitted_external),
             "beta_target": 2,
-            "beta_target_met": int(submitted_external) >= 2,
+            "beta_target_met": int(external) >= 2,
             "internal_review_complete": int(external) >= int(submitted_external) and int(submitted_external) > 0,
             "average_rating": round(float(avg), 2) if avg is not None else None,
             "useful_rate": round(float(useful), 4) if useful is not None else None,
             "store": "postgres" if self.use_postgres else "sqlite",
         }
+
+    def report_records(self) -> list[dict]:
+        """All consented evidence, with review status; never return the raw identifier."""
+        columns = "id,created_at,tester_hash,affiliation,role,features,rating,useful,blocker,notes,external_tester,consent,verified_external,verified_at,test_details"
+        if self.use_postgres:
+            with self._postgres() as con:
+                with con.cursor() as cur:
+                    cur.execute(f"SELECT {columns} FROM beta_feedback WHERE consent=TRUE ORDER BY created_at,id")
+                    rows = [dict(zip(columns.split(','), row)) for row in cur.fetchall()]
+        else:
+            with self._sqlite() as con:
+                rows = [dict(row) for row in con.execute(f"SELECT {columns} FROM beta_feedback WHERE consent=1 ORDER BY created_at,id").fetchall()]
+        for row in rows:
+            for key in ('features', 'test_details'):
+                if isinstance(row[key], str):
+                    row[key] = json.loads(row[key])
+            for key in ('useful', 'external_tester', 'consent', 'verified_external'):
+                row[key] = bool(row[key])
+        return rows

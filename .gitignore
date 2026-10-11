@@ -15,3 +15,6 @@ data/private/
 .dev.vars
 .venv-workers/
 deploy/cloudflare/runtime/
+
+# Local evidence previews and test databases
+tmp/

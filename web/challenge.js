@@ -4,15 +4,18 @@ function nice(k){return k.replaceAll("_"," ").replace(/\b\w/g,c=>c.toUpperCase()
 let feedbackRevision=0;
 
 function renderValidation(validation){
-  const submitted=validation.unique_external_beta_submissions??0;
+  if(!$("betaCount"))return;
+  const submitted=validation.unique_verified_external_beta_testers??0;
+  const pending=validation.pending_external_submissions??0;
   const target=validation.beta_target??2;
   $("betaCount").textContent=submitted;
   $("betaReviewStatus").textContent=submitted>=target
-    ? `${submitted} / ${target} submitted · requirement met`
-    : `${submitted} / ${target} submitted · ${Math.max(0,target-submitted)} more needed`;
+    ? `${submitted} / ${target} verified · requirement met`
+    : `${submitted} / ${target} verified · ${Math.max(0,target-submitted)} more needed; ${pending} pending review`;
 }
 
 async function refresh(){
+  if(!$("readyLabel"))return;
   const revision=feedbackRevision;
   try{
     const r=await fetch("/api/challenge/readiness",{cache:"no-store"});
@@ -40,6 +43,13 @@ $("feedbackForm").addEventListener("submit",async(e)=>{
   $("feedbackSubmit").disabled=true;
   $("formStatus").textContent="Submitting…";
   const payload={
+    test_details: {
+      test_date:$("testDate").value, deployment:$("deployment").value, environment:$("environment").value,
+      integration_minutes:Number($("integrationMinutes").value), use_case:$("useCase").value, steps:$("steps").value,
+      expected_result:$("expectedResult").value, actual_result:$("actualResult").value, outcome:$("outcome").value,
+      request_ids:$("requestIds").value, evidence_links:$("evidenceLinks").value, redacted_sample:$("redactedSample").value,
+      documentation_feedback:$("documentationFeedback").value, authenticity_confirmed:$("authenticityConfirmed").checked
+    },
     tester_identity:$("testerIdentity").value,
     display_name:$("displayName").value||null,
     affiliation:$("affiliation").value||null,
@@ -58,10 +68,12 @@ $("feedbackForm").addEventListener("submit",async(e)=>{
     if(!r.ok)throw new Error(body.detail||"Submission failed");
     feedbackRevision++;
     renderValidation(body.validation);
-    $("formStatus").textContent="Feedback recorded. The tester count is updated; repeat submissions from the same tester count once. Thank you.";
+    $("formStatus").textContent="Feedback recorded and pending admin review. Repeat submissions from the same tester count once. Thank you.";
     $("feedbackForm").reset();
     void refresh();
   }catch(err){$("formStatus").textContent=err.message;}
   finally{$("feedbackSubmit").disabled=false;}
 });
 refresh();
+
+setInterval(refresh,15000);

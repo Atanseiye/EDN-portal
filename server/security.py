@@ -103,7 +103,7 @@ async def production_security_middleware(request: Request, call_next, settings: 
     # Protect credential endpoints from trivial brute force.
     if (
         settings.app_env.lower() in {"production", "demo"}
-        and request.url.path in {"/api/developer/login", "/api/developer/register"}
+        and request.url.path in {"/api/developer/login", "/api/developer/register", "/api/admin/session"}
     ):
         limit = settings.ednai_login_rate_limit_per_minute
         ok, retry = rate_limiter.check(
@@ -119,7 +119,7 @@ async def production_security_middleware(request: Request, call_next, settings: 
             )
 
     # CSRF defense for cookie-authenticated state changes.
-    if request.method.upper() in {"POST", "PUT", "PATCH", "DELETE"} and request.cookies.get("ednai_session"):
+    if request.method.upper() in {"POST", "PUT", "PATCH", "DELETE"} and (request.cookies.get("ednai_session") or request.cookies.get("ednai_admin_session")):
         origin = request.headers.get("origin")
         if origin and origin not in settings.allowed_origin_set:
             return JSONResponse(
@@ -133,6 +133,7 @@ async def production_security_middleware(request: Request, call_next, settings: 
     response.headers["X-Request-ID"] = request_id
     if (
         request.url.path.startswith("/api/developer/")
+        or request.url.path.startswith("/api/admin/")
         or request.url.path.startswith("/v1/")
         or request.url.path.startswith("/api/studio/")
     ):

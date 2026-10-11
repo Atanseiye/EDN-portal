@@ -7,7 +7,7 @@ import ssl
 import tempfile
 import time
 import uuid
-from datetime import datetime, timedelta, timezone
+from datetime import date, datetime, timedelta, timezone
 from email.message import EmailMessage
 from pathlib import Path
 from typing import Any, Literal
@@ -242,16 +242,34 @@ class DeveloperCreditAdjustment(BaseModel):
     description: str | None = None
 
 
+class BetaTestDetails(BaseModel):
+    test_date: date
+    deployment: str = Field(min_length=3, max_length=300)
+    environment: str = Field(min_length=3, max_length=500)
+    use_case: str = Field(min_length=10, max_length=2000)
+    steps: str = Field(min_length=10, max_length=4000)
+    expected_result: str = Field(min_length=3, max_length=2000)
+    actual_result: str = Field(min_length=3, max_length=4000)
+    outcome: Literal["success", "partial", "failed"]
+    request_ids: str = Field(default="", max_length=1000)
+    evidence_links: str = Field(default="", max_length=3000)
+    redacted_sample: str = Field(default="", max_length=6000)
+    integration_minutes: int = Field(ge=0, le=100000)
+    documentation_feedback: str = Field(default="", max_length=2000)
+    authenticity_confirmed: bool
+
+
 class BetaFeedback(BaseModel):
-    tester_identity: str = Field(min_length=3, description="Email or other stable identifier; stored only as a hash.")
-    display_name: str | None = None
-    affiliation: str | None = None
-    role: str | None = None
-    features: list[str] = Field(min_length=1)
+    test_details: BetaTestDetails | None = None
+    tester_identity: str = Field(max_length=320, min_length=3, description="Email or other stable identifier; stored only as a hash.")
+    display_name: str | None = Field(default=None, max_length=200)
+    affiliation: str | None = Field(default=None, max_length=300)
+    role: str | None = Field(default=None, max_length=200)
+    features: list[Literal["python_sdk", "typescript_sdk", "playground", "evaluation", "fine_tuning", "api_gateway"]] = Field(min_length=1, max_length=6)
     rating: int = Field(ge=1, le=5)
     useful: bool
-    blocker: str | None = None
-    notes: str | None = None
+    blocker: str | None = Field(default=None, max_length=4000)
+    notes: str | None = Field(default=None, max_length=6000)
     external_tester: bool
     consent: bool
 
@@ -270,6 +288,11 @@ def ednai_logo_asset():
 @app.get("/", include_in_schema=False)
 def playground():
     return FileResponse(WEB / "index.html")
+
+
+@app.get("/feedback", include_in_schema=False)
+def feedback_page():
+    return FileResponse(WEB / "feedback.html")
 
 
 @app.get("/challenge", include_in_schema=False)
@@ -337,7 +360,7 @@ def _send_demo_access_email(recipient: str, request: Request) -> None:
         f"Password: {settings.ednai_demo_password}\n\n"
         "This shared credential is for challenge/product evaluation only. "
         "Do not reuse it on any other service.\n\n"
-        "EDNAi — Developer infrastructure for NCAIR1/N-ATLaS."
+        "EDNAi â€” Developer infrastructure for NCAIR1/N-ATLaS."
     )
 
     context = ssl.create_default_context()
@@ -1077,8 +1100,10 @@ def chat_completions(
 
 @app.post("/api/beta/feedback")
 def beta_feedback(data: BetaFeedback):
+    if data.test_details and not data.test_details.authenticity_confirmed:
+        raise HTTPException(status_code=400, detail="Confirm this is an actual test, not synthetic feedback.")
     try:
-        evidence_id = store.add(**data.model_dump())
+        evidence_id = store.add(**data.model_dump(mode="json"))
     except ValueError as exc:
         raise HTTPException(status_code=400, detail=str(exc)) from exc
     return {
@@ -1147,5 +1172,10 @@ def readiness():
         "model": NATLAS_MODEL_ID,
         "checks": checks,
         "validation": beta,
-        "note": "NAIC PS1 requires at least two external beta testers. EDNAi counts distinct, consented external tester submissions toward that requirement; internal evidence review remains a separate QA workflow.",
+        "note": "NAIC PS1 requires at least two external beta testers. EDNAi counts distinct, consented, admin-verified external testers. Submitted feedback remains pending until reviewed.",
     }
+
+
+# Separate short-lived admin session; developer/demo accounts confer no admin access.
+from server.admin_evidence import router as evidence_router
+app.include_router(evidence_router)

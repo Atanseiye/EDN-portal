@@ -25,6 +25,7 @@ _lock = asyncio.Lock()
 
 PAGES = {
     "/": "/index.html", "/developer": "/developer.html", "/challenge": "/challenge.html",
+    "/challenge/admin": "/challenge-admin.html", "/feedback": "/feedback.html",
     "/guide": "/guide.html", "/guide/en": "/guide-en.html", "/guide/yo": "/guide-yo.html",
     "/guide/ha": "/guide-ha.html", "/guide/ig": "/guide-ig.html",
     "/brand/ednai-logo.png": "/ednai-logo.png",
@@ -75,6 +76,8 @@ for route in _app.routes:
                 return function(**kwargs)
             return call
         route.dependant.call = wrap(route.dependant.call)
+        # Newer FastAPI caches this property before we replace the callable.
+        route.dependant.__dict__.pop("is_coroutine_callable", None)
         route.app = request_response(route.get_route_handler())
 
 

@@ -45,6 +45,7 @@ train = [
   "pyyaml>=6.0"
 ]
 dev = [
+  "pypdf>=4,<7",
   "pytest>=8.3",
   "pytest-asyncio>=0.24",
   "fastapi>=0.115,<1",
