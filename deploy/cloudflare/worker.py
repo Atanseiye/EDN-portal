@@ -77,7 +77,7 @@ for route in _app.routes:
             return call
         route.dependant.call = wrap(route.dependant.call)
         # Newer FastAPI caches this property before we replace the callable.
-        route.dependant.__dict__.pop("is_coroutine_callable", None)
+        getattr(route.dependant, "__dict__", {}).pop("is_coroutine_callable", None)
         route.app = request_response(route.get_route_handler())
 
 
